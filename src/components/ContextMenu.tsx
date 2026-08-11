@@ -1,0 +1,114 @@
+"use client";
+
+import React, { useState, useEffect, useRef } from "react";
+import { useWindowStore } from "@/store/windowStore";
+import { APPS } from "@/data/apps";
+import { LayoutGrid, XSquare, Image as ImageIcon, Info } from "lucide-react";
+
+interface ContextMenuProps {
+  x: number;
+  y: number;
+  onClose: () => void;
+}
+
+export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose }) => {
+  const { toggleLauncher, closeAllWindows, setWallpaper, wallpaper, openWindow } = useWindowStore();
+  const [showWallpapers, setShowWallpapers] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
+
+  const wallpapers = [
+    { id: "default", name: "Dark Minimal", color: "from-indigo-500/30 to-purple-500/10" },
+    { id: "ocean", name: "Deep Ocean", color: "from-sky-500/30 to-blue-600/10" },
+    { id: "sunset", name: "Sunset Glow", color: "from-rose-500/30 to-amber-500/10" },
+    { id: "emerald", name: "Emerald Forest", color: "from-emerald-500/30 to-teal-600/10" },
+  ];
+
+  return (
+    <div
+      ref={menuRef}
+      style={{ left: Math.min(x, window.innerWidth - 220), top: Math.min(y, window.innerHeight - 260) }}
+      className="fixed z-50 w-52 py-1.5 rounded-xl bg-zinc-900/90 backdrop-blur-2xl border border-white/15 shadow-2xl text-xs select-none animate-in fade-in zoom-in-95 duration-100"
+    >
+      <button
+        onClick={() => {
+          toggleLauncher(true);
+          onClose();
+        }}
+        className="w-full px-3 py-2 text-left text-zinc-200 hover:bg-white/10 flex items-center gap-2.5 transition-colors"
+      >
+        <LayoutGrid size={14} className="text-blue-400" />
+        <span>Buka App Launcher</span>
+      </button>
+
+      <div className="relative">
+        <button
+          onClick={() => setShowWallpapers(!showWallpapers)}
+          className="w-full px-3 py-2 text-left text-zinc-200 hover:bg-white/10 flex items-center justify-between transition-colors"
+        >
+          <div className="flex items-center gap-2.5">
+            <ImageIcon size={14} className="text-purple-400" />
+            <span>Ganti Wallpaper</span>
+          </div>
+          <span className="text-[10px] text-zinc-400">►</span>
+        </button>
+
+        {showWallpapers && (
+          <div className="pl-6 pr-2 py-1.5 space-y-1 bg-white/5 border-y border-white/10">
+            {wallpapers.map((wp) => (
+              <button
+                key={wp.id}
+                onClick={() => {
+                  setWallpaper(wp.id);
+                  onClose();
+                }}
+                className={`w-full px-2 py-1.5 rounded-md text-left flex items-center justify-between text-xs transition-colors ${wallpaper === wp.id ? "bg-white/15 text-white font-medium" : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+                  }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full bg-linear-to-br ${wp.color} border border-white/20`} />
+                  <span>{wp.name}</span>
+                </div>
+                {wallpaper === wp.id && <span className="text-[10px] text-blue-400">✓</span>}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="my-1 border-t border-white/10" />
+
+      <button
+        onClick={() => {
+          const aboutApp = APPS.find((a) => a.id === "about");
+          if (aboutApp) openWindow(aboutApp);
+          onClose();
+        }}
+        className="w-full px-3 py-2 text-left text-zinc-200 hover:bg-white/10 flex items-center gap-2.5 transition-colors"
+      >
+        <Info size={14} className="text-emerald-400" />
+        <span>Tentang SonOS</span>
+      </button>
+
+      <button
+        onClick={() => {
+          closeAllWindows();
+          onClose();
+        }}
+        className="w-full px-3 py-2 text-left text-rose-400 hover:bg-rose-500/15 flex items-center gap-2.5 transition-colors"
+      >
+        <XSquare size={14} />
+        <span>Tutup Semua Window</span>
+      </button>
+    </div>
+  );
+};
