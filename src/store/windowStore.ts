@@ -71,11 +71,13 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
 
     const nextZIndex = highestZIndex + 1;
 
+    const isMobileScreen = typeof window !== 'undefined' && window.innerWidth < 768;
+
     if (existingWindow) {
       set({
         windows: windows.map((w) =>
           w.id === app.id
-            ? { ...w, isMinimized: false, zIndex: nextZIndex }
+            ? { ...w, isMinimized: false, isMaximized: isMobileScreen ? true : w.isMaximized, zIndex: nextZIndex }
             : w
         ),
         activeWindowId: app.id,
@@ -98,7 +100,7 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
         position: { x: initialX, y: initialY },
         size: { w: defaultW, h: defaultH },
         isMinimized: false,
-        isMaximized: false,
+        isMaximized: isMobileScreen,
         zIndex: nextZIndex,
       };
 

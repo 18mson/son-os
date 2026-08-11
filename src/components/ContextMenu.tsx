@@ -44,7 +44,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose }) => {
           toggleLauncher(true);
           onClose();
         }}
-        className="w-full px-3 py-2 text-left text-zinc-200 hover:bg-white/10 flex items-center gap-2.5 transition-colors"
+        className="w-full px-3 py-2.5 text-left text-zinc-200 hover:bg-white/10 focus-visible:bg-white/15 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden flex items-center gap-2.5 transition-colors min-h-[40px] rounded-lg"
       >
         <LayoutGrid size={14} className="text-blue-400" />
         <span>Buka App Launcher</span>
@@ -53,7 +53,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose }) => {
       <div className="relative">
         <button
           onClick={() => setShowWallpapers(!showWallpapers)}
-          className="w-full px-3 py-2 text-left text-zinc-200 hover:bg-white/10 flex items-center justify-between transition-colors"
+          className="w-full px-3 py-2.5 text-left text-zinc-200 hover:bg-white/10 focus-visible:bg-white/15 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden flex items-center justify-between transition-colors min-h-[40px] rounded-lg"
         >
           <div className="flex items-center gap-2.5">
             <ImageIcon size={14} className="text-purple-400" />
@@ -71,7 +71,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose }) => {
                   setWallpaper(wp.id);
                   onClose();
                 }}
-                className={`w-full px-2 py-1.5 rounded-md text-left flex items-center justify-between text-xs transition-colors ${wallpaper === wp.id ? "bg-white/15 text-white font-medium" : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+                className={`w-full px-2.5 py-2 rounded-md text-left flex items-center justify-between text-xs transition-colors focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden ${wallpaper === wp.id ? "bg-white/15 text-white font-medium" : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
                   }`}
               >
                 <div className="flex items-center gap-2">
@@ -93,7 +93,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose }) => {
           if (aboutApp) openWindow(aboutApp);
           onClose();
         }}
-        className="w-full px-3 py-2 text-left text-zinc-200 hover:bg-white/10 flex items-center gap-2.5 transition-colors"
+        className="w-full px-3 py-2.5 text-left text-zinc-200 hover:bg-white/10 focus-visible:bg-white/15 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden flex items-center gap-2.5 transition-colors min-h-[40px] rounded-lg"
       >
         <Info size={14} className="text-emerald-400" />
         <span>Tentang SonOS</span>
@@ -104,7 +104,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose }) => {
           closeAllWindows();
           onClose();
         }}
-        className="w-full px-3 py-2 text-left text-rose-400 hover:bg-rose-500/15 flex items-center gap-2.5 transition-colors"
+        className="w-full px-3 py-2.5 text-left text-rose-400 hover:bg-rose-500/15 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-hidden flex items-center gap-2.5 transition-colors min-h-[40px] rounded-lg"
       >
         <XSquare size={14} />
         <span>Tutup Semua Window</span>

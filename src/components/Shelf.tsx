@@ -35,12 +35,13 @@ export const Shelf: React.FC = () => {
   }, []);
 
   return (
-    <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-3 py-2 rounded-full bg-zinc-950/80 backdrop-blur-2xl border border-white/15 shadow-2xl shadow-black/80 max-w-[95vw]">
+    <div className="fixed bottom-0 left-0 right-0 md:bottom-3 md:left-1/2 md:-translate-x-1/2 md:right-auto z-50 flex items-center justify-between md:justify-start gap-2 px-3 py-2 rounded-t-2xl md:rounded-full bg-zinc-950/90 backdrop-blur-2xl border-t border-white/15 md:border shadow-2xl shadow-black/80 w-full md:w-auto md:max-w-[95vw]">
       {/* Launcher Button */}
       <button
         onClick={() => toggleLauncher()}
         title="Launcher"
-        className={`p-2.5 rounded-full transition-all duration-200 group relative ${
+        aria-label="Toggle App Launcher"
+        className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-200 group relative focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden ${
           launcherOpen
             ? "bg-white text-zinc-950 shadow-lg scale-105"
             : "text-zinc-300 hover:bg-white/15 hover:text-white"
@@ -50,10 +51,10 @@ export const Shelf: React.FC = () => {
       </button>
 
       {/* Separator */}
-      {windows.length > 0 && <div className="h-6 w-px bg-white/15" />}
+      {windows.length > 0 && <div className="h-6 w-px bg-white/15 hidden sm:block" />}
 
       {/* Open Apps List */}
-      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-[55vw] md:max-w-none">
         {windows.map((win) => {
           const isActive = activeWindowId === win.id && !win.isMinimized;
           return (
@@ -61,7 +62,8 @@ export const Shelf: React.FC = () => {
               key={win.id}
               onClick={() => toggleMinimizeWindow(win.id)}
               title={win.title}
-              className={`relative group p-2 rounded-2xl transition-all duration-200 flex items-center justify-center ${
+              aria-label={`Open App ${win.title}`}
+              className={`relative group p-2 min-w-[44px] min-h-[44px] rounded-2xl transition-all duration-200 flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden ${
                 isActive
                   ? "bg-white/20 text-white shadow-inner"
                   : win.isMinimized
@@ -89,10 +91,10 @@ export const Shelf: React.FC = () => {
       </div>
 
       {/* Separator */}
-      <div className="h-6 w-px bg-white/15" />
+      <div className="h-6 w-px bg-white/15 hidden sm:block" />
 
       {/* System Tray (Clock & Status) */}
-      <div className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-white/10 text-zinc-200 hover:bg-white/15 transition-colors cursor-default text-xs font-medium select-none">
+      <div className="flex items-center gap-2.5 px-3 py-1.5 min-h-[44px] rounded-full bg-white/10 text-zinc-200 hover:bg-white/15 transition-colors cursor-default text-xs font-medium select-none">
         <div className="hidden sm:flex items-center gap-2 text-zinc-400">
           <Wifi size={13} />
           <Battery size={14} />

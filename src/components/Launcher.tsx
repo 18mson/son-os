@@ -42,15 +42,16 @@ export const Launcher: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search apps, projects..."
+                aria-label="Search apps and projects"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 autoFocus
-                className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white/10 text-white placeholder-zinc-400 border border-white/15 outline-none focus:ring-2 focus:ring-blue-400/50 transition-all shadow-xl backdrop-blur-md text-base"
+                className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white/10 text-white placeholder-zinc-400 border border-white/15 outline-hidden focus-visible:ring-2 focus-visible:ring-blue-400 focus:ring-2 focus:ring-blue-400/50 transition-all shadow-xl backdrop-blur-md text-base"
               />
             </div>
 
             {/* Apps Grid */}
-            <div className="w-full grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 gap-5">
+            <div className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-5">
               {filteredApps.map((app) => (
                 <button
                   key={app.id}
@@ -58,10 +59,11 @@ export const Launcher: React.FC = () => {
                     openWindow(app);
                     setSearchQuery("");
                   }}
-                  className="group flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 hover:bg-white/15 border border-white/5 hover:border-white/20 transition-all duration-200 shadow-md hover:shadow-xl hover:-translate-y-1"
+                  aria-label={`Open ${app.title}`}
+                  className="group flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 hover:bg-white/15 border border-white/5 hover:border-white/20 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden transition-all duration-200 shadow-md hover:shadow-xl hover:-translate-y-1 min-h-[110px]"
                 >
-                  <div className={`w-16 h-16 rounded-2xl ${app.accentColor} flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition-transform`}>
-                    <AppIcon name={app.icon} size={30} />
+                  <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl ${app.accentColor} flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition-transform`}>
+                    <AppIcon name={app.icon} size={28} />
                   </div>
                   <div className="text-center">
                     <span className="text-sm font-semibold text-zinc-100 group-hover:text-white block">
