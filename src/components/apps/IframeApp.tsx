@@ -65,7 +65,7 @@ export const IframeApp: React.FC<IframeAppProps> = ({ url, title, githubUrl }) =
               target="_blank"
               rel="noopener noreferrer"
               title="View on GitHub"
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
               <Code2 size={13} />
             </a>
@@ -76,7 +76,7 @@ export const IframeApp: React.FC<IframeAppProps> = ({ url, title, githubUrl }) =
             target="_blank"
             rel="noopener noreferrer"
             title="Open in new tab"
-            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-600/80 hover:bg-blue-600 text-white font-medium transition-colors"
+            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-600/80 hover:bg-blue-600 text-white font-medium transition-colors cursor-pointer"
           >
             <span>Open</span>
             <ExternalLink size={12} />
@@ -85,7 +85,7 @@ export const IframeApp: React.FC<IframeAppProps> = ({ url, title, githubUrl }) =
       </div>
 
       {/* Frame Container */}
-      <div className="relative flex-1 w-full h-full bg-zinc-950 overflow-hidden">
+      <div className={`relative flex-1 w-full h-full bg-zinc-950 overflow-hidden ${isLoading ? "cursor-wait" : ""}`}>
         {/* Loading Spinner Skeleton */}
         {isLoading && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-zinc-950/90 backdrop-blur-sm">

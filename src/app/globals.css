@@ -1,26 +1,427 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #09090b;
+  --foreground: #f4f4f5;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* System OS Cursor Rules: Default arrow cursor for buttons/interactive OS chrome */
+*, ::before, ::after {
+  cursor: default;
 }
 
-body {
+button, [role="button"], a {
+  cursor: default;
+}
+
+/* Specific text input cursors */
+input, textarea, [contenteditable="true"], .selectable-text {
+  cursor: text !important;
+  user-select: text !important;
+}
+
+/* Explicit cursor classes for pointer or drag states */
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+.cursor-grab {
+  cursor: grab !important;
+}
+
+.cursor-grabbing {
+  cursor: grabbing !important;
+}
+
+.cursor-wait {
+  cursor: wait !important;
+}
+
+/* Custom Overlay Scrollbars (ChromeOS / macOS Style) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* Firefox thin scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+/* Smooth scrolling for OS scroll containers */
+html, body {
+  scroll-behavior: smooth;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ─────────────────────────────────────────────────
+   Light Mode Overrides (html.light)
+   Applied when theme === 'light' via Desktop.tsx
+───────────────────────────────────────────────── */
+html.light {
+  color-scheme: light;
+  --background: #e8eaed;
+  --foreground: #1f2937;
+}
+
+/* Light mode body / desktop canvas */
+html.light body {
+  background: #e8eaed;
+  color: #1f2937;
+}
+
+/* Shelf dock pill + status tray pill + launcher button */
+html.light [data-shelf-dock],
+html.light [data-status-tray] {
+  background: rgba(255, 255, 255, 0.86) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: #1f2937 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.14) !important;
+}
+html.light [data-status-tray] span,
+html.light [data-status-tray] svg {
+  color: #374151 !important;
+  opacity: 1 !important;
+}
+
+/* Launcher bubble */
+html.light [data-launcher-bubble] {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border-color: rgba(0, 0, 0, 0.10) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18) !important;
+  color: #1f2937 !important;
+}
+html.light [data-launcher-bubble] input {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: #1f2937 !important;
+}
+html.light [data-launcher-bubble] input::placeholder {
+  color: #6b7280 !important;
+}
+html.light [data-launcher-bubble] button:hover {
+  background: rgba(0, 0, 0, 0.06) !important;
+}
+html.light [data-launcher-bubble] span {
+  color: #374151 !important;
+}
+
+/* Windows chrome & titlebar */
+html.light [data-window-chrome] {
+  background: rgba(248, 249, 250, 0.98) !important;
+  border-color: rgba(0, 0, 0, 0.14) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.20) !important;
+}
+html.light [data-window-chrome] [data-window-titlebar] {
+  background: rgba(238, 240, 244, 0.98) !important;
+  border-color: rgba(0, 0, 0, 0.10) !important;
+  color: #111827 !important;
+}
+html.light [data-window-chrome] [data-window-titlebar] span {
+  color: #111827 !important;
+}
+html.light [data-window-chrome] [data-window-titlebar] button:hover {
+  background: rgba(0, 0, 0, 0.08) !important;
+  color: #111827 !important;
+}
+
+/* Window Body Content & Inner Layers */
+html.light [data-window-body] {
+  background: #ffffff !important;
+  color: #1f2937 !important;
+}
+html.light [data-window-body] .bg-zinc-950,
+html.light [data-window-body] .bg-zinc-900,
+html.light [data-window-body] .bg-zinc-900\/90,
+html.light [data-window-body] .bg-zinc-900\/80,
+html.light [data-window-body] .bg-zinc-900\/60,
+html.light [data-window-body] .bg-zinc-800 {
+  background: #f8f9fa !important;
+  color: #1f2937 !important;
+}
+html.light [data-window-body] .border-white\/10,
+html.light [data-window-body] .border-white\/15,
+html.light [data-window-body] .border-white\/20 {
+  border-color: rgba(0, 0, 0, 0.10) !important;
+}
+html.light [data-window-body] .text-zinc-100,
+html.light [data-window-body] .text-zinc-200 {
+  color: #111827 !important;
+}
+html.light [data-window-body] .text-zinc-300,
+html.light [data-window-body] .text-zinc-400 {
+  color: #374151 !important;
+}
+html.light [data-window-body] .text-zinc-500 {
+  color: #6b7280 !important;
+}
+html.light [data-window-body] input,
+html.light [data-window-body] textarea,
+html.light [data-window-body] select {
+  background: #f3f4f6 !important;
+  color: #111827 !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Terminal App Inner Layers */
+html.light [data-terminal-app] {
+  background: #f8f9fa !important;
+  color: #1f2937 !important;
+}
+html.light [data-terminal-app] input {
+  color: #111827 !important;
+}
+html.light [data-terminal-app] .text-zinc-100,
+html.light [data-terminal-app] .text-white {
+  color: #111827 !important;
+}
+html.light [data-terminal-app] .text-zinc-300,
+html.light [data-terminal-app] .text-zinc-400 {
+  color: #374151 !important;
+}
+html.light [data-terminal-app] .text-zinc-500 {
+  color: #6b7280 !important;
+}
+html.light [data-terminal-app] .text-emerald-400 {
+  color: #059669 !important;
+}
+html.light [data-terminal-app] .text-blue-400 {
+  color: #2563eb !important;
+}
+html.light [data-terminal-app] .text-amber-300 {
+  color: #d97706 !important;
+}
+
+/* System Notification Toast Popup */
+html.light [data-notification-toast] {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: #1f2937 !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18) !important;
+}
+html.light [data-notification-toast] h4,
+html.light [data-notification-toast] .text-white {
+  color: #111827 !important;
+}
+html.light [data-notification-toast] p,
+html.light [data-notification-toast] .text-zinc-300 {
+  color: #374151 !important;
+}
+html.light [data-notification-toast] .text-zinc-400 {
+  color: #6b7280 !important;
+}
+html.light [data-notification-toast] .text-zinc-500 {
+  color: #9ca3af !important;
+}
+html.light [data-notification-toast] .bg-white\/10 {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+html.light [data-notification-toast] button:hover {
+  background: rgba(0, 0, 0, 0.06) !important;
+  color: #111827 !important;
+}
+
+/* Context Menus (Desktop, Shelf, Launcher, Shortcuts) */
+html.light [data-context-menu] {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: #1f2937 !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.16) !important;
+}
+html.light [data-context-menu] button {
+  color: #374151 !important;
+}
+html.light [data-context-menu] button:hover {
+  background: rgba(0, 0, 0, 0.07) !important;
+  color: #111827 !important;
+}
+html.light [data-context-menu] .text-zinc-200,
+html.light [data-context-menu] .text-zinc-300 {
+  color: #1f2937 !important;
+}
+html.light [data-context-menu] .border-white\/10,
+html.light [data-context-menu] .border-white\/15 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+html.light [data-context-menu] .bg-white\/5 {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Quick Settings Panel */
+html.light [data-quick-settings] {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: #1f2937 !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18) !important;
+}
+html.light [data-quick-settings] .text-zinc-400 { color: #4b5563 !important; }
+html.light [data-quick-settings] .text-zinc-300 { color: #374151 !important; }
+html.light [data-quick-settings] .text-white    { color: #111827 !important; }
+html.light [data-quick-settings] .text-zinc-200 { color: #1f2937 !important; }
+html.light [data-quick-settings] .border-white\/10 { border-color: rgba(0,0,0,0.10) !important; }
+html.light [data-quick-settings] .bg-white\/5   { background: rgba(0,0,0,0.04) !important; }
+html.light [data-quick-settings] .bg-white\/10  { background: rgba(0,0,0,0.06) !important; }
+
+/* Quick Settings tile accent colors & icon badges in Light Mode */
+html.light [data-quick-settings] .text-purple-300 { color: #7c3aed !important; }
+html.light [data-quick-settings] .text-emerald-300 { color: #059669 !important; }
+html.light [data-quick-settings] .text-amber-300   { color: #d97706 !important; }
+html.light [data-quick-settings] .text-amber-400   { color: #d97706 !important; }
+html.light [data-quick-settings] .text-blue-400    { color: #2563eb !important; }
+
+html.light [data-quick-settings] .bg-purple-600\/30 {
+  background: rgba(124, 58, 237, 0.12) !important;
+  border-color: rgba(124, 58, 237, 0.25) !important;
+}
+html.light [data-quick-settings] .bg-emerald-600\/30 {
+  background: rgba(5, 150, 105, 0.12) !important;
+  border-color: rgba(5, 150, 105, 0.25) !important;
+}
+html.light [data-quick-settings] .bg-amber-600\/30 {
+  background: rgba(217, 119, 6, 0.12) !important;
+  border-color: rgba(217, 119, 6, 0.25) !important;
+}
+html.light [data-quick-settings] .bg-blue-600\/30 {
+  background: rgba(37, 99, 235, 0.12) !important;
+  border-color: rgba(37, 99, 235, 0.25) !important;
+}
+html.light [data-quick-settings] .bg-zinc-800 {
+  background: rgba(0, 0, 0, 0.08) !important;
+  color: #4b5563 !important;
+}
+
+/* Desktop Widgets */
+html.light [data-widget] {
+  background: rgba(255, 255, 255, 0.82) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.14) !important;
+}
+html.light [data-widget]:hover {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border-color: rgba(0, 0, 0, 0.20) !important;
+}
+html.light [data-widget] h2,
+html.light [data-widget] .text-white {
+  color: #111827 !important;
+}
+html.light [data-widget] p,
+html.light [data-widget] .text-zinc-400 {
+  color: #374151 !important;
+}
+html.light [data-widget] .text-zinc-500 {
+  color: #6b7280 !important;
+}
+html.light [data-widget] .text-amber-400,
+html.light [data-widget] .text-amber-300 {
+  color: #d97706 !important;
+}
+html.light [data-widget] .text-blue-400 {
+  color: #2563eb !important;
+}
+html.light [data-widget] .bg-amber-500\/20 {
+  background: rgba(217, 119, 6, 0.12) !important;
+  color: #d97706 !important;
+}
+
+/* Calculator App Light Mode */
+html.light [data-calculator-app] {
+  background: #f8f9fa !important;
+  color: #111827 !important;
+}
+html.light [data-calculator-app] .bg-zinc-900 {
+  background: #e5e7eb !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+html.light [data-calculator-app] .bg-zinc-800 {
+  background: #e5e7eb !important;
+  color: #1f2937 !important;
+}
+html.light [data-calculator-app] .bg-zinc-800:hover {
+  background: #d1d5db !important;
+}
+html.light [data-calculator-app] .bg-white\/10 {
+  background: rgba(0, 0, 0, 0.06) !important;
+  color: #111827 !important;
+}
+html.light [data-calculator-app] .bg-white\/10:hover {
+  background: rgba(0, 0, 0, 0.12) !important;
+}
+html.light [data-calculator-app] .text-zinc-200,
+html.light [data-calculator-app] .text-zinc-300,
+html.light [data-calculator-app] .text-zinc-400 {
+  color: #4b5563 !important;
+}
+html.light [data-calculator-app] .text-white {
+  color: #111827 !important;
+}
+html.light [data-calculator-app] .text-rose-400 {
+  color: #e11d48 !important;
+}
+html.light [data-calculator-app] .bg-amber-600\/80,
+html.light [data-calculator-app] .bg-amber-500 {
+  background: #d97706 !important;
+  color: #ffffff !important;
+}
+html.light [data-calculator-app] .bg-blue-600 {
+  background: #2563eb !important;
+  color: #ffffff !important;
+}
+
+/* Calculator Widget Light Mode Enhancements */
+html.light [data-widget] .bg-zinc-900\/90 {
+  background: rgba(0, 0, 0, 0.06) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: #111827 !important;
+}
+html.light [data-widget] .text-purple-400 {
+  color: #7c3aed !important;
+}
+html.light [data-widget] .bg-rose-500\/20 {
+  background: rgba(225, 29, 72, 0.12) !important;
+  color: #e11d48 !important;
+}
+html.light [data-widget] .bg-white\/10 {
+  background: rgba(0, 0, 0, 0.08) !important;
+  color: #d97706 !important;
+}
+html.light [data-widget] .bg-white\/5 {
+  background: rgba(0, 0, 0, 0.05) !important;
+  color: #111827 !important;
+}
+
+/* Light mode scrollbar */
+html.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border-color: rgba(0, 0, 0, 0.05);
+}
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.32);
+}
+html.light * {
+  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+}
+
+
+

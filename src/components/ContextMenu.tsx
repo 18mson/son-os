@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { useWindowStore } from "@/store/windowStore";
 import { APPS } from "@/data/apps";
 import { LayoutGrid, XSquare, Image as ImageIcon, Info } from "lucide-react";
+import { useContextMenuClose } from "@/hooks/useContextMenuClose";
 
 interface ContextMenuProps {
   x: number;
@@ -12,19 +13,11 @@ interface ContextMenuProps {
 }
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose }) => {
-  const { toggleLauncher, closeAllWindows, setWallpaper, wallpaper, openWindow } = useWindowStore();
+  const { toggleLauncher, closeAllWindows, setWallpaper, wallpaper, openWindow, toggleWidgetGallery } = useWindowStore();
   const [showWallpapers, setShowWallpapers] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [onClose]);
+  useContextMenuClose(true, onClose, menuRef);
 
   const wallpapers = [
     { id: "default", name: "Dark Minimal", color: "from-indigo-500/30 to-purple-500/10" },
@@ -36,15 +29,27 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose }) => {
   return (
     <div
       ref={menuRef}
-      style={{ left: Math.min(x, window.innerWidth - 220), top: Math.min(y, window.innerHeight - 260) }}
+      style={{ left: Math.min(x, window.innerWidth - 220), top: Math.min(y, window.innerHeight - 300) }}
       className="fixed z-50 w-52 py-1.5 rounded-xl bg-zinc-900/90 backdrop-blur-2xl border border-white/15 shadow-2xl text-xs select-none animate-in fade-in zoom-in-95 duration-100"
+      data-context-menu
     >
+      <button
+        onClick={() => {
+          toggleWidgetGallery(true);
+          onClose();
+        }}
+        className="w-full px-3 py-2.5 text-left text-zinc-200 hover:bg-white/10 focus-visible:bg-white/15 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden flex items-center gap-2.5 transition-colors min-h-10 rounded-lg"
+      >
+        <LayoutGrid size={14} className="text-amber-400" />
+        <span>Kelola Widget...</span>
+      </button>
+
       <button
         onClick={() => {
           toggleLauncher(true);
           onClose();
         }}
-        className="w-full px-3 py-2.5 text-left text-zinc-200 hover:bg-white/10 focus-visible:bg-white/15 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden flex items-center gap-2.5 transition-colors min-h-[40px] rounded-lg"
+        className="w-full px-3 py-2.5 text-left text-zinc-200 hover:bg-white/10 focus-visible:bg-white/15 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden flex items-center gap-2.5 transition-colors min-h-10 rounded-lg"
       >
         <LayoutGrid size={14} className="text-blue-400" />
         <span>Buka App Launcher</span>
@@ -53,7 +58,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose }) => {
       <div className="relative">
         <button
           onClick={() => setShowWallpapers(!showWallpapers)}
-          className="w-full px-3 py-2.5 text-left text-zinc-200 hover:bg-white/10 focus-visible:bg-white/15 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden flex items-center justify-between transition-colors min-h-[40px] rounded-lg"
+          className="w-full px-3 py-2.5 text-left text-zinc-200 hover:bg-white/10 focus-visible:bg-white/15 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden flex items-center justify-between transition-colors min-h-10 rounded-lg"
         >
           <div className="flex items-center gap-2.5">
             <ImageIcon size={14} className="text-purple-400" />
@@ -93,10 +98,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose }) => {
           if (aboutApp) openWindow(aboutApp);
           onClose();
         }}
-        className="w-full px-3 py-2.5 text-left text-zinc-200 hover:bg-white/10 focus-visible:bg-white/15 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden flex items-center gap-2.5 transition-colors min-h-[40px] rounded-lg"
+        className="w-full px-3 py-2.5 text-left text-zinc-200 hover:bg-white/10 focus-visible:bg-white/15 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden flex items-center gap-2.5 transition-colors min-h-10 rounded-lg"
       >
         <Info size={14} className="text-emerald-400" />
-        <span>Tentang SonOS</span>
+        <span>Tentang Son-OS</span>
       </button>
 
       <button
@@ -104,7 +109,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose }) => {
           closeAllWindows();
           onClose();
         }}
-        className="w-full px-3 py-2.5 text-left text-rose-400 hover:bg-rose-500/15 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-hidden flex items-center gap-2.5 transition-colors min-h-[40px] rounded-lg"
+        className="w-full px-3 py-2.5 text-left text-rose-400 hover:bg-rose-500/15 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-hidden flex items-center gap-2.5 transition-colors min-h-10 rounded-lg"
       >
         <XSquare size={14} />
         <span>Tutup Semua Window</span>

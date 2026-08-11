@@ -1,0 +1,108 @@
+"use client";
+
+import React, { useState, useRef } from "react";
+import { motion } from "framer-motion";
+import { Trash2, ExternalLink } from "lucide-react";
+import { useWindowStore, DesktopShortcutItem } from "@/store/windowStore";
+import { APPS } from "@/config/appsConfig";
+import { AppIcon } from "./AppIcon";
+import { useContextMenuClose, closeAllContextMenus } from "@/hooks/useContextMenuClose";
+
+interface DesktopShortcutProps {
+  shortcut: DesktopShortcutItem;
+  isSelected?: boolean;
+}
+
+export const DesktopShortcut: React.FC<DesktopShortcutProps> = ({ shortcut, isSelected }) => {
+  const { openWindow, removeDesktopShortcut, updateDesktopShortcutPos } = useWindowStore();
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useContextMenuClose(Boolean(menu), () => setMenu(null), menuRef);
+
+  const app = APPS.find((a) => a.id === shortcut.appId);
+  if (!app) return null;
+
+  const handleDoubleClick = () => {
+    openWindow(app);
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // On mobile view (<768px), single tap opens the app directly
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      openWindow(app);
+    }
+  };
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeAllContextMenus();
+    setMenu({ x: e.clientX, y: e.clientY });
+  };
+
+  return (
+    <>
+      <motion.div
+        drag
+        dragMomentum={false}
+        initial={{ x: shortcut.x, y: shortcut.y }}
+        onDragEnd={(_, info) => {
+          const newX = Math.max(10, Math.min(shortcut.x + info.offset.x, typeof window !== "undefined" ? window.innerWidth - 90 : 800));
+          const newY = Math.max(10, Math.min(shortcut.y + info.offset.y, typeof window !== "undefined" ? window.innerHeight - 120 : 600));
+          updateDesktopShortcutPos(shortcut.id, { x: newX, y: newY });
+        }}
+        onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
+        onContextMenu={handleContextMenu}
+        style={{ position: "absolute", left: 0, top: 0 }}
+        className={`group z-10 flex flex-col items-center gap-1.5 p-2 rounded-2xl transition-all cursor-grab active:cursor-grabbing w-22 select-none ${
+          isSelected
+            ? "bg-blue-500/30 border border-blue-400 ring-2 ring-blue-400/40 shadow-lg shadow-blue-500/20"
+            : "hover:bg-white/10 border border-transparent hover:border-white/15"
+        }`}
+      >
+        <div className={`w-13 h-13 rounded-2xl ${app.accentColor} flex items-center justify-center text-white shadow-xl group-hover:scale-105 transition-transform`}>
+          <AppIcon name={app.icon} size={24} />
+        </div>
+        <span className="text-[11px] font-semibold text-white text-center line-clamp-2 drop-shadow-md leading-tight px-1">
+          {app.title}
+        </span>
+      </motion.div>
+
+      {/* Context Menu for Desktop Shortcut */}
+      {menu && (
+        <div
+          ref={menuRef}
+          style={{ position: "fixed", left: menu.x, top: menu.y }}
+          onClick={(e) => e.stopPropagation()}
+          className="z-50 w-44 rounded-2xl bg-zinc-900/95 border border-white/15 p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 select-none"
+          data-context-menu
+        >
+          <div className="flex flex-col gap-0.5 text-xs text-zinc-200">
+            <button
+              onClick={() => {
+                openWindow(app);
+                setMenu(null);
+              }}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-blue-600 hover:text-white transition-colors cursor-pointer w-full text-left font-medium"
+            >
+              <ExternalLink size={14} /> Buka {app.title}
+            </button>
+
+            <button
+              onClick={() => {
+                removeDesktopShortcut(shortcut.id);
+                setMenu(null);
+              }}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-colors cursor-pointer w-full text-left font-medium"
+            >
+              <Trash2 size={14} /> Hapus Shortcut
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};

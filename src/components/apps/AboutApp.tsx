@@ -1,23 +1,30 @@
 "use client";
 
 import React from "react";
-import { User, Code2, Sparkles } from "lucide-react";
+import Image from "next/image";
+import { Code2, Sparkles } from "lucide-react";
 
 export const AboutApp: React.FC = () => (
   <div className="space-y-6 max-w-2xl mx-auto">
     <div className="flex items-center gap-4 border-b border-white/10 pb-5">
-      <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-        <User size={32} />
+      <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg shrink-0">
+        <Image
+          src="/globe.svg"
+          alt="son-OS Portfolio"
+          width={32}
+          height={32}
+          className="invert opacity-90"
+        />
       </div>
       <div>
-        <h2 className="text-2xl font-bold text-white tracking-tight">SonOS Portfolio</h2>
+        <h2 className="text-2xl font-bold text-white tracking-tight">Son-OS Portfolio</h2>
         <p className="text-blue-400 font-medium text-sm">Fullstack Software Engineer & UI/UX Enthusiast</p>
       </div>
     </div>
 
     <div className="space-y-4 text-zinc-300 text-sm leading-relaxed">
       <p>
-        Welcome to <strong className="text-white">SonOS</strong> — a web portfolio designed with a modern ChromeOS desktop aesthetic.
+        Welcome to <strong className="text-white">Son-OS</strong> — a web portfolio designed with a modern ChromeOS desktop aesthetic.
         I build high-performance web applications, intuitive interfaces, and scalable backend infrastructure.
       </p>
 
