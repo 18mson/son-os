@@ -45,10 +45,10 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
       if (!isDragging || !dragRef.current || isMobile) return;
       const dx = e.clientX - dragRef.current.startX;
       const dy = e.clientY - dragRef.current.startY;
-      
+
       const newX = Math.max(-size.w + 120, Math.min(window.innerWidth - 80, dragRef.current.posX + dx));
       const newY = Math.max(0, Math.min(window.innerHeight - 80, dragRef.current.posY + dy));
-      
+
       moveWindow(id, { x: newX, y: newY });
     };
 
@@ -93,11 +93,10 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
         height: isMobile ? "calc(100vh - 60px)" : isMaximized ? "calc(100vh - 72px)" : size.h,
         zIndex: zIndex,
       }}
-      className={`flex flex-col rounded-t-xl md:rounded-xl overflow-hidden shadow-2xl border transition-shadow duration-200 select-none ${
-        isActive
-          ? "border-white/20 shadow-black/70 bg-zinc-950/90 backdrop-blur-2xl ring-1 ring-white/10"
-          : "border-white/10 shadow-black/40 bg-zinc-950/75 backdrop-blur-xl opacity-95"
-      }`}
+      className={`flex flex-col rounded-t-xl md:rounded-xl overflow-hidden shadow-2xl border transition-shadow duration-200 select-none ${isActive
+        ? "border-white/20 shadow-black/70 bg-zinc-950/90 backdrop-blur-2xl ring-1 ring-white/10"
+        : "border-white/10 shadow-black/40 bg-zinc-950/75 backdrop-blur-xl opacity-95"
+        }`}
     >
       {/* Title bar (ChromeOS-like minimalist header) */}
       <div
@@ -121,7 +120,7 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
             onClick={() => minimizeWindow(id)}
             title="Minimize"
             aria-label="Minimize Window"
-            className="p-2 sm:p-1.5 rounded-lg hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+            className="p-2 sm:p-1.5 rounded-lg hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden transition-colors min-w-9 min-h-9 flex items-center justify-center"
           >
             <Minus size={14} />
           </button>
@@ -130,7 +129,7 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
               onClick={() => toggleMaximizeWindow(id)}
               title={isMaximized ? "Restore" : "Maximize"}
               aria-label={isMaximized ? "Restore Window" : "Maximize Window"}
-              className="p-2 sm:p-1.5 rounded-lg hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+              className="p-2 sm:p-1.5 rounded-lg hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden transition-colors min-w-9 min-h-9 flex items-center justify-center"
             >
               {isMaximized ? <Copy size={13} /> : <Square size={13} />}
             </button>
@@ -139,7 +138,7 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
             onClick={() => closeWindow(id)}
             title="Close"
             aria-label="Close Window"
-            className="p-2 sm:p-1.5 rounded-lg hover:bg-rose-500/80 hover:text-white focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-hidden transition-colors ml-0.5 min-w-[36px] min-h-[36px] flex items-center justify-center text-rose-300 hover:text-white"
+            className="p-2 sm:p-1.5 rounded-lg hover:bg-rose-500/80 hover:text-white focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-hidden transition-colors ml-0.5 min-w-9 min-h-9 flex items-center justify-center text-rose-300"
           >
             <X size={15} />
           </button>
@@ -147,9 +146,8 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
       </div>
 
       {/* Window Body Content Area */}
-      <div className={`flex-1 overflow-auto text-zinc-100 font-sans select-text ${
-        id === 'japanese-quiz' || id === 'lovely-ever' ? 'p-0 flex flex-col' : 'p-4 sm:p-6'
-      }`}>
+      <div className={`flex-1 overflow-auto text-zinc-100 font-sans select-text ${id === 'japanese-quiz' || id === 'lovely-ever' ? 'p-0 flex flex-col' : 'p-4 sm:p-6'
+        }`}>
         {children}
       </div>
     </motion.div>
