@@ -1,18 +1,20 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { ExternalLink, RotateCw, AlertTriangle, Loader2, Globe, Code2 } from "lucide-react";
+import { ExternalLink, RotateCw, AlertTriangle, Loader2, Globe, Code2, ZoomIn, ZoomOut } from "lucide-react";
 
 interface IframeAppProps {
   url: string;
   title: string;
   githubUrl?: string;
+  initialZoom?: number;
 }
 
-export const IframeApp: React.FC<IframeAppProps> = ({ url, title, githubUrl }) => {
+export const IframeApp: React.FC<IframeAppProps> = ({ url, title, githubUrl, initialZoom = 0.85 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasTimedOut, setHasTimedOut] = useState<boolean>(false);
   const [key, setKey] = useState<number>(0); // used for reload
+  const [zoom, setZoom] = useState<number>(initialZoom);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -39,6 +41,10 @@ export const IframeApp: React.FC<IframeAppProps> = ({ url, title, githubUrl }) =
     setKey((prev) => prev + 1);
   };
 
+  const handleZoomIn = () => setZoom((prev) => Math.min(1.25, Math.round((prev + 0.05) * 100) / 100));
+  const handleZoomOut = () => setZoom((prev) => Math.max(0.50, Math.round((prev - 0.05) * 100) / 100));
+  const handleResetZoom = () => setZoom(initialZoom);
+
   return (
     <div className="flex flex-col h-full w-full bg-zinc-950 rounded-xl overflow-hidden border border-white/10 shadow-2xl">
       {/* Toolbar */}
@@ -50,7 +56,34 @@ export const IframeApp: React.FC<IframeAppProps> = ({ url, title, githubUrl }) =
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Zoom Controls */}
+          <div className="flex items-center gap-0.5 bg-white/5 border border-white/10 rounded-lg px-1 py-0.5 text-zinc-400">
+            <button
+              onClick={handleZoomOut}
+              disabled={zoom <= 0.50}
+              title="Perkecil Tampilan (Zoom Out)"
+              className="p-1 hover:text-white hover:bg-white/10 rounded disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer"
+            >
+              <ZoomOut size={13} />
+            </button>
+            <button
+              onClick={handleResetZoom}
+              title={`Reset Zoom ke ${Math.round(initialZoom * 100)}%`}
+              className="px-1.5 py-0.5 text-[11px] font-mono font-semibold text-zinc-300 hover:text-white hover:bg-white/10 rounded cursor-pointer min-w-9 text-center"
+            >
+              {Math.round(zoom * 100)}%
+            </button>
+            <button
+              onClick={handleZoomIn}
+              disabled={zoom >= 1.25}
+              title="Perbesar Tampilan (Zoom In)"
+              className="p-1 hover:text-white hover:bg-white/10 rounded disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer"
+            >
+              <ZoomIn size={13} />
+            </button>
+          </div>
+
           <button
             onClick={handleReload}
             title="Reload frame"
@@ -124,14 +157,23 @@ export const IframeApp: React.FC<IframeAppProps> = ({ url, title, githubUrl }) =
             </div>
           </div>
         ) : (
-          <iframe
-            key={key}
-            src={url}
-            title={title}
-            className="w-full h-full border-0"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-            onLoad={handleLoad}
-          />
+          <div
+            className="w-full h-full origin-top-left transition-all duration-150"
+            style={{
+              width: `${100 / zoom}%`,
+              height: `${100 / zoom}%`,
+              transform: `scale(${zoom})`,
+            }}
+          >
+            <iframe
+              key={key}
+              src={url}
+              title={title}
+              className="w-full h-full border-0"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+              onLoad={handleLoad}
+            />
+          </div>
         )}
       </div>
     </div>

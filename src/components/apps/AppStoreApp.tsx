@@ -7,34 +7,40 @@ import { AppDefinition, useWindowStore } from "@/store/windowStore";
 import { useAppStoreStore } from "@/store/appStoreStore";
 import { AppIcon } from "../AppIcon";
 
-type CategoryFilter = "all" | "portfolio" | "utility" | "system";
+type CategoryFilter = "all" | "portfolio" | "utility" | "system" | "entertainment";
 
 export const AppStoreApp: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>("all");
 
   const { openWindow, theme } = useWindowStore();
-  const { installedApps, installApp, uninstallApp } = useAppStoreStore();
+  const { installedApps, installApp, setPendingUninstallAppId } = useAppStoreStore();
 
   const isLight = theme === "light";
 
-  const filteredApps = APPS.filter((app) => {
+  const catalogApps = APPS.filter((app) => app.id !== "settings" && app.id !== "app-store");
+
+  const filteredApps = catalogApps.filter((app) => {
     const matchesSearch =
       app.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (app.description && app.description.toLowerCase().includes(searchQuery.toLowerCase()));
 
+    const appCategories = Array.isArray(app.category) ? app.category : app.category ? [app.category] : ["utility"];
     const matchesCategory =
-      activeCategory === "all" || app.category === activeCategory;
+      activeCategory === "all" || appCategories.includes(activeCategory);
 
     return matchesSearch && matchesCategory;
   });
 
   const categories: { id: CategoryFilter; label: string }[] = [
     { id: "all", label: "Semua App" },
+    { id: "entertainment", label: "Hiburan" },
     { id: "portfolio", label: "Portfolio" },
     { id: "utility", label: "Utilitas" },
     { id: "system", label: "Sistem" },
   ];
+
+  const installedCatalogCount = installedApps.filter((id) => id !== "settings" && id !== "app-store").length;
 
   return (
     <div className={`flex flex-col h-full w-full select-none overflow-hidden font-sans ${
@@ -65,7 +71,7 @@ export const AppStoreApp: React.FC = () => {
             isLight ? "bg-white border-slate-300 text-slate-700 shadow-xs" : "bg-white/5 border-white/10 text-zinc-400"
           }`}>
             <CheckCircle size={14} className="text-emerald-500" />
-            <span>Terinstall: {installedApps.length} / {APPS.length} Apps</span>
+            <span>Terinstall: {installedCatalogCount} / {catalogApps.length} Apps</span>
           </div>
         </div>
 
@@ -137,11 +143,18 @@ export const AppStoreApp: React.FC = () => {
                         </div>
                         <div>
                           <h2 className={`text-sm font-semibold tracking-wide ${isLight ? "text-slate-900" : "text-white"}`}>{app.title}</h2>
-                          <span className={`inline-block text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-md mt-0.5 ${
-                            isLight ? "bg-slate-100 text-slate-600" : "bg-white/10 text-zinc-400"
-                          }`}>
-                            {app.category || "Utility"}
-                          </span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {(Array.isArray(app.category) ? app.category : [app.category || "utility"]).map((cat) => (
+                              <span
+                                key={cat}
+                                className={`inline-block text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                                  isLight ? "bg-slate-100 text-slate-600" : "bg-white/10 text-zinc-300"
+                                }`}
+                              >
+                                {cat}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       </div>
 
@@ -171,7 +184,7 @@ export const AppStoreApp: React.FC = () => {
 
                         {!isSystem && (
                           <button
-                            onClick={() => uninstallApp(app.id)}
+                            onClick={() => setPendingUninstallAppId(app.id)}
                             title="Uninstall Aplikasi"
                             className="flex items-center justify-center p-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/30 text-rose-500 border border-rose-500/20 transition-all cursor-pointer"
                           >

@@ -21,7 +21,6 @@ export const QuickSettingsPanel: React.FC = () => {
   const {
     quickSettingsOpen,
     toggleQuickSettings,
-    toggleSound,
     theme,
     setTheme,
     wallpaper,
@@ -39,7 +38,7 @@ export const QuickSettingsPanel: React.FC = () => {
   const {
     setTheme: setSettingsTheme,
     soundEnabled: settingsSoundEnabled,
-    toggleSound: toggleSettingsSound,
+    setSoundEnabled: setSettingsSoundEnabled,
     brightness,
     setBrightness,
     volume,
@@ -117,8 +116,8 @@ export const QuickSettingsPanel: React.FC = () => {
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ type: "spring", duration: 0.25, bounce: 0.05 }}
           className={`w-84 sm:w-96 rounded-3xl p-5 backdrop-blur-3xl border shadow-2xl select-none z-50 pointer-events-auto ${isLight
-              ? "bg-white/90 border-black/10 shadow-slate-400/30 text-slate-900"
-              : "bg-zinc-950/85 border-white/12 shadow-black/80 text-zinc-100"
+            ? "bg-white/90 border-black/10 shadow-slate-400/30 text-slate-900"
+            : "bg-zinc-950/85 border-white/12 shadow-black/80 text-zinc-100"
             }`}
         >
           {/* Header Clock & Date */}
@@ -134,8 +133,8 @@ export const QuickSettingsPanel: React.FC = () => {
             <button
               onClick={handleOpenSettings}
               className={`p-2.5 rounded-2xl border transition-all cursor-pointer ${isLight
-                  ? "bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800"
-                  : "bg-white/10 hover:bg-white/20 border-white/10 text-white"
+                ? "bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800"
+                : "bg-white/10 hover:bg-white/20 border-white/10 text-white"
                 }`}
               title="Pengaturan Sistem"
             >
@@ -153,8 +152,8 @@ export const QuickSettingsPanel: React.FC = () => {
                 setSettingsTheme(nextTheme);
               }}
               className={`p-3.5 rounded-2xl border flex items-center justify-between transition-all cursor-pointer ${isLight
-                  ? "bg-blue-50 border-blue-200 text-blue-900 shadow-sm"
-                  : "bg-white/10 border-white/15 text-white hover:bg-white/20"
+                ? "bg-blue-50 border-blue-200 text-blue-900 shadow-sm"
+                : "bg-white/10 border-white/15 text-white hover:bg-white/20"
                 }`}
             >
               <div className="flex items-center gap-2.5">
@@ -170,31 +169,29 @@ export const QuickSettingsPanel: React.FC = () => {
             <button
               onClick={() => {
                 if (settingsSoundEnabled) {
-                  // Muting: save current volume, set to 0
                   if (volume > 0) prevVolumeRef.current = volume;
                   setVolume(0);
                   setMediaVolume(0);
+                  setSettingsSoundEnabled(false);
                 } else {
-                  // Unmuting: restore previous volume
                   const restored = prevVolumeRef.current > 0 ? prevVolumeRef.current : 70;
                   setVolume(restored);
                   setMediaVolume(restored);
+                  setSettingsSoundEnabled(true);
                 }
-                toggleSound();
-                toggleSettingsSound();
               }}
-              className={`p-3.5 rounded-2xl border flex items-center justify-between transition-all cursor-pointer ${settingsSoundEnabled
-                  ? "bg-blue-600 border-blue-500 text-white shadow-md"
-                  : isLight
-                    ? "bg-slate-100 border-slate-300 text-slate-600"
-                    : "bg-white/5 border-white/10 text-zinc-400"
+              className={`p-3.5 rounded-2xl border flex items-center justify-between transition-all cursor-pointer ${settingsSoundEnabled && volume > 0
+                ? "bg-blue-600 border-blue-500 text-white shadow-md"
+                : isLight
+                  ? "bg-slate-100 border-slate-300 text-slate-600"
+                  : "bg-white/5 border-white/10 text-zinc-400"
                 }`}
             >
               <div className="flex items-center gap-2.5">
-                {settingsSoundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                {settingsSoundEnabled && volume > 0 ? <Volume2 size={18} /> : <VolumeX size={18} />}
                 <div className="text-left">
                   <p className="text-xs font-bold">Suara UI</p>
-                  <p className="text-[10px] opacity-80">{settingsSoundEnabled ? "Menyala" : "Mati"}</p>
+                  <p className="text-[10px] opacity-80">{settingsSoundEnabled && volume > 0 ? "Menyala" : "Mati"}</p>
                 </div>
               </div>
             </button>
@@ -203,8 +200,8 @@ export const QuickSettingsPanel: React.FC = () => {
             <button
               onClick={cycleWallpaper}
               className={`col-span-2 p-3.5 rounded-2xl border flex items-center justify-between transition-all cursor-pointer ${isLight
-                  ? "bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800"
-                  : "bg-white/8 hover:bg-white/15 border-white/10 text-white"
+                ? "bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800"
+                : "bg-white/8 hover:bg-white/15 border-white/10 text-white"
                 }`}
             >
               <div className="flex items-center gap-2.5">
@@ -245,7 +242,7 @@ export const QuickSettingsPanel: React.FC = () => {
             <div className="space-y-1">
               <div className="flex justify-between text-xs font-medium">
                 <span className={`flex items-center gap-1.5 ${isLight ? "text-slate-700" : "text-zinc-300"}`}>
-                  <Volume2 size={14} /> Volume System
+                  {volume > 0 && settingsSoundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />} Volume System
                 </span>
                 <span className={isLight ? "text-slate-500" : "text-zinc-400"}>{volume}%</span>
               </div>
@@ -258,6 +255,11 @@ export const QuickSettingsPanel: React.FC = () => {
                   const val = Number(e.target.value);
                   setVolume(val);
                   setMediaVolume(val);
+                  if (val > 0 && !settingsSoundEnabled) {
+                    setSettingsSoundEnabled(true);
+                  } else if (val === 0 && settingsSoundEnabled) {
+                    setSettingsSoundEnabled(false);
+                  }
                 }}
                 className="w-full accent-blue-500 cursor-pointer h-1.5 rounded-lg bg-zinc-700/50"
               />

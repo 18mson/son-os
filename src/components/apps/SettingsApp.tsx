@@ -4,20 +4,20 @@ import React, { useState } from "react";
 import {
   Palette,
   Volume2,
-  Eye,
   Settings,
   Info,
   RotateCcw,
   Sparkles,
   Smartphone,
   ShieldCheck,
+  Package,
 } from "lucide-react";
 import { useWindowStore } from "@/store/windowStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { AppearanceTab } from "./settings/AppearanceTab";
 import { SoundTab } from "./settings/SoundTab";
-import { AccessibilityTab } from "./settings/AccessibilityTab";
 import { SystemTab } from "./settings/SystemTab";
+import { AppsTab } from "./settings/AppsTab";
 
 const WALLPAPERS = [
   { id: "default", name: "SonOS Mesh", url: "bg-gradient-to-br from-indigo-900 via-slate-950 to-blue-950" },
@@ -32,7 +32,6 @@ export const SettingsApp: React.FC = () => {
     wallpaper,
     setWallpaper,
     showNotification,
-    soundEnabled,
     toggleSound,
     theme,
     toggleTheme,
@@ -47,16 +46,19 @@ export const SettingsApp: React.FC = () => {
     toggleHighContrast,
     clockFormat,
     setClockFormat,
+    setMediaVolume,
   } = useWindowStore();
 
   const {
     volume,
     setVolume,
+    soundEnabled: settingsSoundEnabled,
+    toggleSound: toggleSettingsSound,
     resetToDefault: resetSettingsStore,
   } = useSettingsStore();
 
   const isLight = theme === "light";
-  const [activeTab, setActiveTab] = useState<"tampilan" | "suara" | "aksesibilitas" | "sistem" | "about">("tampilan");
+  const [activeTab, setActiveTab] = useState<"tampilan" | "suara" | "sistem" | "aplikasi" | "about">("tampilan");
 
   const handleResetSettings = () => {
     resetSettingsStore();
@@ -82,8 +84,8 @@ export const SettingsApp: React.FC = () => {
         <button
           onClick={() => setActiveTab("tampilan")}
           className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === "tampilan"
-              ? "bg-blue-600 text-white shadow-md"
-              : isLight ? "text-slate-700 hover:bg-slate-300/60" : "text-zinc-400 hover:bg-white/5"
+            ? "bg-blue-600 text-white shadow-md"
+            : isLight ? "text-slate-700 hover:bg-slate-300/60" : "text-zinc-400 hover:bg-white/5"
             }`}
         >
           <Palette size={16} /> Tampilan & Tema
@@ -92,38 +94,38 @@ export const SettingsApp: React.FC = () => {
         <button
           onClick={() => setActiveTab("suara")}
           className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === "suara"
-              ? "bg-blue-600 text-white shadow-md"
-              : isLight ? "text-slate-700 hover:bg-slate-300/60" : "text-zinc-400 hover:bg-white/5"
+            ? "bg-blue-600 text-white shadow-md"
+            : isLight ? "text-slate-700 hover:bg-slate-300/60" : "text-zinc-400 hover:bg-white/5"
             }`}
         >
           <Volume2 size={16} /> Suara & Audio
         </button>
 
         <button
-          onClick={() => setActiveTab("aksesibilitas")}
-          className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === "aksesibilitas"
-              ? "bg-blue-600 text-white shadow-md"
-              : isLight ? "text-slate-700 hover:bg-slate-300/60" : "text-zinc-400 hover:bg-white/5"
-            }`}
-        >
-          <Eye size={16} /> Aksesibilitas
-        </button>
-
-        <button
           onClick={() => setActiveTab("sistem")}
           className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === "sistem"
-              ? "bg-blue-600 text-white shadow-md"
-              : isLight ? "text-slate-700 hover:bg-slate-300/60" : "text-zinc-400 hover:bg-white/5"
+            ? "bg-blue-600 text-white shadow-md"
+            : isLight ? "text-slate-700 hover:bg-slate-300/60" : "text-zinc-400 hover:bg-white/5"
             }`}
         >
           <Settings size={16} /> Sistem & Waktu
         </button>
 
         <button
+          onClick={() => setActiveTab("aplikasi")}
+          className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === "aplikasi"
+            ? "bg-blue-600 text-white shadow-md"
+            : isLight ? "text-slate-700 hover:bg-slate-300/60" : "text-zinc-400 hover:bg-white/5"
+            }`}
+        >
+          <Package size={16} /> Kelola Aplikasi
+        </button>
+
+        <button
           onClick={() => setActiveTab("about")}
           className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === "about"
-              ? "bg-blue-600 text-white shadow-md"
-              : isLight ? "text-slate-700 hover:bg-slate-300/60" : "text-zinc-400 hover:bg-white/5"
+            ? "bg-blue-600 text-white shadow-md"
+            : isLight ? "text-slate-700 hover:bg-slate-300/60" : "text-zinc-400 hover:bg-white/5"
             }`}
         >
           <Info size={16} /> Tentang SonOS
@@ -140,28 +142,26 @@ export const SettingsApp: React.FC = () => {
             wallpaper={wallpaper}
             setWallpaper={setWallpaper}
             WALLPAPERS={WALLPAPERS}
+            highContrast={highContrast}
+            toggleHighContrast={() => toggleHighContrast()}
+            textScale={textScale}
+            setTextScale={setTextScale}
           />
         )}
 
         {activeTab === "suara" && (
           <SoundTab
             isLight={isLight}
-            soundEnabled={soundEnabled}
-            toggleSound={toggleSound}
+            soundEnabled={settingsSoundEnabled}
+            toggleSound={() => {
+              toggleSettingsSound();
+              toggleSound();
+            }}
             volume={volume}
-            setVolume={setVolume}
-          />
-        )}
-
-        {activeTab === "aksesibilitas" && (
-          <AccessibilityTab
-            isLight={isLight}
-            reducedMotion={reducedMotion}
-            toggleReducedMotion={() => toggleReducedMotion()}
-            highContrast={highContrast}
-            toggleHighContrast={() => toggleHighContrast()}
-            textScale={textScale}
-            setTextScale={setTextScale}
+            setVolume={(v) => {
+              setVolume(v);
+              setMediaVolume(v);
+            }}
           />
         )}
 
@@ -173,7 +173,13 @@ export const SettingsApp: React.FC = () => {
             desktopWidgets={desktopWidgets}
             removeWidget={removeWidget}
             toggleWidgetGallery={() => toggleWidgetGallery()}
+            reducedMotion={reducedMotion}
+            toggleReducedMotion={() => toggleReducedMotion()}
           />
+        )}
+
+        {activeTab === "aplikasi" && (
+          <AppsTab isLight={isLight} />
         )}
 
         {activeTab === "about" && (

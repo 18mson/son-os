@@ -38,7 +38,7 @@ export const LauncherMobileGrid: React.FC<LauncherMobileGridProps> = ({
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: "100%", opacity: 0 }}
           transition={{ type: "spring", stiffness: 350, damping: 32 }}
-          className="fixed inset-0 z-9500 bg-zinc-950/98 backdrop-blur-3xl flex flex-col justify-between select-none"
+          className="fixed inset-0 z-45 bg-zinc-950/98 backdrop-blur-3xl flex flex-col justify-between select-none"
         >
           {/* Header Search Bar */}
           <div className="p-4 pt-12 border-b border-white/10 flex items-center gap-3">
@@ -54,7 +54,7 @@ export const LauncherMobileGrid: React.FC<LauncherMobileGridProps> = ({
             </div>
             <button
               onClick={handleClose}
-              className="px-3 py-2 rounded-xl bg-white/10 text-xs font-semibold text-white cursor-pointer"
+              className="px-3 py-2 rounded-xl bg-white/10 text-xs font-semibold text-white cursor-pointer active:scale-95 transition-transform"
             >
               Tutup
             </button>
@@ -78,13 +78,15 @@ export const LauncherMobileGrid: React.FC<LauncherMobileGridProps> = ({
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-3 pb-8">
                 {(searchQuery ? filteredApps : installedAppsList).map((app) => (
                   <button
                     key={app.id}
-                    onClick={() => handleOpenApp(app)}
+                    onClick={() => {
+                      handleOpenApp(app);
+                    }}
                     onContextMenu={(e) => handleAppContextMenu(e, app.id)}
-                    className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/5 border border-white/5 active:bg-white/15 cursor-pointer"
+                    className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/5 border border-white/5 active:bg-white/20 active:scale-95 cursor-pointer touch-manipulation transition-all"
                   >
                     <div className={`w-12 h-12 rounded-2xl ${app.accentColor} flex items-center justify-center text-white shadow-md`}>
                       <AppIcon name={app.icon} size={22} />

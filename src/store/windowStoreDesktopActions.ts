@@ -41,14 +41,33 @@ export const createDesktopActions = (
       return;
     }
 
-    const maxRow = Math.max(-1, ...current.map((s) => Math.round((s.y - 28) / 110)));
-    const newY = 28 + (maxRow + 1) * 110;
+    const GRID_W = 96;
+    const GRID_H = 110;
+    const START_X = 28;
+    const START_Y = 28;
+
+    let newX = START_X;
+    let newY = START_Y;
+    let found = false;
+
+    for (let col = 0; col < 12 && !found; col++) {
+      for (let row = 0; row < 6 && !found; row++) {
+        const testX = START_X + col * GRID_W;
+        const testY = START_Y + row * GRID_H;
+        const occupied = current.some((s) => Math.abs(s.x - testX) < 30 && Math.abs(s.y - testY) < 30);
+        if (!occupied) {
+          newX = testX;
+          newY = testY;
+          found = true;
+        }
+      }
+    }
 
     const newShortcut: DesktopShortcutItem = {
       id: `ds-${appId}-${Date.now()}`,
       appId,
-      x: 28,
-      y: newY < 600 ? newY : 28,
+      x: newX,
+      y: newY,
     };
 
     const updated = [...current, newShortcut];

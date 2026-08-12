@@ -25,15 +25,24 @@ export const GlobalAudioManager: React.FC = () => {
   const playlist = [...PLAYLIST, ...customTracks];
   const currentTrack = playlist[mediaTrackIndex] || playlist[0] || PLAYLIST[0];
 
-  // Synchronize audio volume and mute
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = (!soundEnabled || mediaIsMuted) ? 0 : mediaVolume / 100;
-    }
-  }, [mediaVolume, mediaIsMuted, soundEnabled]);
+  const effectiveVolume = (!soundEnabled || mediaIsMuted) ? 0 : mediaVolume / 100;
 
-  // Synchronize audio play / pause state
+  // Synchronize audio volume and mute for HTML5 Audio
   useEffect(() => {
+    if (audioRef.current && !currentTrack.youtubeId) {
+      audioRef.current.volume = effectiveVolume;
+    }
+  }, [mediaVolume, mediaIsMuted, soundEnabled, effectiveVolume, currentTrack.youtubeId]);
+
+  // Synchronize audio play / pause state for HTML5 Audio
+  useEffect(() => {
+    if (currentTrack.youtubeId) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      return;
+    }
+
     if (!audioRef.current) return;
 
     if (mediaIsPlaying) {
@@ -46,10 +55,10 @@ export const GlobalAudioManager: React.FC = () => {
     } else {
       audioRef.current.pause();
     }
-  }, [mediaIsPlaying, mediaTrackIndex, toggleMediaPlay]);
+  }, [mediaIsPlaying, mediaTrackIndex, toggleMediaPlay, currentTrack.youtubeId]);
 
   const handleTimeUpdate = () => {
-    if (audioRef.current) {
+    if (audioRef.current && !currentTrack.youtubeId) {
       setMediaCurrentTime(audioRef.current.currentTime);
       setMediaDuration(audioRef.current.duration || currentTrack.duration);
     }
@@ -57,7 +66,7 @@ export const GlobalAudioManager: React.FC = () => {
 
   const handleEnded = () => {
     if (mediaIsRepeat) {
-      if (audioRef.current) {
+      if (audioRef.current && !currentTrack.youtubeId) {
         audioRef.current.currentTime = 0;
         audioRef.current.play().catch(console.error);
       }
@@ -67,13 +76,17 @@ export const GlobalAudioManager: React.FC = () => {
   };
 
   return (
-    <audio
-      ref={audioRef}
-      src={currentTrack.audioUrl}
-      onTimeUpdate={handleTimeUpdate}
-      onEnded={handleEnded}
-      onLoadedMetadata={handleTimeUpdate}
-      className="hidden"
-    />
+    <>
+      {!currentTrack.youtubeId && currentTrack.audioUrl && (
+        <audio
+          ref={audioRef}
+          src={currentTrack.audioUrl}
+          onTimeUpdate={handleTimeUpdate}
+          onEnded={handleEnded}
+          onLoadedMetadata={handleTimeUpdate}
+          className="hidden"
+        />
+      )}
+    </>
   );
 };

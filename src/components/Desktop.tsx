@@ -14,6 +14,7 @@ import { QuickSettingsPanel } from "./QuickSettingsPanel";
 import { SystemNotificationToast } from "./SystemNotificationToast";
 import { GlobalAudioManager } from "./GlobalAudioManager";
 import { WidgetGalleryModal } from "./WidgetGalleryModal";
+import { DeleteAppConfirmModal } from "./modals/DeleteAppConfirmModal";
 import { ScreenBrightnessOverlay } from "./ScreenBrightnessOverlay";
 import { Trash2, Plus } from "lucide-react";
 import { DesktopShortcut } from "./DesktopShortcut";
@@ -175,7 +176,7 @@ export const Desktop: React.FC = () => {
       {/* Selection Rectangle Box */}
       {selectionBox && (
         <div
-          className="fixed border border-blue-400/80 bg-blue-500/20 rounded-lg pointer-events-none z-20 shadow-lg shadow-blue-500/10"
+          className="fixed border border-blue-400/80 bg-blue-500/20 rounded-lg pointer-events-none z-12 shadow-lg shadow-blue-500/10"
           style={{
             left: `${Math.min(selectionBox.startX, selectionBox.currentX)}px`,
             top: `${Math.min(selectionBox.startY, selectionBox.currentY)}px`,
@@ -196,7 +197,7 @@ export const Desktop: React.FC = () => {
 
       {/* Desktop Shortcuts Layer - client-only to prevent SSR hydration mismatch */}
       {mounted && (
-        <div className="absolute inset-0 z-3 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
           {desktopShortcuts.map((shortcut) => (
             <DesktopShortcut
               key={shortcut.id}
@@ -233,7 +234,7 @@ export const Desktop: React.FC = () => {
           ref={widgetMenuRef}
           style={{ position: "fixed", left: widgetMenu.x, top: widgetMenu.y }}
           onClick={(e) => e.stopPropagation()}
-          className="z-50 w-52 rounded-2xl bg-zinc-900/95 border border-white/15 p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 select-none"
+          className="z-70 w-52 rounded-2xl bg-zinc-900/95 border border-white/15 p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 select-none"
           data-context-menu
         >
           <div className="flex flex-col gap-0.5 text-xs text-zinc-200 font-medium">
@@ -263,7 +264,7 @@ export const Desktop: React.FC = () => {
       <Shelf />
 
       {/* System Tray Overlays */}
-      <div className="fixed bottom-18 right-3 sm:right-4 z-50 flex flex-col-reverse items-end gap-3 pointer-events-none">
+      <div className="fixed bottom-18 right-3 sm:right-4 z-80 flex flex-col-reverse items-end gap-3 pointer-events-none">
         <QuickSettingsPanel />
         <SystemNotificationToast />
       </div>
@@ -273,6 +274,9 @@ export const Desktop: React.FC = () => {
 
       {/* Widget Gallery Modal */}
       <WidgetGalleryModal />
+
+      {/* Delete App Confirmation Modal */}
+      <DeleteAppConfirmModal />
 
       {/* Screen Hardware Brightness Overlay */}
       <ScreenBrightnessOverlay />

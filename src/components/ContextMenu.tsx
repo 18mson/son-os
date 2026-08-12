@@ -30,7 +30,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose }) => {
     <div
       ref={menuRef}
       style={{ left: Math.min(x, window.innerWidth - 220), top: Math.min(y, window.innerHeight - 300) }}
-      className="fixed z-50 w-52 py-1.5 rounded-xl bg-zinc-900/90 backdrop-blur-2xl border border-white/15 shadow-2xl text-xs select-none animate-in fade-in zoom-in-95 duration-100"
+      className="fixed z-70 w-52 py-1.5 rounded-xl bg-zinc-900/90 backdrop-blur-2xl border border-white/15 shadow-2xl text-xs select-none animate-in fade-in zoom-in-95 duration-100"
       data-context-menu
     >
       <button

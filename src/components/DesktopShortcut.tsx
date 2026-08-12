@@ -14,8 +14,10 @@ interface DesktopShortcutProps {
 }
 
 export const DesktopShortcut: React.FC<DesktopShortcutProps> = ({ shortcut, isSelected }) => {
-  const { openWindow, removeDesktopShortcut, updateDesktopShortcutPos } = useWindowStore();
+  const { openWindow, removeDesktopShortcut, updateDesktopShortcutPos, desktopShortcuts, soundEnabled } = useWindowStore();
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragPreviewPos, setDragPreviewPos] = useState<{ x: number; y: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useContextMenuClose(Boolean(menu), () => setMenu(null), menuRef);
@@ -42,35 +44,106 @@ export const DesktopShortcut: React.FC<DesktopShortcutProps> = ({ shortcut, isSe
     setMenu({ x: e.clientX, y: e.clientY });
   };
 
+  const GRID_W = 96;
+  const GRID_H = 110;
+  const START_X = 28;
+  const START_Y = 28;
+
+  const getGridPosition = (rawX: number, rawY: number) => {
+    const col = Math.max(0, Math.round((rawX - START_X) / GRID_W));
+    const row = Math.max(0, Math.round((rawY - START_Y) / GRID_H));
+
+    const screenW = typeof window !== "undefined" ? window.innerWidth : 1280;
+    const screenH = typeof window !== "undefined" ? window.innerHeight : 800;
+
+    const maxCol = Math.max(0, Math.floor((screenW - 120) / GRID_W));
+    const maxRow = Math.max(0, Math.floor((screenH - 160) / GRID_H));
+
+    const targetCol = Math.min(col, maxCol);
+    const targetRow = Math.min(row, maxRow);
+
+    return {
+      x: START_X + targetCol * GRID_W,
+      y: START_Y + targetRow * GRID_H,
+      col: targetCol,
+      row: targetRow,
+      maxCol,
+      maxRow,
+    };
+  };
+
   return (
     <>
+      {/* Visual Grid Drop Target Highlight Box */}
+      {isDragging && dragPreviewPos && (
+        <div
+          style={{
+            position: "absolute",
+            left: `${dragPreviewPos.x}px`,
+            top: `${dragPreviewPos.y}px`,
+          }}
+          className="w-22 h-24 rounded-2xl border-2 border-dashed border-blue-400/80 bg-blue-500/20 shadow-lg shadow-blue-500/10 backdrop-blur-xs z-5 pointer-events-none transition-all duration-100 flex items-center justify-center"
+        >
+          <div className="w-10 h-10 rounded-xl border border-blue-400/50 bg-blue-400/10" />
+        </div>
+      )}
+
       <motion.div
         drag
         dragMomentum={false}
         dragElastic={0.05}
         animate={{ x: shortcut.x, y: shortcut.y }}
         transition={{ type: "spring", stiffness: 450, damping: 28 }}
-        whileDrag={{ scale: 1.08, zIndex: 40, cursor: "grabbing" }}
+        whileDrag={{ scale: 1.08, zIndex: 15, cursor: "grabbing" }}
+        onDragStart={() => {
+          setIsDragging(true);
+          setDragPreviewPos({ x: shortcut.x, y: shortcut.y });
+        }}
+        onDrag={(_, info) => {
+          const rawX = shortcut.x + info.offset.x;
+          const rawY = shortcut.y + info.offset.y;
+          const target = getGridPosition(rawX, rawY);
+          setDragPreviewPos({ x: target.x, y: target.y });
+        }}
         onDragEnd={(_, info) => {
-          const GRID_W = 96;
-          const GRID_H = 104;
-          const START_X = 24;
-          const START_Y = 24;
+          setIsDragging(false);
+          setDragPreviewPos(null);
 
           const rawX = shortcut.x + info.offset.x;
           const rawY = shortcut.y + info.offset.y;
+          const target = getGridPosition(rawX, rawY);
 
-          const col = Math.max(0, Math.round((rawX - START_X) / GRID_W));
-          const row = Math.max(0, Math.round((rawY - START_Y) / GRID_H));
+          const otherShortcuts = desktopShortcuts.filter((s) => s.id !== shortcut.id);
+          const isSlotOccupied = (x: number, y: number) => {
+            return otherShortcuts.some((s) => Math.abs(s.x - x) < 30 && Math.abs(s.y - y) < 30);
+          };
 
-          const screenW = typeof window !== "undefined" ? window.innerWidth : 1280;
-          const screenH = typeof window !== "undefined" ? window.innerHeight : 800;
+          let finalX = target.x;
+          let finalY = target.y;
 
-          const maxCol = Math.max(0, Math.floor((screenW - 120) / GRID_W));
-          const maxRow = Math.max(0, Math.floor((screenH - 160) / GRID_H));
+          // If target grid slot is occupied by another icon, find nearest empty grid slot
+          if (isSlotOccupied(finalX, finalY)) {
+            let found = false;
+            for (let dist = 1; dist <= 12 && !found; dist++) {
+              for (let dRow = -dist; dRow <= dist && !found; dRow++) {
+                for (let dCol = -dist; dCol <= dist && !found; dCol++) {
+                  const c = Math.max(0, Math.min(target.col + dCol, target.maxCol));
+                  const r = Math.max(0, Math.min(target.row + dRow, target.maxRow));
+                  const testX = START_X + c * GRID_W;
+                  const testY = START_Y + r * GRID_H;
+                  if (!isSlotOccupied(testX, testY)) {
+                    finalX = testX;
+                    finalY = testY;
+                    found = true;
+                  }
+                }
+              }
+            }
+          }
 
-          const finalX = START_X + Math.min(col, maxCol) * GRID_W;
-          const finalY = START_Y + Math.min(row, maxRow) * GRID_H;
+          if (soundEnabled) {
+            import("@/utils/audio").then(({ playUiClickSound }) => playUiClickSound());
+          }
 
           updateDesktopShortcutPos(shortcut.id, { x: finalX, y: finalY });
         }}
@@ -98,7 +171,7 @@ export const DesktopShortcut: React.FC<DesktopShortcutProps> = ({ shortcut, isSe
           ref={menuRef}
           style={{ position: "fixed", left: menu.x, top: menu.y }}
           onClick={(e) => e.stopPropagation()}
-          className="z-50 w-44 rounded-2xl bg-zinc-900/95 border border-white/15 p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 select-none"
+          className="z-70 w-44 rounded-2xl bg-zinc-900/95 border border-white/15 p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 select-none"
           data-context-menu
         >
           <div className="flex flex-col gap-0.5 text-xs text-zinc-200">

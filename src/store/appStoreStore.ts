@@ -5,33 +5,33 @@ import { useWindowStore } from "./windowStore";
 const STORAGE_KEY = "sonos_installed_apps";
 
 const getInitialInstalledApps = (): string[] => {
-  const defaultInstalled = APPS.filter((a) => a.isPreinstalled).map((a) => a.id);
-  if (typeof window === "undefined") return defaultInstalled;
-
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed: string[] = JSON.parse(saved);
-      // Always guarantee system apps are present
-      const systemAppIds = APPS.filter((a) => a.isSystemApp).map((a) => a.id);
-      return Array.from(new Set([...parsed, ...systemAppIds]));
-    }
-  } catch {
-    // fallback
-  }
-
-  return defaultInstalled;
+  return APPS.filter((a) => a.isPreinstalled).map((a) => a.id);
 };
 
 interface AppStoreState {
   installedApps: string[];
+  pendingUninstallAppId: string | null;
+  setPendingUninstallAppId: (id: string | null) => void;
+  confirmUninstallApp: () => void;
   installApp: (id: string) => void;
   uninstallApp: (id: string) => void;
   isInstalled: (id: string) => boolean;
+  hydrateFromStorage: () => void;
 }
 
 export const useAppStoreStore = create<AppStoreState>((set, get) => ({
   installedApps: getInitialInstalledApps(),
+  pendingUninstallAppId: null,
+
+  setPendingUninstallAppId: (id: string | null) => set({ pendingUninstallAppId: id }),
+
+  confirmUninstallApp: () => {
+    const id = get().pendingUninstallAppId;
+    if (id) {
+      get().uninstallApp(id);
+      set({ pendingUninstallAppId: null });
+    }
+  },
 
   installApp: (id: string) => {
     const current = get().installedApps;
@@ -83,6 +83,12 @@ export const useAppStoreStore = create<AppStoreState>((set, get) => ({
         windowStore.togglePinApp(id);
       }
 
+      // Remove any desktop shortcuts for this app
+      const shortcuts = windowStore.desktopShortcuts.filter((s) => s.appId === id);
+      shortcuts.forEach((s) => {
+        windowStore.removeDesktopShortcut(s.id);
+      });
+
       if (app) {
         windowStore.showNotification(
           "App Di-uninstall",
@@ -96,5 +102,17 @@ export const useAppStoreStore = create<AppStoreState>((set, get) => ({
 
   isInstalled: (id: string) => {
     return get().installedApps.includes(id);
+  },
+
+  hydrateFromStorage: () => {
+    if (typeof window === "undefined") return;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed: string[] = JSON.parse(saved);
+        const systemAppIds = APPS.filter((a) => a.isSystemApp).map((a) => a.id);
+        set({ installedApps: Array.from(new Set([...parsed, ...systemAppIds])) });
+      }
+    } catch {}
   },
 }));

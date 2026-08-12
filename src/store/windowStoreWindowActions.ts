@@ -10,7 +10,7 @@ export const createWindowActions = (
     if (get().soundEnabled) playUiClickSound();
     const state = get();
     const existing = state.windows.find((w) => w.id === app.id);
-    const newZ = state.highestZIndex + 1;
+    const newZ = Math.max(state.highestZIndex + 1, 100);
     let nextWindows: WindowState[];
 
     if (existing) {
@@ -18,7 +18,7 @@ export const createWindowActions = (
         w.id === app.id ? { ...w, isMinimized: false, zIndex: newZ } : w
       );
     } else {
-      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+      const isMobile = typeof window !== 'undefined' && (window.innerWidth < 768 || window.matchMedia('(pointer: coarse)').matches);
       const defaultW = isMobile ? Math.min(window.innerWidth - 16, 700) : app.defaultSize?.w ?? 800;
       const defaultH = isMobile ? Math.min(window.innerHeight - 100, 520) : app.defaultSize?.h ?? 550;
       const windowCount = state.windows.length;
@@ -46,6 +46,7 @@ export const createWindowActions = (
       activeWindowId: nextActiveId,
       highestZIndex: newZ,
       launcherOpen: options?.keepLauncherOpen ? state.launcherOpen : false,
+      quickSettingsOpen: false,
     }));
   },
 
@@ -99,7 +100,7 @@ export const createWindowActions = (
     if (!win) return;
     if (state.activeWindowId === id && !win.isMinimized) return;
 
-    const newZ = state.highestZIndex + 1;
+    const newZ = Math.max(state.highestZIndex + 1, 100);
     const nextWindows = state.windows.map((w) =>
       w.id === id ? { ...w, isMinimized: false, zIndex: newZ } : w
     );

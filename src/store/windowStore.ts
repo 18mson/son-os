@@ -16,8 +16,8 @@ export * from './windowStoreTypes';
 
 export const useWindowStore = create<WindowStore>((set, get) => ({
   windows: getInitialWindows(),
-  activeWindowId: getInitialActiveWindowId(getInitialWindows()),
-  highestZIndex: 100,
+  activeWindowId: getInitialActiveWindowId(),
+  highestZIndex: 20,
   launcherOpen: false,
   quickSettingsOpen: false,
   widgetGalleryOpen: false,
@@ -27,8 +27,8 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
   nightLightEnabled: false,
   volume: 80,
   brightness: 100,
-  theme: typeof window !== "undefined" ? (localStorage.getItem("sonos_theme") as "dark" | "light") || "dark" : "dark",
-  wallpaper: typeof window !== "undefined" ? localStorage.getItem("sonos_wallpaper") || "default" : "default",
+  theme: "dark",
+  wallpaper: "default",
   booted: false,
   notification: null,
   pinnedApps: getInitialPinnedApps(),
@@ -36,17 +36,17 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
   desktopWidgets: getInitialDesktopWidgets(),
 
   // Accessibility & System Preferences
-  reducedMotion: typeof window !== "undefined" ? localStorage.getItem("sonos_reduced_motion") === "true" : false,
-  textScale: (typeof window !== "undefined" ? (localStorage.getItem("sonos_text_scale") as "small" | "normal" | "large") : null) || "normal",
-  highContrast: typeof window !== "undefined" ? localStorage.getItem("sonos_high_contrast") === "true" : false,
-  clockFormat: (typeof window !== "undefined" ? (localStorage.getItem("sonos_clock_format") as "12h" | "24h") : null) || "12h",
+  reducedMotion: false,
+  textScale: "normal",
+  highContrast: false,
+  clockFormat: "12h",
 
   // Global Background Media Player State
   mediaTrackIndex: 0,
   mediaIsPlaying: false,
   mediaCurrentTime: 0,
   mediaDuration: 0,
-  mediaVolume: typeof window !== "undefined" ? Number(localStorage.getItem("sonos_media_volume") ?? 80) : 80,
+  mediaVolume: 80,
   mediaIsMuted: false,
   mediaIsShuffle: false,
   mediaIsRepeat: false,
@@ -235,5 +235,92 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
   toggleMediaMute: () => set((state) => ({ mediaIsMuted: !state.mediaIsMuted })),
   toggleMediaShuffle: () => set((state) => ({ mediaIsShuffle: !state.mediaIsShuffle })),
   toggleMediaRepeat: () => set((state) => ({ mediaIsRepeat: !state.mediaIsRepeat })),
-  addCustomTrack: (track) => set((state) => ({ customTracks: [...state.customTracks, track] })),
+  addCustomTrack: (track) => {
+    const updated = [...get().customTracks, track];
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("sonos_custom_tracks", JSON.stringify(updated));
+      } catch {}
+    }
+    set({ customTracks: updated });
+  },
+
+  hydrateFromStorage: () => {
+    if (typeof window === "undefined") return;
+    try {
+      const savedTheme = localStorage.getItem("sonos_theme") as "dark" | "light" | null;
+      const savedWallpaper = localStorage.getItem("sonos_wallpaper");
+      const savedWidgets = localStorage.getItem("sonos_desktop_widgets");
+      const savedPinned = localStorage.getItem("sonos_pinned_apps");
+      const savedShortcuts = localStorage.getItem("sonos_desktop_shortcuts");
+      const savedSound = localStorage.getItem("sonos_sound_enabled");
+      const savedReducedMotion = localStorage.getItem("sonos_reduced_motion");
+      const savedTextScale = localStorage.getItem("sonos_text_scale") as "small" | "normal" | "large" | null;
+      const savedHighContrast = localStorage.getItem("sonos_high_contrast");
+      const savedClockFormat = localStorage.getItem("sonos_clock_format") as "12h" | "24h" | null;
+      const savedMediaVolume = localStorage.getItem("sonos_media_volume");
+      const savedCustomTracks = localStorage.getItem("sonos_custom_tracks");
+      const savedWindows = localStorage.getItem("sonos_windows");
+      const savedActiveWindowId = localStorage.getItem("sonos_active_window_id");
+
+      const updates: Partial<WindowStore> = {};
+
+      if (savedTheme === "dark" || savedTheme === "light") updates.theme = savedTheme;
+      if (savedWallpaper) updates.wallpaper = savedWallpaper;
+      if (savedWidgets) {
+        try { updates.desktopWidgets = JSON.parse(savedWidgets); } catch {}
+      }
+      if (savedPinned) {
+        try {
+          const parsed = JSON.parse(savedPinned);
+          updates.pinnedApps = parsed.includes("app-store") ? parsed : ["app-store", ...parsed];
+        } catch {}
+      }
+      if (savedShortcuts) {
+        try { updates.desktopShortcuts = JSON.parse(savedShortcuts); } catch {}
+      }
+      if (savedCustomTracks) {
+        try { updates.customTracks = JSON.parse(savedCustomTracks); } catch {}
+      }
+      if (savedSound !== null) {
+        try { updates.soundEnabled = JSON.parse(savedSound); } catch {}
+      }
+      if (savedReducedMotion !== null) {
+        try { updates.reducedMotion = JSON.parse(savedReducedMotion); } catch {}
+      }
+      if (savedTextScale === "small" || savedTextScale === "normal" || savedTextScale === "large") {
+        updates.textScale = savedTextScale;
+      }
+      if (savedHighContrast !== null) {
+        try { updates.highContrast = JSON.parse(savedHighContrast); } catch {}
+      }
+      if (savedClockFormat === "12h" || savedClockFormat === "24h") {
+        updates.clockFormat = savedClockFormat;
+      }
+      if (savedMediaVolume !== null && !isNaN(Number(savedMediaVolume))) {
+        updates.mediaVolume = Number(savedMediaVolume);
+      }
+      if (savedWindows) {
+        try {
+          const parsedWindows = JSON.parse(savedWindows);
+          updates.windows = parsedWindows;
+          if (savedActiveWindowId && parsedWindows.some((w: { id: string }) => w.id === savedActiveWindowId)) {
+            updates.activeWindowId = savedActiveWindowId;
+          } else {
+            const active = parsedWindows.filter((w: { isMinimized: boolean }) => !w.isMinimized);
+            if (active.length > 0) {
+              updates.activeWindowId = active.reduce((prev: { zIndex: number }, curr: { zIndex: number }) => (curr.zIndex > prev.zIndex ? curr : prev)).id;
+            }
+          }
+          if (parsedWindows.length > 0) {
+            updates.highestZIndex = Math.max(20, ...parsedWindows.map((w: { zIndex?: number }) => w.zIndex || 20));
+          }
+        } catch {}
+      }
+
+      set(updates);
+    } catch (e) {
+      console.error("Failed to rehydrate store from localStorage:", e);
+    }
+  },
 }));

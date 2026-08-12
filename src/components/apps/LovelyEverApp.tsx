@@ -8,6 +8,7 @@ export const LovelyEverApp: React.FC = () => {
     <IframeApp
       url="https://lovelyever.com"
       title="Lovely Ever"
+      initialZoom={0.80}
     />
   );
 };

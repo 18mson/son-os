@@ -9,6 +9,7 @@ export const JapaneseQuizApp: React.FC = () => {
       url="https://japanese-quiz-coral.vercel.app/"
       title="Japanese Quiz"
       githubUrl="https://github.com/18mson/japanese-quiz.git"
+      initialZoom={0.80}
     />
   );
 };

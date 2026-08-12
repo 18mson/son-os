@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ChevronUp, ChevronDown } from "lucide-react";
+import { Search } from "lucide-react";
 import { useWindowStore, AppDefinition } from "@/store/windowStore";
 import { useAppStoreStore } from "@/store/appStoreStore";
 import { APPS } from "@/config/appsConfig";
@@ -10,8 +10,6 @@ import { AppIcon } from "./AppIcon";
 import { closeAllContextMenus } from "@/hooks/useContextMenuClose";
 import { LauncherContextMenu } from "./launcher/LauncherContextMenu";
 import { LauncherMobileGrid } from "./launcher/LauncherMobileGrid";
-
-const COMPACT_APP_COUNT = 8;
 
 export const Launcher: React.FC = () => {
   const {
@@ -31,7 +29,6 @@ export const Launcher: React.FC = () => {
   const isLight = theme === "light";
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [appContextMenu, setAppContextMenu] = useState<{
     appId: string;
@@ -44,7 +41,10 @@ export const Launcher: React.FC = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
+    const check = () =>
+      setIsMobile(
+        window.innerWidth < 768 || window.matchMedia("(pointer: coarse)").matches
+      );
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
@@ -52,7 +52,6 @@ export const Launcher: React.FC = () => {
 
   const handleClose = useCallback(() => {
     setSearchQuery("");
-    setIsExpanded(false);
     setAppContextMenu(null);
     closeLauncher();
   }, [closeLauncher]);
@@ -108,26 +107,36 @@ export const Launcher: React.FC = () => {
     a.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const displayedApps = searchQuery
-    ? filteredApps
-    : isExpanded
-      ? installedAppsList
-      : installedAppsList.slice(0, COMPACT_APP_COUNT);
+  const displayedApps = searchQuery ? filteredApps : installedAppsList;
 
   if (isMobile) {
     return (
-      <LauncherMobileGrid
-        launcherOpen={launcherOpen}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        filteredApps={filteredApps}
-        installedAppsList={installedAppsList}
-        handleOpenApp={handleOpenApp}
-        handleAppContextMenu={handleAppContextMenu}
-        openWindow={openWindow}
-        handleClose={handleClose}
-        APPS={APPS}
-      />
+      <>
+        <LauncherMobileGrid
+          launcherOpen={launcherOpen}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          filteredApps={filteredApps}
+          installedAppsList={installedAppsList}
+          handleOpenApp={handleOpenApp}
+          handleAppContextMenu={handleAppContextMenu}
+          openWindow={openWindow}
+          handleClose={handleClose}
+          APPS={APPS}
+        />
+        <LauncherContextMenu
+          menuRef={menuRef}
+          appContextMenu={appContextMenu}
+          pinnedApps={pinnedApps}
+          desktopShortcuts={desktopShortcuts}
+          onOpenApp={handleOpenApp}
+          onTogglePinApp={togglePinApp}
+          onAddDesktopShortcut={addDesktopShortcut}
+          onRemoveDesktopShortcut={removeDesktopShortcut}
+          showNotification={showNotification}
+          onCloseMenu={() => setAppContextMenu(null)}
+        />
+      </>
     );
   }
 
@@ -139,82 +148,70 @@ export const Launcher: React.FC = () => {
             ref={bubbleRef}
             key="launcher-bubble"
             data-launcher-bubble
-            initial={{ opacity: 0, scale: 0.88, y: 12 }}
+            initial={{ opacity: 0, scale: 0.92, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.88, y: 12 }}
-            transition={{ type: "spring", duration: 0.28, bounce: 0.06 }}
+            exit={{ opacity: 0, scale: 0.92, y: 16 }}
+            transition={{ type: "spring", duration: 0.28, bounce: 0.05 }}
             style={{ transformOrigin: "bottom left" }}
-            className={`fixed bottom-17 left-3 z-9500 w-130 rounded-3xl backdrop-blur-3xl border shadow-2xl select-none overflow-hidden ${isLight
+            className={`fixed bottom-17 left-3 z-45 w-130 max-h-[calc(100vh-100px)] h-135 rounded-3xl backdrop-blur-3xl border shadow-2xl select-none overflow-hidden flex flex-col ${isLight
                 ? "bg-white/90 border-black/10 shadow-slate-400/30 text-slate-900"
-                : "bg-zinc-950/85 border-white/12 shadow-black/70 text-zinc-100"
+                : "bg-zinc-950/88 border-white/12 shadow-black/80 text-zinc-100"
               }`}
           >
-            <div className="flex flex-col gap-0">
-              {/* Search Bar */}
-              <div className="px-4 pt-4 pb-3">
-                <div className="relative">
-                  <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${isLight ? "text-slate-400" : "text-zinc-400"}`} size={16} />
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    placeholder="Search apps, projects..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`w-full pl-10 pr-4 py-2.5 rounded-xl border outline-hidden focus:ring-2 focus:ring-blue-400/50 transition-all text-sm ${isLight
-                        ? "bg-slate-100 text-slate-900 placeholder-slate-400 border-slate-300"
-                        : "bg-white/8 text-white placeholder-zinc-500 border-white/10"
-                      }`}
-                  />
-                </div>
+            {/* Search Bar */}
+            <div className="p-4 pb-2 shrink-0">
+              <div className="relative">
+                <Search
+                  className={`absolute left-4 top-1/2 -translate-y-1/2 ${isLight ? "text-slate-400" : "text-zinc-400"
+                    }`}
+                  size={17}
+                />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search your apps, web, and more..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`w-full pl-11 pr-4 py-3 rounded-2xl border outline-hidden focus:ring-2 focus:ring-blue-400/50 transition-all text-sm font-medium ${isLight
+                      ? "bg-slate-100 text-slate-900 placeholder-slate-400 border-slate-300"
+                      : "bg-white/8 text-white placeholder-zinc-500 border-white/10"
+                    }`}
+                />
               </div>
+            </div>
 
-              {/* App Grid */}
-              <div className="overflow-y-auto px-3" style={{ maxHeight: isExpanded ? "380px" : "auto" }}>
-                {displayedApps.length === 0 ? (
-                  <p className="text-center text-xs py-8 text-zinc-500">Tidak ada aplikasi yang cocok</p>
-                ) : (
-                  <div className="grid grid-cols-4 gap-2 py-1">
-                    {displayedApps.map((app) => (
-                      <button
-                        key={app.id}
-                        onClick={() => handleOpenApp(app)}
-                        onContextMenu={(e) => handleAppContextMenu(e, app.id)}
-                        className={`group flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all cursor-pointer border ${isLight
-                            ? "hover:bg-slate-200/70 border-transparent hover:border-slate-300/80"
-                            : "hover:bg-white/10 border-transparent hover:border-white/12"
+            {/* App Grid Container - Full Height Scrollable */}
+            <div className="flex-1 overflow-y-auto px-4 py-2 no-scrollbar">
+              {displayedApps.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-zinc-400">
+                  <p className="text-sm font-medium">Tidak ada aplikasi yang cocok</p>
+                  <p className="text-xs text-zinc-500 mt-1">Coba kata kunci pencarian lain</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-4 gap-3 py-1 pb-4">
+                  {displayedApps.map((app) => (
+                    <button
+                      key={app.id}
+                      onClick={() => handleOpenApp(app)}
+                      onContextMenu={(e) => handleAppContextMenu(e, app.id)}
+                      className={`group flex flex-col items-center gap-2 p-3.5 rounded-2xl transition-all cursor-pointer border ${isLight
+                          ? "hover:bg-slate-200/80 border-transparent hover:border-slate-300/80"
+                          : "hover:bg-white/10 border-transparent hover:border-white/12 active:bg-white/15"
+                        }`}
+                    >
+                      <div
+                        className={`w-13 h-13 rounded-2xl ${app.accentColor} flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition-transform`}
+                      >
+                        <AppIcon name={app.icon} size={24} />
+                      </div>
+                      <span
+                        className={`text-xs font-semibold text-center line-clamp-1 w-full tracking-tight ${isLight ? "text-slate-800" : "text-zinc-200"
                           }`}
                       >
-                        <div className={`w-12 h-12 rounded-2xl ${app.accentColor} flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform`}>
-                          <AppIcon name={app.icon} size={22} />
-                        </div>
-                        <span className={`text-[11px] font-medium text-center line-clamp-1 w-full ${isLight ? "text-slate-800" : "text-zinc-200"
-                          }`}>
-                          {app.title}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Expand Toggle Button */}
-              {!searchQuery && installedAppsList.length > COMPACT_APP_COUNT && (
-                <div className="px-3 py-2 flex justify-center">
-                  <button
-                    onClick={() => setIsExpanded(!isExpanded)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${isLight ? "hover:bg-slate-200 text-slate-700" : "hover:bg-white/10 text-zinc-300"
-                      }`}
-                  >
-                    {isExpanded ? (
-                      <>
-                        <ChevronDown size={14} /> Sembunyikan sebagian
-                      </>
-                    ) : (
-                      <>
-                        <ChevronUp size={14} /> Tampilkan semua app ({installedAppsList.length})
-                      </>
-                    )}
-                  </button>
+                        {app.title}
+                      </span>
+                    </button>
+                  ))}
                 </div>
               )}
             </div>

@@ -37,12 +37,13 @@ export const ShelfDesktopStatusTray: React.FC<ShelfDesktopStatusTrayProps> = ({
       }}
       title="Quick Settings & Status System"
       aria-label="Open Quick Settings & Status System"
-      className={`fixed bottom-4 right-4 z-50 px-3.5 py-2 min-h-11 rounded-full text-xs backdrop-blur-2xl border transition-all duration-200 cursor-pointer flex items-center gap-3 shrink-0 shadow-lg hover:scale-105 active:scale-95 ${quickSettingsOpen
-          ? "bg-blue-600 text-white border-blue-500 shadow-blue-600/30 scale-105"
-          : theme === "light"
-            ? "bg-white/90 text-slate-800 border-black/10 hover:bg-white shadow-slate-400/20"
-            : "bg-zinc-950/90 text-zinc-200 border-white/15 hover:bg-zinc-900 shadow-black/80"
-        }`}
+      className={`fixed bottom-3 right-3 z-50 px-3.5 py-2 min-h-11 rounded-full text-xs backdrop-blur-2xl border transition-all duration-200 cursor-pointer flex items-center gap-3 shrink-0 hover:scale-105 active:scale-95 ${
+        quickSettingsOpen
+          ? "bg-blue-600 text-white border-blue-500 shadow-xl shadow-blue-600/30 scale-105"
+          : isLight
+          ? "bg-white/90 text-slate-800 border-slate-300/80 hover:bg-white shadow-xl shadow-slate-400/25"
+          : "bg-zinc-950/90 text-zinc-200 border-white/15 hover:bg-zinc-900 shadow-2xl shadow-black/80"
+      }`}
     >
       <div className="flex items-center gap-2 opacity-90">
         {/* Theme indicator */}

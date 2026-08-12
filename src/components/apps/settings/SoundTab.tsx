@@ -70,17 +70,17 @@ export const SoundTab: React.FC<SoundTabProps> = ({
           <h3 className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-700" : "text-zinc-300"}`}>
             Volume Output Sistem
           </h3>
-          <span className="font-mono text-xs font-semibold">{Math.round(volume * 100)}%</span>
+          <span className="font-mono text-xs font-semibold">{Math.round(volume)}%</span>
         </div>
 
         <input
           type="range"
           min={0}
-          max={1}
-          step={0.05}
+          max={100}
+          step={1}
           value={volume}
           onChange={(e) => setVolume(Number(e.target.value))}
-          className="w-full accent-blue-600 cursor-pointer"
+          className="w-full accent-blue-600 cursor-pointer h-1.5 rounded-lg bg-zinc-700/50"
         />
       </div>
     </div>

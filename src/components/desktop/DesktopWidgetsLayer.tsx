@@ -24,14 +24,14 @@ export const DesktopWidgetsLayer: React.FC<DesktopWidgetsLayerProps> = ({
       axis="y"
       values={desktopWidgets}
       onReorder={reorderWidgets}
-      className="absolute top-6 right-6 hidden md:flex flex-col flex-wrap gap-4 z-5 pointer-events-auto no-desktop-select max-h-[calc(100vh-100px)] overflow-x-auto overflow-y-hidden pr-1 no-scrollbar content-start items-end"
+      className="absolute top-6 right-6 hidden md:flex flex-col flex-wrap gap-4 z-10 pointer-events-auto no-desktop-select max-h-[calc(100vh-100px)] overflow-x-auto overflow-y-hidden pr-1 no-scrollbar content-start items-end"
     >
       {desktopWidgets.map((w) => (
         <Reorder.Item
           key={w.id}
           value={w}
           id={w.id}
-          whileDrag={{ scale: 1.04, zIndex: 8, cursor: "grabbing" }}
+          whileDrag={{ scale: 1.04, zIndex: 15, cursor: "grabbing" }}
           transition={{ type: "spring", stiffness: 400, damping: 28 }}
           onContextMenu={(e) => {
             e.preventDefault();

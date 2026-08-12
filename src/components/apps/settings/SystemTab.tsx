@@ -1,5 +1,5 @@
 import React from "react";
-import { Clock, LayoutGrid } from "lucide-react";
+import { Clock, LayoutGrid, Zap } from "lucide-react";
 import { DesktopWidgetConfig } from "@/store/windowStore";
 
 interface SystemTabProps {
@@ -9,6 +9,8 @@ interface SystemTabProps {
   desktopWidgets: DesktopWidgetConfig[];
   removeWidget: (id: string) => void;
   toggleWidgetGallery: () => void;
+  reducedMotion: boolean;
+  toggleReducedMotion: () => void;
 }
 
 export const SystemTab: React.FC<SystemTabProps> = ({
@@ -18,6 +20,8 @@ export const SystemTab: React.FC<SystemTabProps> = ({
   desktopWidgets,
   removeWidget,
   toggleWidgetGallery,
+  reducedMotion,
+  toggleReducedMotion,
 }) => {
   return (
     <div className="space-y-6">
@@ -26,7 +30,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({
           Pengaturan Sistem & Waktu
         </h2>
         <p className={`text-xs ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
-          Atur format waktu jam dan pengelolaan widget desktop.
+          Atur format waktu jam, performa animasi, dan pengelolaan widget desktop.
         </p>
       </div>
 
@@ -66,6 +70,41 @@ export const SystemTab: React.FC<SystemTabProps> = ({
             24-Jam (Standar)
           </button>
         </div>
+      </div>
+
+      {/* Reduced Motion Toggle */}
+      <div
+        className={`p-4 rounded-2xl border flex items-center justify-between gap-4 ${
+          isLight ? "bg-white border-slate-200 shadow-sm" : "bg-zinc-900/80 border-white/10"
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-xl ${isLight ? "bg-amber-100 text-amber-600" : "bg-amber-500/20 text-amber-400"}`}>
+            <Zap size={20} />
+          </div>
+          <div>
+            <h3 className={`text-sm font-bold ${isLight ? "text-slate-900" : "text-white"}`}>
+              Kurangi Gerakan (Reduced Motion)
+            </h3>
+            <p className={`text-xs mt-0.5 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+              Kurangi transisi dan efek blur berat untuk performa HP 2GB RAM lebih cepat.
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={toggleReducedMotion}
+          className={`w-12 h-6 rounded-full transition-colors relative p-1 shrink-0 cursor-pointer ${
+            reducedMotion ? "bg-blue-600" : "bg-zinc-700"
+          }`}
+        >
+          <div
+            className={`w-4 h-4 rounded-full bg-white transition-transform ${
+              reducedMotion ? "translate-x-6" : "translate-x-0"
+            }`}
+          />
+        </button>
       </div>
 
       {/* Pengelolaan Widget */}

@@ -22,6 +22,8 @@ export interface WindowState {
   zIndex: number;
 }
 
+export type AppCategory = 'portfolio' | 'utility' | 'system' | 'entertainment';
+
 export interface AppDefinition {
   id: string;
   title: string;
@@ -32,9 +34,10 @@ export interface AppDefinition {
   type?: 'iframe' | 'static';
   liveUrl?: string;
   githubUrl?: string;
-  category?: 'portfolio' | 'utility' | 'system';
+  category?: AppCategory | AppCategory[];
   isSystemApp?: boolean;
   isPreinstalled?: boolean;
+  version?: string;
 }
 
 export interface SystemNotification {
@@ -148,4 +151,5 @@ export interface WindowStore {
   toggleMediaShuffle: () => void;
   toggleMediaRepeat: () => void;
   addCustomTrack: (track: Track) => void;
+  hydrateFromStorage: () => void;
 }

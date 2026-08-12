@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useWindowStore } from "@/store/windowStore";
+import { useAppStoreStore } from "@/store/appStoreStore";
 import { APPS } from "@/config/appsConfig";
 
 export const useDesktopGlobalHandlers = () => {
@@ -18,6 +19,12 @@ export const useDesktopGlobalHandlers = () => {
   const [transitionText, setTransitionText] = useState("Beralih ke Desktop Mode...");
   const mounted = useSyncExternalStore(() => () => { }, () => true, () => false);
   const wasMobileRef = useRef<boolean>(typeof window !== "undefined" ? window.innerWidth < 768 : false);
+
+  // Rehydrate stores from localStorage on mount (prevents SSR / Client hydration mismatch)
+  useEffect(() => {
+    useWindowStore.getState().hydrateFromStorage();
+    useAppStoreStore.getState().hydrateFromStorage();
+  }, []);
 
   // Resize mode transition
   useEffect(() => {
