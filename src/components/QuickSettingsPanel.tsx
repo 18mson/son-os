@@ -22,7 +22,8 @@ export const QuickSettingsPanel: React.FC = () => {
     quickSettingsOpen,
     toggleQuickSettings,
     toggleSound,
-    toggleTheme,
+    theme,
+    setTheme,
     wallpaper,
     cycleWallpaper,
     openWindow,
@@ -32,11 +33,11 @@ export const QuickSettingsPanel: React.FC = () => {
     playNextTrack,
     playPrevTrack,
     setMediaVolume,
+    clockFormat,
   } = useWindowStore();
 
   const {
-    theme: settingsTheme,
-    toggleTheme: toggleSettingsTheme,
+    setTheme: setSettingsTheme,
     soundEnabled: settingsSoundEnabled,
     toggleSound: toggleSettingsSound,
     brightness,
@@ -44,6 +45,9 @@ export const QuickSettingsPanel: React.FC = () => {
     volume,
     setVolume,
   } = useSettingsStore();
+
+  // Track previous volume to restore when unmuting
+  const prevVolumeRef = React.useRef<number>(volume > 0 ? volume : 70);
 
   const currentTrack = PLAYLIST[mediaTrackIndex] || PLAYLIST[0];
 
@@ -53,12 +57,13 @@ export const QuickSettingsPanel: React.FC = () => {
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
+      const is12h = clockFormat === "12h";
       setTime(
         now.toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
           second: "2-digit",
-          hour12: true,
+          hour12: is12h,
         })
       );
       setFullDate(
@@ -75,7 +80,7 @@ export const QuickSettingsPanel: React.FC = () => {
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [clockFormat]);
 
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -94,8 +99,7 @@ export const QuickSettingsPanel: React.FC = () => {
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [quickSettingsOpen, toggleQuickSettings]);
 
-  const activeTheme = settingsTheme || useWindowStore.getState().theme;
-  const isLight = activeTheme === "light";
+  const isLight = theme === "light";
 
   const handleOpenSettings = () => {
     const settingsApp = APPS.find((a) => a.id === "settings");
@@ -144,8 +148,9 @@ export const QuickSettingsPanel: React.FC = () => {
             {/* Theme Toggle */}
             <button
               onClick={() => {
-                toggleTheme();
-                toggleSettingsTheme();
+                const nextTheme = theme === "dark" ? "light" : "dark";
+                setTheme(nextTheme);
+                setSettingsTheme(nextTheme);
               }}
               className={`p-3.5 rounded-2xl border flex items-center justify-between transition-all cursor-pointer ${isLight
                   ? "bg-blue-50 border-blue-200 text-blue-900 shadow-sm"
@@ -164,6 +169,17 @@ export const QuickSettingsPanel: React.FC = () => {
             {/* Sound Toggle */}
             <button
               onClick={() => {
+                if (settingsSoundEnabled) {
+                  // Muting: save current volume, set to 0
+                  if (volume > 0) prevVolumeRef.current = volume;
+                  setVolume(0);
+                  setMediaVolume(0);
+                } else {
+                  // Unmuting: restore previous volume
+                  const restored = prevVolumeRef.current > 0 ? prevVolumeRef.current : 70;
+                  setVolume(restored);
+                  setMediaVolume(restored);
+                }
                 toggleSound();
                 toggleSettingsSound();
               }}

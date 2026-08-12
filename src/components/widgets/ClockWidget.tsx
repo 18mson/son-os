@@ -6,7 +6,7 @@ import { useWindowStore } from "@/store/windowStore";
 import { APPS } from "@/config/appsConfig";
 
 export const ClockWidget: React.FC = () => {
-  const { openWindow, theme } = useWindowStore();
+  const { openWindow, theme, clockFormat } = useWindowStore();
   const isLight = theme === "light";
   const [timeStr, setTimeStr] = useState<string>("");
   const [dateStr, setDateStr] = useState<string>("");
@@ -14,11 +14,12 @@ export const ClockWidget: React.FC = () => {
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
+      const is12h = clockFormat === "12h";
       setTimeStr(
         now.toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
-          hour12: true,
+          hour12: is12h,
         })
       );
       setDateStr(
@@ -33,7 +34,7 @@ export const ClockWidget: React.FC = () => {
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [clockFormat]);
 
   const handleClick = () => {
     const clockApp = APPS.find((a) => a.id === "clock");

@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Roboto } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 
 const roboto = Roboto({
@@ -72,9 +71,7 @@ export default function RootLayout({
         className={`${roboto.className} h-full w-full overflow-hidden bg-zinc-950 text-zinc-100 antialiased select-none`}
         suppressHydrationWarning
       >
-        <Script
-          id="theme-init"
-          strategy="beforeInteractive"
+        <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {

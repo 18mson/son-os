@@ -38,12 +38,11 @@ const DEFAULT_SETTINGS = {
   brightness: 100,
 };
 
-const applyDOMSettings = (theme: ThemeMode, scale: TextScale) => {
+// Apply only theme-related DOM changes — does NOT touch text scale
+const applyThemeDOM = (theme: ThemeMode) => {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
   root.setAttribute("data-theme", theme);
-  root.setAttribute("data-text-scale", scale);
-
   if (theme === "light") {
     root.classList.add("light");
     root.classList.remove("dark");
@@ -53,19 +52,32 @@ const applyDOMSettings = (theme: ThemeMode, scale: TextScale) => {
   }
 };
 
+// Apply only text scale DOM changes — does NOT touch theme
+const applyTextScaleDOM = (scale: TextScale) => {
+  if (typeof document === "undefined") return;
+  document.documentElement.setAttribute("data-text-scale", scale);
+};
+
+// Apply both — used only on initial hydration
+const applyDOMSettings = (theme: ThemeMode, scale: TextScale) => {
+  applyThemeDOM(theme);
+  applyTextScaleDOM(scale);
+};
+
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
       ...DEFAULT_SETTINGS,
 
       setTheme: (theme) => {
-        applyDOMSettings(theme, get().textScale);
+        // Only apply theme DOM — never touch text scale here
+        applyThemeDOM(theme);
         set({ theme });
       },
 
       toggleTheme: () => {
         const nextTheme = get().theme === "light" ? "dark" : "light";
-        applyDOMSettings(nextTheme, get().textScale);
+        applyThemeDOM(nextTheme);
         set({ theme: nextTheme });
       },
 
@@ -82,7 +94,8 @@ export const useSettingsStore = create<SettingsState>()(
       setClockFormat: (clockFormat) => set({ clockFormat }),
 
       setTextScale: (textScale) => {
-        applyDOMSettings(get().theme, textScale);
+        // Only apply text scale DOM — never touch theme here
+        applyTextScaleDOM(textScale);
         set({ textScale });
       },
 
@@ -97,6 +110,7 @@ export const useSettingsStore = create<SettingsState>()(
       name: "sonos_settings",
       onRehydrateStorage: () => (state) => {
         if (state) {
+          // On hydration, apply both together so initial page load is correct
           applyDOMSettings(state.theme, state.textScale);
         }
       },

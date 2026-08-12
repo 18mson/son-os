@@ -111,8 +111,8 @@ export const Launcher: React.FC = () => {
   const displayedApps = searchQuery
     ? filteredApps
     : isExpanded
-    ? installedAppsList
-    : installedAppsList.slice(0, COMPACT_APP_COUNT);
+      ? installedAppsList
+      : installedAppsList.slice(0, COMPACT_APP_COUNT);
 
   if (isMobile) {
     return (
@@ -144,11 +144,10 @@ export const Launcher: React.FC = () => {
             exit={{ opacity: 0, scale: 0.88, y: 12 }}
             transition={{ type: "spring", duration: 0.28, bounce: 0.06 }}
             style={{ transformOrigin: "bottom left" }}
-            className={`fixed bottom-17 left-3 z-45 w-130 rounded-3xl backdrop-blur-3xl border shadow-2xl select-none overflow-hidden ${
-              isLight
+            className={`fixed bottom-17 left-3 z-9500 w-130 rounded-3xl backdrop-blur-3xl border shadow-2xl select-none overflow-hidden ${isLight
                 ? "bg-white/90 border-black/10 shadow-slate-400/30 text-slate-900"
                 : "bg-zinc-950/85 border-white/12 shadow-black/70 text-zinc-100"
-            }`}
+              }`}
           >
             <div className="flex flex-col gap-0">
               {/* Search Bar */}
@@ -161,11 +160,10 @@ export const Launcher: React.FC = () => {
                     placeholder="Search apps, projects..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`w-full pl-10 pr-4 py-2.5 rounded-xl border outline-hidden focus:ring-2 focus:ring-blue-400/50 transition-all text-sm ${
-                      isLight
+                    className={`w-full pl-10 pr-4 py-2.5 rounded-xl border outline-hidden focus:ring-2 focus:ring-blue-400/50 transition-all text-sm ${isLight
                         ? "bg-slate-100 text-slate-900 placeholder-slate-400 border-slate-300"
                         : "bg-white/8 text-white placeholder-zinc-500 border-white/10"
-                    }`}
+                      }`}
                   />
                 </div>
               </div>
@@ -181,18 +179,16 @@ export const Launcher: React.FC = () => {
                         key={app.id}
                         onClick={() => handleOpenApp(app)}
                         onContextMenu={(e) => handleAppContextMenu(e, app.id)}
-                        className={`group flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all cursor-pointer border ${
-                          isLight
+                        className={`group flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all cursor-pointer border ${isLight
                             ? "hover:bg-slate-200/70 border-transparent hover:border-slate-300/80"
                             : "hover:bg-white/10 border-transparent hover:border-white/12"
-                        }`}
+                          }`}
                       >
                         <div className={`w-12 h-12 rounded-2xl ${app.accentColor} flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform`}>
                           <AppIcon name={app.icon} size={22} />
                         </div>
-                        <span className={`text-[11px] font-medium text-center line-clamp-1 w-full ${
-                          isLight ? "text-slate-800" : "text-zinc-200"
-                        }`}>
+                        <span className={`text-[11px] font-medium text-center line-clamp-1 w-full ${isLight ? "text-slate-800" : "text-zinc-200"
+                          }`}>
                           {app.title}
                         </span>
                       </button>
@@ -206,9 +202,8 @@ export const Launcher: React.FC = () => {
                 <div className="px-3 py-2 flex justify-center">
                   <button
                     onClick={() => setIsExpanded(!isExpanded)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
-                      isLight ? "hover:bg-slate-200 text-slate-700" : "hover:bg-white/10 text-zinc-300"
-                    }`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${isLight ? "hover:bg-slate-200 text-slate-700" : "hover:bg-white/10 text-zinc-300"
+                      }`}
                   >
                     {isExpanded ? (
                       <>

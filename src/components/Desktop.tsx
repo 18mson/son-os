@@ -185,32 +185,38 @@ export const Desktop: React.FC = () => {
         />
       )}
 
-      {/* Dynamic Desktop Widgets */}
-      <DesktopWidgetsLayer
-        desktopWidgets={desktopWidgets}
-        reorderWidgets={reorderWidgets}
-        setWidgetMenu={setWidgetMenu}
-      />
+      {/* Dynamic Desktop Widgets - only rendered client-side to avoid SSR hydration mismatch */}
+      {mounted && (
+        <DesktopWidgetsLayer
+          desktopWidgets={desktopWidgets}
+          reorderWidgets={reorderWidgets}
+          setWidgetMenu={setWidgetMenu}
+        />
+      )}
 
-      {/* Desktop Shortcuts Layer */}
-      <div className="absolute inset-0 z-3 pointer-events-none overflow-hidden">
-        {desktopShortcuts.map((shortcut) => (
-          <DesktopShortcut
-            key={shortcut.id}
-            shortcut={shortcut}
-            isSelected={selectedShortcutIds.includes(shortcut.id)}
-          />
-        ))}
-      </div>
+      {/* Desktop Shortcuts Layer - client-only to prevent SSR hydration mismatch */}
+      {mounted && (
+        <div className="absolute inset-0 z-3 pointer-events-none overflow-hidden">
+          {desktopShortcuts.map((shortcut) => (
+            <DesktopShortcut
+              key={shortcut.id}
+              shortcut={shortcut}
+              isSelected={selectedShortcutIds.includes(shortcut.id)}
+            />
+          ))}
+        </div>
+      )}
 
-      {/* Active Windows Layer */}
-      <AnimatePresence>
-        {windows.map((win) => (
-          <WindowComponent key={win.id} window={win}>
-            <AppContent appId={win.id} />
-          </WindowComponent>
-        ))}
-      </AnimatePresence>
+      {/* Active Windows Layer - client-only to prevent SSR hydration mismatch */}
+      {mounted && (
+        <AnimatePresence>
+          {windows.map((win) => (
+            <WindowComponent key={win.id} window={win}>
+              <AppContent appId={win.id} />
+            </WindowComponent>
+          ))}
+        </AnimatePresence>
+      )}
 
       {/* Right Click Desktop Context Menu */}
       {contextMenu && (

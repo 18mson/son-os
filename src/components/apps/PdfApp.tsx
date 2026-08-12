@@ -10,7 +10,7 @@ import {
 import { useWindowStore } from "@/store/windowStore";
 import { PdfSidebarControls } from "./pdf/PdfSidebarControls";
 import { PdfHeaderToolbar } from "./pdf/PdfHeaderToolbar";
-import { handleApplyWatermark, handleMergePdfs } from "./pdf/pdfOperations";
+import { handleApplyWatermark, handleMergePdfs, handleDeletePage, handleSplitPdf } from "./pdf/pdfOperations";
 
 export const PdfApp: React.FC = () => {
   const { theme } = useWindowStore();
@@ -20,10 +20,13 @@ export const PdfApp: React.FC = () => {
   const [pdfBuffer, setPdfBuffer] = useState<ArrayBuffer | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1.2);
+  const [scale, setScale] = useState<number>(0.9);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"viewer" | "watermark" | "merge" | "tools">("viewer");
+  const [activeTab, setActiveTab] = useState<"viewer" | "watermark" | "merge" | "tools" | "split">("viewer");
+
+  // Split State
+  const [splitRanges, setSplitRanges] = useState<{ start: number; end: number; label: string }[]>([{ start: 1, end: 1, label: "part1" }]);
 
   // Watermark State
   const [watermarkText, setWatermarkText] = useState("CONFIDENTIAL");
@@ -185,6 +188,40 @@ export const PdfApp: React.FC = () => {
     }
   };
 
+  const handleDeletePageAction = async () => {
+    if (!pdfBuffer) return;
+    setIsLoading(true);
+    setStatusMsg("Menghapus halaman...");
+    try {
+      const res = await handleDeletePage(pdfBuffer, currentPage - 1);
+      if (res) {
+        setPdfBuffer(res.newBuffer);
+        setCurrentPage((p) => Math.min(p, numPages - 1));
+        setStatusMsg("Halaman berhasil dihapus!");
+      } else {
+        setStatusMsg("Tidak bisa menghapus satu-satunya halaman.");
+      }
+    } catch {
+      setStatusMsg("Gagal menghapus halaman.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSplitAction = async () => {
+    if (!pdfBuffer) return;
+    setIsLoading(true);
+    setStatusMsg("Memisahkan PDF...");
+    try {
+      await handleSplitPdf(pdfBuffer, pdfFile, splitRanges);
+      setStatusMsg(`${splitRanges.length} file berhasil dipisahkan!`);
+    } catch {
+      setStatusMsg("Gagal memisahkan PDF.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleDownloadOriginal = () => {
     if (!pdfBuffer) return;
     const blob = new Blob([pdfBuffer], { type: "application/pdf" });
@@ -236,12 +273,15 @@ export const PdfApp: React.FC = () => {
           setWatermarkFontSize={setWatermarkFontSize}
           handleApplyWatermark={handleApplyWatermarkAction}
           handleRotatePage={() => {}}
-          handleDeletePage={() => {}}
+          handleDeletePage={handleDeletePageAction}
           mergeFiles={mergeFiles}
           setMergeFiles={setMergeFiles}
           handleMergePdfs={handleMergeAction}
           mergeInputRef={mergeInputRef}
           handleMergeFilesAdd={handleMergeFilesAdd}
+          splitRanges={splitRanges}
+          setSplitRanges={setSplitRanges}
+          handleSplitPdf={handleSplitAction}
         />
 
         <div className="flex-1 p-4 overflow-auto flex flex-col items-center justify-center relative">

@@ -15,13 +15,14 @@ export const DEFAULT_DESKTOP_WIDGETS: DesktopWidgetConfig[] = [
 ];
 
 export const getInitialDesktopWidgets = (): DesktopWidgetConfig[] => {
-  if (typeof window !== "undefined") {
-    try {
-      const saved = localStorage.getItem("sonos_desktop_widgets");
-      if (saved) return JSON.parse(saved);
-    } catch {
-      // fallback
-    }
+  // Always return default on server to avoid SSR/client hydration mismatch.
+  // The store will sync from localStorage after mount via a useEffect.
+  if (typeof window === "undefined") return DEFAULT_DESKTOP_WIDGETS;
+  try {
+    const saved = localStorage.getItem("sonos_desktop_widgets");
+    if (saved) return JSON.parse(saved);
+  } catch {
+    // fallback
   }
   return DEFAULT_DESKTOP_WIDGETS;
 };

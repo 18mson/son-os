@@ -12,8 +12,8 @@ import {
 
 interface PdfHeaderToolbarProps {
   isLight: boolean;
-  activeTab: "viewer" | "watermark" | "merge" | "tools";
-  setActiveTab: (tab: "viewer" | "watermark" | "merge" | "tools") => void;
+  activeTab: "viewer" | "watermark" | "merge" | "tools" | "split";
+  setActiveTab: (tab: "viewer" | "watermark" | "merge" | "tools" | "split") => void;
   pdfBuffer: ArrayBuffer | null;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -25,6 +25,7 @@ interface PdfHeaderToolbarProps {
   setScale: React.Dispatch<React.SetStateAction<number>>;
   statusMsg: string | null;
   setStatusMsg: (msg: string | null) => void;
+  numPagesTotal?: number;
 }
 
 export const PdfHeaderToolbar: React.FC<PdfHeaderToolbarProps> = ({
@@ -42,6 +43,8 @@ export const PdfHeaderToolbar: React.FC<PdfHeaderToolbarProps> = ({
   setScale,
   statusMsg,
   setStatusMsg,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  numPagesTotal,
 }) => {
   return (
     <>
@@ -71,7 +74,7 @@ export const PdfHeaderToolbar: React.FC<PdfHeaderToolbarProps> = ({
             isLight ? "bg-slate-300/60 border-slate-300" : "bg-white/5 border-white/10"
           }`}
         >
-          {(["viewer", "watermark", "tools", "merge"] as const).map((tab) => (
+          {(["viewer", "watermark", "tools", "merge", "split"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -83,7 +86,7 @@ export const PdfHeaderToolbar: React.FC<PdfHeaderToolbarProps> = ({
                   : "text-zinc-400 hover:text-white"
               }`}
             >
-              {tab === "tools" ? "Rotate/Delete" : tab === "merge" ? "Merge PDFs" : tab}
+              {tab === "tools" ? "Rotate/Delete" : tab === "merge" ? "Merge" : tab === "split" ? "Split" : tab}
             </button>
           ))}
         </div>

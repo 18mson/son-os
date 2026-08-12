@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import { useWindowStore, AppDefinition } from "@/store/windowStore";
+import { DEFAULT_PINNED_APPS } from "@/store/windowStoreHelpers";
+import { useSettingsStore } from "@/store/settingsStore";
 import { useAppStoreStore } from "@/store/appStoreStore";
 import { APPS } from "@/config/appsConfig";
 import { AppIcon } from "./AppIcon";
@@ -27,10 +29,15 @@ export const Shelf: React.FC = () => {
     togglePinApp,
     reorderPinnedApps,
     toggleQuickSettings,
+    clockFormat,
   } = useWindowStore();
 
   const { isInstalled } = useAppStoreStore();
+  const { volume, soundEnabled } = useSettingsStore();
 
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
+  const effectiveWindows = mounted ? windows : [];
+  const effectivePinnedApps = mounted ? pinnedApps : DEFAULT_PINNED_APPS;
   const [time, setTime] = useState<string>("");
   const [dateStr, setDateStr] = useState<string>("");
   const [draggedAppId, setDraggedAppId] = useState<string | null>(null);
@@ -61,10 +68,10 @@ export const Shelf: React.FC = () => {
       return;
     }
 
-    const currentIndex = pinnedApps.indexOf(sourceAppId);
-    const targetIndex = pinnedApps.indexOf(targetAppId);
+    const currentIndex = effectivePinnedApps.indexOf(sourceAppId);
+    const targetIndex = effectivePinnedApps.indexOf(targetAppId);
     if (currentIndex !== -1 && targetIndex !== -1) {
-      const updated = [...pinnedApps];
+      const updated = [...effectivePinnedApps];
       updated.splice(currentIndex, 1);
       updated.splice(targetIndex, 0, sourceAppId);
       reorderPinnedApps(updated);
@@ -75,11 +82,12 @@ export const Shelf: React.FC = () => {
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
+      const is12h = clockFormat === "12h";
       setTime(
         now.toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
-          hour12: true,
+          hour12: is12h,
         })
       );
       setDateStr(
@@ -94,13 +102,13 @@ export const Shelf: React.FC = () => {
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [clockFormat]);
 
-  const pinnedAppDefs = pinnedApps
+  const pinnedAppDefs = effectivePinnedApps
     .map((id) => APPS.find((a) => a.id === id))
     .filter((a): a is AppDefinition => a !== undefined && Boolean(a.isPreinstalled || a.isSystemApp || isInstalled(a.id)));
 
-  const unpinnedOpenWindows = windows.filter((w) => !pinnedApps.includes(w.id));
+  const unpinnedOpenWindows = effectiveWindows.filter((w) => !effectivePinnedApps.includes(w.id));
   const unpinnedOpenDefs = unpinnedOpenWindows
     .map((w) => APPS.find((a) => a.id === w.id))
     .filter((a): a is AppDefinition => Boolean(a));
@@ -110,7 +118,7 @@ export const Shelf: React.FC = () => {
   const renderAppIcons = () => (
     <>
       {pinnedAppDefs.map((app) => {
-        const win = windows.find((w) => w.id === app.id);
+        const win = effectiveWindows.find((w) => w.id === app.id);
         const isOpen = Boolean(win);
         const isActive = activeWindowId === app.id && win && !win.isMinimized;
 
@@ -158,7 +166,7 @@ export const Shelf: React.FC = () => {
       )}
 
       {unpinnedOpenDefs.map((app) => {
-        const win = windows.find((w) => w.id === app.id);
+        const win = effectiveWindows.find((w) => w.id === app.id);
         const isOpen = Boolean(win);
         const isActive = activeWindowId === app.id && win && !win.isMinimized;
 
@@ -218,6 +226,8 @@ export const Shelf: React.FC = () => {
           toggleQuickSettings={toggleQuickSettings}
           time={time}
           dateStr={dateStr}
+          volume={volume}
+          soundEnabled={soundEnabled}
         />
       </div>
 
@@ -237,8 +247,8 @@ export const Shelf: React.FC = () => {
       <ShelfContextMenu
         menuRef={shelfMenuRef}
         contextMenu={shelfContextMenu}
-        pinnedApps={pinnedApps}
-        isOpen={Boolean(shelfContextMenu && windows.find((w) => w.id === shelfContextMenu.app.id))}
+        pinnedApps={effectivePinnedApps}
+        isOpen={Boolean(shelfContextMenu && effectiveWindows.find((w) => w.id === shelfContextMenu.app.id))}
         onOpenWindow={(app) => {
           closeLauncher();
           openWindow(app);

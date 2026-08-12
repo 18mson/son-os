@@ -99,6 +99,10 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
       } catch {}
     }
     set({ theme: nextTheme });
+    // Keep settingsStore in sync
+    import('./settingsStore').then(({ useSettingsStore }) => {
+      useSettingsStore.getState().setTheme(nextTheme);
+    });
   },
 
   setTheme: (theme: 'dark' | 'light') => {
@@ -109,6 +113,10 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
       } catch {}
     }
     set({ theme });
+    // Keep settingsStore in sync
+    import('./settingsStore').then(({ useSettingsStore }) => {
+      useSettingsStore.getState().setTheme(theme);
+    });
   },
 
   cycleWallpaper: () => {

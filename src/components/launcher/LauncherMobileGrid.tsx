@@ -38,7 +38,7 @@ export const LauncherMobileGrid: React.FC<LauncherMobileGridProps> = ({
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: "100%", opacity: 0 }}
           transition={{ type: "spring", stiffness: 350, damping: 32 }}
-          className="fixed inset-0 z-50 bg-zinc-950/98 backdrop-blur-3xl flex flex-col justify-between select-none"
+          className="fixed inset-0 z-9500 bg-zinc-950/98 backdrop-blur-3xl flex flex-col justify-between select-none"
         >
           {/* Header Search Bar */}
           <div className="p-4 pt-12 border-b border-white/10 flex items-center gap-3">
