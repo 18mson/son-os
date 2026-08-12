@@ -127,7 +127,7 @@ export const Shelf: React.FC = () => {
               closeAllContextMenus();
               setShelfContextMenu({ app, x: e.clientX, y: e.clientY });
             }}
-            className="relative flex flex-col items-center justify-center cursor-grab active:cursor-grabbing shrink-0 p-1"
+            className="relative flex flex-col items-center justify-center shrink-0 cursor-grab active:cursor-grabbing px-1 h-11"
           >
             <button
               onClick={() => {
@@ -138,17 +138,17 @@ export const Shelf: React.FC = () => {
                 }
               }}
               title={app.title}
-              className={`p-2 rounded-2xl transition-all duration-200 cursor-pointer flex items-center justify-center ${app.accentColor} text-white shadow-md hover:scale-110 active:scale-95 ${
-                isActive ? "ring-2 ring-blue-400 ring-offset-2 ring-offset-zinc-950 scale-105" : ""
-              }`}
+              className={`p-2 rounded-2xl transition-all duration-200 cursor-pointer flex items-center justify-center ${app.accentColor} text-white shadow-md hover:scale-110 active:scale-95 ${isActive ? "ring-2 ring-blue-400" : ""
+                }`}
             >
               <AppIcon name={app.icon} size={20} />
             </button>
-            {isOpen && (
-              <span className={`w-1.5 h-1.5 rounded-full mt-1 transition-all ${
-                isActive ? "bg-blue-400 w-3" : "bg-white/60"
-              }`} />
-            )}
+            <div className="h-2 flex items-center justify-center mt-0.5">
+              {isOpen && (
+                <span className={`h-1.5 w-1.5 rounded-full transition-all duration-200 ${isActive ? "bg-blue-400" : "bg-white/60"
+                  }`} />
+              )}
+            </div>
           </div>
         );
       })}
@@ -171,22 +171,22 @@ export const Shelf: React.FC = () => {
               closeAllContextMenus();
               setShelfContextMenu({ app, x: e.clientX, y: e.clientY });
             }}
-            className="relative flex flex-col items-center justify-center shrink-0 p-1"
+            className="relative flex flex-col items-center justify-center shrink-0 px-1 h-11"
           >
             <button
               onClick={() => toggleMinimizeWindow(app.id)}
               title={app.title}
-              className={`p-2 rounded-2xl transition-all duration-200 cursor-pointer flex items-center justify-center ${app.accentColor} text-white shadow-md hover:scale-110 active:scale-95 ${
-                isActive ? "ring-2 ring-blue-400 ring-offset-2 ring-offset-zinc-950 scale-105" : ""
-              }`}
+              className={`p-2 rounded-2xl transition-all duration-200 cursor-pointer flex items-center justify-center ${app.accentColor} text-white shadow-md hover:scale-110 active:scale-95 ${isActive ? "ring-2 ring-blue-400" : ""
+                }`}
             >
               <AppIcon name={app.icon} size={20} />
             </button>
-            {isOpen && (
-              <span className={`w-1.5 h-1.5 rounded-full mt-1 transition-all ${
-                isActive ? "bg-blue-400 w-3" : "bg-white/60"
-              }`} />
-            )}
+            <div className="h-2 flex items-center justify-center mt-0.5">
+              {isOpen && (
+                <span className={`h-1.5 w-1.5 rounded-full transition-all duration-200 ${isActive ? "bg-blue-400" : "bg-white/60"
+                  }`} />
+              )}
+            </div>
           </div>
         );
       })}
@@ -204,11 +204,10 @@ export const Shelf: React.FC = () => {
         />
 
         {totalShelfItemsCount > 0 && (
-          <div data-shelf-dock className={`fixed bottom-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 px-3 py-2 rounded-full backdrop-blur-2xl border max-w-[80vw] md:max-w-none overflow-x-auto no-scrollbar transition-all duration-300 ${
-            theme === "light"
-              ? "bg-white/80 border-slate-300/80 shadow-xl shadow-slate-400/20 text-slate-800"
-              : "bg-zinc-950/90 border-white/15 shadow-2xl shadow-black/80 text-zinc-100"
-          }`}>
+          <div data-shelf-dock className={`fixed bottom-3 left-1/2 -translate-x-1/2 z-50 h-14 flex items-center gap-1.5 px-3 pt-1.5 rounded-full backdrop-blur-2xl border max-w-[80vw] md:max-w-none overflow-x-auto no-scrollbar transition-all duration-300 ${theme === "light"
+            ? "bg-white/80 border-slate-300/80 shadow-xl shadow-slate-400/20 text-slate-800"
+            : "bg-zinc-950/90 border-white/15 shadow-2xl shadow-black/80 text-zinc-100"
+            }`}>
             {renderAppIcons()}
           </div>
         )}
