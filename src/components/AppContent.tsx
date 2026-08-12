@@ -130,6 +130,51 @@ const SettingsApp = dynamic(() => import("./apps/SettingsApp").then((mod) => mod
   ),
 });
 
+const AppStoreApp = dynamic(() => import("./apps/AppStoreApp").then((mod) => mod.AppStoreApp), {
+  loading: () => (
+    <div className="flex flex-col items-center justify-center h-full p-8 text-zinc-400 gap-3">
+      <Loader2 className="animate-spin text-indigo-400" size={28} />
+      <span className="text-xs font-medium">Memuat App Store...</span>
+    </div>
+  ),
+});
+
+const CameraApp = dynamic(() => import("./apps/CameraApp").then((mod) => mod.CameraApp), {
+  loading: () => (
+    <div className="flex flex-col items-center justify-center h-full p-8 text-zinc-400 gap-3">
+      <Loader2 className="animate-spin text-purple-400" size={28} />
+      <span className="text-xs font-medium">Memuat Kamera...</span>
+    </div>
+  ),
+});
+
+const PdfApp = dynamic(() => import("./apps/PdfApp").then((mod) => mod.PdfApp), {
+  loading: () => (
+    <div className="flex flex-col items-center justify-center h-full p-8 text-zinc-400 gap-3">
+      <Loader2 className="animate-spin text-rose-400" size={28} />
+      <span className="text-xs font-medium">Memuat PDF Studio...</span>
+    </div>
+  ),
+});
+
+const FileManagerApp = dynamic(() => import("./apps/FileManagerApp").then((mod) => mod.FileManagerApp), {
+  loading: () => (
+    <div className="flex flex-col items-center justify-center h-full p-8 text-zinc-400 gap-3">
+      <Loader2 className="animate-spin text-amber-400" size={28} />
+      <span className="text-xs font-medium">Memuat File Manager...</span>
+    </div>
+  ),
+});
+
+const AudioConverterApp = dynamic(() => import("./apps/AudioConverterApp").then((mod) => mod.AudioConverterApp), {
+  loading: () => (
+    <div className="flex flex-col items-center justify-center h-full p-8 text-zinc-400 gap-3">
+      <Loader2 className="animate-spin text-purple-400" size={28} />
+      <span className="text-xs font-medium">Memuat Audio Converter...</span>
+    </div>
+  ),
+});
+
 const SnakeGameApp = dynamic(() => import("./apps/SnakeGameApp").then((mod) => mod.SnakeGameApp), {
   loading: () => (
     <div className="flex flex-col items-center justify-center h-full p-8 text-zinc-400 gap-3">
@@ -145,6 +190,16 @@ interface AppContentProps {
 
 export const AppContent: React.FC<AppContentProps> = ({ appId }) => {
   switch (appId) {
+    case "app-store":
+      return <AppStoreApp />;
+    case "camera":
+      return <CameraApp />;
+    case "pdf":
+      return <PdfApp />;
+    case "file-manager":
+      return <FileManagerApp />;
+    case "audio-converter":
+      return <AudioConverterApp />;
     case "japanese-quiz":
       return <JapaneseQuizApp />;
     case "lovely-ever":

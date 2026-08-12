@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useWindowStore } from "@/store/windowStore";
 import { WindowComponent } from "./Window";
@@ -20,6 +20,7 @@ import { QuickNotesWidget } from "./widgets/QuickNotesWidget";
 import { SystemMonitorWidget } from "./widgets/SystemMonitorWidget";
 import { MiniCalcWidget } from "./widgets/MiniCalcWidget";
 import { WidgetGalleryModal } from "./WidgetGalleryModal";
+import { ScreenBrightnessOverlay } from "./ScreenBrightnessOverlay";
 import { Minus } from "lucide-react";
 import { DesktopShortcut } from "./DesktopShortcut";
 import { closeAllContextMenus } from "@/hooks/useContextMenuClose";
@@ -54,6 +55,29 @@ const WALLPAPER_CONFIGS: Record<string, WallpaperConfig> = {
   },
 };
 
+const LIGHT_WALLPAPER_CONFIGS: Record<string, WallpaperConfig> = {
+  default: {
+    bgClass: "bg-linear-to-br from-indigo-100 via-sky-50 to-slate-200",
+    glowTopLeft: "bg-indigo-400/30",
+    glowBottomRight: "bg-purple-400/30",
+  },
+  ocean: {
+    bgClass: "bg-linear-to-br from-cyan-100 via-sky-100 to-blue-200",
+    glowTopLeft: "bg-cyan-400/30",
+    glowBottomRight: "bg-blue-400/30",
+  },
+  sunset: {
+    bgClass: "bg-linear-to-br from-amber-100 via-rose-100 to-orange-200",
+    glowTopLeft: "bg-rose-400/30",
+    glowBottomRight: "bg-amber-400/30",
+  },
+  emerald: {
+    bgClass: "bg-linear-to-br from-emerald-100 via-teal-100 to-green-200",
+    glowTopLeft: "bg-emerald-400/30",
+    glowBottomRight: "bg-teal-400/30",
+  },
+};
+
 export const Desktop: React.FC = () => {
   const {
     windows,
@@ -63,12 +87,23 @@ export const Desktop: React.FC = () => {
     closeLauncher,
     activeWindowId,
     closeWindow,
+    focusWindow,
     toggleLauncher,
     toggleQuickSettings,
     desktopShortcuts,
     desktopWidgets,
     removeWidget,
   } = useWindowStore();
+
+  useEffect(() => {
+    if (theme === "light") {
+      document.documentElement.classList.add("light");
+      document.documentElement.classList.remove("dark");
+    } else {
+      document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("light");
+    }
+  }, [theme]);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [selectionBox, setSelectionBox] = useState<{
     startX: number;
@@ -79,6 +114,8 @@ export const Desktop: React.FC = () => {
   const [selectedShortcutIds, setSelectedShortcutIds] = useState<string[]>([]);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionText, setTransitionText] = useState("Beralih ke Desktop Mode...");
+  // useSyncExternalStore: returns false on server, true on client (avoids hydration mismatch)
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
   const wasMobileRef = useRef<boolean>(typeof window !== "undefined" ? window.innerWidth < 768 : false);
 
   useEffect(() => {
@@ -101,9 +138,16 @@ export const Desktop: React.FC = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, [closeLauncher, toggleQuickSettings]);
 
-  // Keyboard Shortcuts: Esc to close window/launcher, Alt+Space or Meta to toggle launcher
+  // Global Keyboard Shortcuts:
+  // - Alt+Tab / Ctrl+Tab: Cycle focus between open non-minimized windows
+  // - Ctrl+W / Cmd+W: Close active window
+  // - Ctrl+Space / Alt+Space: Toggle app launcher
+  // - Esc: Close launcher or close active window
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const targetTag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      const isInput = targetTag === "input" || targetTag === "textarea" || (e.target as HTMLElement)?.isContentEditable;
+
       if (e.key === "Escape") {
         if (launcherOpen) {
           closeLauncher();
@@ -113,12 +157,25 @@ export const Desktop: React.FC = () => {
       } else if ((e.altKey && e.code === "Space") || (e.ctrlKey && e.code === "Space")) {
         e.preventDefault();
         toggleLauncher();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "w" && !isInput) {
+        if (activeWindowId) {
+          e.preventDefault();
+          closeWindow(activeWindowId);
+        }
+      } else if ((e.altKey || e.ctrlKey) && e.key === "Tab") {
+        const activeWindows = windows.filter((w) => !w.isMinimized);
+        if (activeWindows.length > 1) {
+          e.preventDefault();
+          const currentIndex = activeWindows.findIndex((w) => w.id === activeWindowId);
+          const nextIndex = (currentIndex + 1) % activeWindows.length;
+          focusWindow(activeWindows[nextIndex].id);
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [launcherOpen, activeWindowId, closeLauncher, closeWindow, toggleLauncher]);
+  }, [launcherOpen, activeWindowId, windows, closeLauncher, closeWindow, focusWindow, toggleLauncher]);
 
   // Dynamic Browser Tab Title based on active window
   useEffect(() => {
@@ -203,7 +260,11 @@ export const Desktop: React.FC = () => {
   };
 
   const isCustomUrl = wallpaper.startsWith("http://") || wallpaper.startsWith("https://") || wallpaper.startsWith("/");
-  const activeConfig = WALLPAPER_CONFIGS[wallpaper] || WALLPAPER_CONFIGS.default;
+  // Use mounted guard: before hydration, always fall back to dark/default to match server render
+  const isLight = mounted && theme === "light";
+  const activeConfig = isLight
+    ? LIGHT_WALLPAPER_CONFIGS[wallpaper] || LIGHT_WALLPAPER_CONFIGS.default
+    : WALLPAPER_CONFIGS[wallpaper] || WALLPAPER_CONFIGS.default;
 
   return (
     <div
@@ -321,6 +382,9 @@ export const Desktop: React.FC = () => {
 
       {/* macOS Sonoma Style Widget Gallery Modal */}
       <WidgetGalleryModal />
+
+      {/* Screen Hardware Brightness Overlay (z-[999999], pointer-events: none) */}
+      <ScreenBrightnessOverlay />
 
       {/* Global Background Audio Manager */}
       <GlobalAudioManager />

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { playUiClickSound } from '@/utils/audio';
-import { PLAYLIST } from '@/config/musicConfig';
+import { PLAYLIST, Track } from '@/config/musicConfig';
 
 export interface WindowPosition {
   x: number;
@@ -34,6 +34,9 @@ export interface AppDefinition {
   type?: 'iframe' | 'static';
   liveUrl?: string;
   githubUrl?: string;
+  category?: 'portfolio' | 'utility' | 'system';
+  isSystemApp?: boolean;
+  isPreinstalled?: boolean;
 }
 
 export interface SystemNotification {
@@ -58,7 +61,7 @@ export interface DesktopWidgetConfig {
   type: DesktopWidgetType;
 }
 
-const DEFAULT_PINNED_APPS = ["japanese-quiz", "lovely-ever", "about", "settings"];
+const DEFAULT_PINNED_APPS = ["app-store", "japanese-quiz", "lovely-ever", "about", "settings"];
 
 const DEFAULT_DESKTOP_SHORTCUTS: DesktopShortcutItem[] = [
   { id: "ds-japanese-quiz", appId: "japanese-quiz", x: 28, y: 28 },
@@ -88,7 +91,8 @@ const getInitialPinnedApps = (): string[] => {
   if (typeof window === "undefined") return DEFAULT_PINNED_APPS;
   try {
     const saved = localStorage.getItem("sonos_pinned_apps");
-    return saved ? JSON.parse(saved) : DEFAULT_PINNED_APPS;
+    const parsed = saved ? JSON.parse(saved) : DEFAULT_PINNED_APPS;
+    return parsed.includes("app-store") ? parsed : ["app-store", ...parsed];
   } catch {
     return DEFAULT_PINNED_APPS;
   }
@@ -101,6 +105,80 @@ const getInitialDesktopShortcuts = (): DesktopShortcutItem[] => {
     return saved ? JSON.parse(saved) : DEFAULT_DESKTOP_SHORTCUTS;
   } catch {
     return DEFAULT_DESKTOP_SHORTCUTS;
+  }
+};
+
+const getInitialWallpaper = (): string => {
+  if (typeof window === "undefined") return "default";
+  try {
+    const saved = localStorage.getItem("sonos_wallpaper");
+    return saved || "default";
+  } catch {
+    return "default";
+  }
+};
+
+const getInitialSoundEnabled = (): boolean => {
+  if (typeof window === "undefined") return true;
+  try {
+    const saved = localStorage.getItem("sonos_sound_enabled");
+    return saved !== null ? JSON.parse(saved) : true;
+  } catch {
+    return true;
+  }
+};
+
+const getInitialMediaVolume = (): number => {
+  if (typeof window === "undefined") return 0.8;
+  try {
+    const saved = localStorage.getItem("sonos_media_volume");
+    return saved !== null ? Number(saved) : 0.8;
+  } catch {
+    return 0.8;
+  }
+};
+
+const getInitialWindows = (): WindowState[] => {
+  if (typeof window === "undefined") return [];
+  try {
+    const saved = localStorage.getItem("sonos_windows");
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+};
+
+const getInitialActiveWindowId = (initialWindows: WindowState[]): string | null => {
+  if (typeof window === "undefined" || initialWindows.length === 0) return null;
+  try {
+    const saved = localStorage.getItem("sonos_active_window_id");
+    if (saved && initialWindows.some((w) => w.id === saved)) return saved;
+    const active = initialWindows.filter((w) => !w.isMinimized);
+    if (active.length > 0) {
+      return active.reduce((prev, curr) => (curr.zIndex > prev.zIndex ? curr : prev)).id;
+    }
+  } catch {
+    // fallback
+  }
+  return null;
+};
+
+const getInitialHighestZIndex = (initialWindows: WindowState[]): number => {
+  if (initialWindows.length === 0) return 10;
+  return Math.max(10, ...initialWindows.map((w) => w.zIndex || 10));
+};
+
+const saveWindowsSession = (windows: WindowState[], activeId: string | null) => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem("sonos_windows", JSON.stringify(windows));
+    if (activeId) {
+      localStorage.setItem("sonos_active_window_id", activeId);
+    } else {
+      localStorage.removeItem("sonos_active_window_id");
+    }
+  } catch {
+    // ignore
   }
 };
 
@@ -129,6 +207,7 @@ interface WindowStore {
   mediaIsMuted: boolean;
   mediaIsShuffle: boolean;
   mediaIsRepeat: boolean;
+  customTracks: Track[];
 
   openWindow: (app: AppDefinition, options?: { keepLauncherOpen?: boolean }) => void;
   closeWindow: (id: string) => void;
@@ -169,19 +248,25 @@ interface WindowStore {
   toggleMediaMute: () => void;
   toggleMediaShuffle: () => void;
   toggleMediaRepeat: () => void;
+  addCustomTracks: (tracks: Track[]) => void;
+  getPlaylist: () => Track[];
 }
 
+const initialSavedWindows = getInitialWindows();
+const initialSavedActiveId = getInitialActiveWindowId(initialSavedWindows);
+const initialSavedHighestZ = getInitialHighestZIndex(initialSavedWindows);
+
 export const useWindowStore = create<WindowStore>((set, get) => ({
-  windows: [],
+  windows: initialSavedWindows,
   launcherOpen: false,
   quickSettingsOpen: false,
-  soundEnabled: true,
+  soundEnabled: getInitialSoundEnabled(),
   theme: (typeof window !== 'undefined'
     ? (localStorage.getItem('sonos_theme') as 'dark' | 'light' | null) ?? 'dark'
     : 'dark'),
-  activeWindowId: null,
-  highestZIndex: 10,
-  wallpaper: 'default',
+  activeWindowId: initialSavedActiveId,
+  highestZIndex: initialSavedHighestZ,
+  wallpaper: getInitialWallpaper(),
   booted: false,
   notification: null,
   pinnedApps: getInitialPinnedApps(),
@@ -192,10 +277,11 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
   mediaIsPlaying: false,
   mediaCurrentTime: 0,
   mediaDuration: 0,
-  mediaVolume: 0.8,
+  mediaVolume: getInitialMediaVolume(),
   mediaIsMuted: false,
   mediaIsShuffle: false,
   mediaIsRepeat: false,
+  customTracks: [],
 
   openWindow: (app, options) => {
     if (get().soundEnabled) playUiClickSound();
@@ -206,17 +292,16 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
     const isMobileScreen = typeof window !== 'undefined' && window.innerWidth < 768;
     const shouldCloseLauncher = options?.keepLauncherOpen ? launcherOpen : false;
 
+    let updatedWindows: WindowState[];
+    let newActiveId: string;
+
     if (existingWindow) {
-      set({
-        windows: windows.map((w) =>
-          w.id === app.id
-            ? { ...w, isMinimized: false, isMaximized: isMobileScreen ? true : w.isMaximized, zIndex: nextZIndex }
-            : w
-        ),
-        activeWindowId: app.id,
-        highestZIndex: nextZIndex,
-        launcherOpen: shouldCloseLauncher,
-      });
+      updatedWindows = windows.map((w) =>
+        w.id === app.id
+          ? { ...w, isMinimized: false, isMaximized: isMobileScreen ? true : w.isMaximized, zIndex: nextZIndex }
+          : w
+      );
+      newActiveId = app.id;
     } else {
       const offset = (windows.length % 5) * 28;
       const defaultW = app.defaultSize?.w || 760;
@@ -237,45 +322,54 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
         zIndex: nextZIndex,
       };
 
-      set({
-        windows: [...windows, newWindow],
-        activeWindowId: app.id,
-        highestZIndex: nextZIndex,
-        launcherOpen: shouldCloseLauncher,
-      });
+      updatedWindows = [...windows, newWindow];
+      newActiveId = app.id;
     }
+
+    set({
+      windows: updatedWindows,
+      activeWindowId: newActiveId,
+      highestZIndex: nextZIndex,
+      launcherOpen: shouldCloseLauncher,
+    });
+    saveWindowsSession(updatedWindows, newActiveId);
   },
 
   closeWindow: (id) => {
     if (get().soundEnabled) playUiClickSound();
-    set((state) => {
-      const remaining = state.windows.filter((w) => w.id !== id);
-      const activeWindows = remaining.filter((w) => !w.isMinimized);
-      const newActiveId = activeWindows.length > 0
-        ? activeWindows.reduce((prev, curr) => (curr.zIndex > prev.zIndex ? curr : prev)).id
-        : null;
-      return {
-        windows: remaining,
-        activeWindowId: newActiveId,
-      };
+    const remaining = get().windows.filter((w) => w.id !== id);
+    const activeWindows = remaining.filter((w) => !w.isMinimized);
+    const newActiveId = activeWindows.length > 0
+      ? activeWindows.reduce((prev, curr) => (curr.zIndex > prev.zIndex ? curr : prev)).id
+      : null;
+
+    set({
+      windows: remaining,
+      activeWindowId: newActiveId,
     });
+    saveWindowsSession(remaining, newActiveId);
+  },
+
+  closeAllWindows: () => {
+    set({ windows: [], activeWindowId: null });
+    saveWindowsSession([], null);
   },
 
   minimizeWindow: (id) => {
     if (get().soundEnabled) playUiClickSound();
-    set((state) => {
-      const updatedWindows = state.windows.map((w) =>
-        w.id === id ? { ...w, isMinimized: true } : w
-      );
-      const activeWindows = updatedWindows.filter((w) => !w.isMinimized);
-      const newActiveId = activeWindows.length > 0
-        ? activeWindows.reduce((prev, curr) => (curr.zIndex > prev.zIndex ? curr : prev)).id
-        : null;
-      return {
-        windows: updatedWindows,
-        activeWindowId: newActiveId,
-      };
+    const updatedWindows = get().windows.map((w) =>
+      w.id === id ? { ...w, isMinimized: true } : w
+    );
+    const activeWindows = updatedWindows.filter((w) => !w.isMinimized);
+    const newActiveId = activeWindows.length > 0
+      ? activeWindows.reduce((prev, curr) => (curr.zIndex > prev.zIndex ? curr : prev)).id
+      : null;
+
+    set({
+      windows: updatedWindows,
+      activeWindowId: newActiveId,
     });
+    saveWindowsSession(updatedWindows, newActiveId);
   },
 
   focusWindow: (id) => {
@@ -289,13 +383,16 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
     }
 
     const nextZIndex = highestZIndex + 1;
+    const updatedWindows = windows.map((w) =>
+      w.id === id ? { ...w, isMinimized: false, zIndex: nextZIndex } : w
+    );
+
     set({
-      windows: windows.map((w) =>
-        w.id === id ? { ...w, isMinimized: false, zIndex: nextZIndex } : w
-      ),
+      windows: updatedWindows,
       activeWindowId: id,
       highestZIndex: nextZIndex,
     });
+    saveWindowsSession(updatedWindows, id);
   },
 
   toggleMinimizeWindow: (id) => {
@@ -311,27 +408,27 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
   },
 
   moveWindow: (id, position) => {
-    set((state) => ({
-      windows: state.windows.map((w) =>
-        w.id === id ? { ...w, position } : w
-      ),
-    }));
+    const updatedWindows = get().windows.map((w) =>
+      w.id === id ? { ...w, position } : w
+    );
+    set({ windows: updatedWindows });
+    saveWindowsSession(updatedWindows, get().activeWindowId);
   },
 
   resizeWindow: (id, size) => {
-    set((state) => ({
-      windows: state.windows.map((w) =>
-        w.id === id ? { ...w, size } : w
-      ),
-    }));
+    const updatedWindows = get().windows.map((w) =>
+      w.id === id ? { ...w, size } : w
+    );
+    set({ windows: updatedWindows });
+    saveWindowsSession(updatedWindows, get().activeWindowId);
   },
 
   toggleMaximizeWindow: (id) => {
-    set((state) => ({
-      windows: state.windows.map((w) =>
-        w.id === id ? { ...w, isMaximized: !w.isMaximized } : w
-      ),
-    }));
+    const updatedWindows = get().windows.map((w) =>
+      w.id === id ? { ...w, isMaximized: !w.isMaximized } : w
+    );
+    set({ windows: updatedWindows });
+    saveWindowsSession(updatedWindows, get().activeWindowId);
   },
 
   toggleLauncher: (open) => {
@@ -352,6 +449,9 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
 
   toggleSound: () => {
     const nextState = !get().soundEnabled;
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem('sonos_sound_enabled', JSON.stringify(nextState)); } catch { /* ignore */ }
+    }
     get().showNotification(
       "Audio System",
       nextState ? "Suara sistem diaktifkan" : "Suara sistem dibisukan",
@@ -380,6 +480,9 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
     const current = get().wallpaper;
     const currentIndex = PRESETS.indexOf(current);
     const nextWallpaper = PRESETS[(currentIndex + 1) % PRESETS.length];
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem('sonos_wallpaper', nextWallpaper); } catch { /* ignore */ }
+    }
     get().showNotification(
       "Wallpaper Diperbarui",
       `Tema wallpaper diubah ke: ${nextWallpaper}`,
@@ -389,11 +492,10 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
     set({ wallpaper: nextWallpaper });
   },
 
-  closeAllWindows: () => {
-    set({ windows: [], activeWindowId: null });
-  },
-
   setWallpaper: (wallpaper) => {
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem('sonos_wallpaper', wallpaper); } catch { /* ignore */ }
+    }
     get().showNotification(
       "Wallpaper Diperbarui",
       `Tema wallpaper diubah ke: ${wallpaper}`,
@@ -424,6 +526,9 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
   },
 
   togglePinApp: (appId) => {
+    if (appId === "app-store" && get().pinnedApps.includes("app-store")) {
+      return;
+    }
     const { pinnedApps } = get();
     const isPinned = pinnedApps.includes(appId);
     const updated = isPinned
@@ -594,20 +699,31 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
     }));
   },
 
+  addCustomTracks: (newTracks) => {
+    const updated = [...get().customTracks, ...newTracks];
+    set({ customTracks: updated });
+  },
+
+  getPlaylist: () => {
+    return [...PLAYLIST, ...get().customTracks];
+  },
+
   playNextTrack: () => {
+    const playlist = [...PLAYLIST, ...get().customTracks];
     const { mediaIsShuffle, mediaTrackIndex } = get();
     if (mediaIsShuffle) {
-      const nextIdx = Math.floor(Math.random() * PLAYLIST.length);
+      const nextIdx = Math.floor(Math.random() * playlist.length);
       set({ mediaTrackIndex: nextIdx, mediaIsPlaying: true, mediaCurrentTime: 0 });
     } else {
-      const nextIdx = (mediaTrackIndex + 1) % PLAYLIST.length;
+      const nextIdx = (mediaTrackIndex + 1) % playlist.length;
       set({ mediaTrackIndex: nextIdx, mediaIsPlaying: true, mediaCurrentTime: 0 });
     }
   },
 
   playPrevTrack: () => {
+    const playlist = [...PLAYLIST, ...get().customTracks];
     const { mediaTrackIndex } = get();
-    const prevIdx = (mediaTrackIndex - 1 + PLAYLIST.length) % PLAYLIST.length;
+    const prevIdx = (mediaTrackIndex - 1 + playlist.length) % playlist.length;
     set({ mediaTrackIndex: prevIdx, mediaIsPlaying: true, mediaCurrentTime: 0 });
   },
 
@@ -617,7 +733,12 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
 
   setMediaCurrentTime: (time) => set({ mediaCurrentTime: time }),
   setMediaDuration: (duration) => set({ mediaDuration: duration }),
-  setMediaVolume: (volume) => set({ mediaVolume: volume, mediaIsMuted: false }),
+  setMediaVolume: (volume) => {
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem('sonos_media_volume', String(volume)); } catch { /* ignore */ }
+    }
+    set({ mediaVolume: volume, mediaIsMuted: false });
+  },
   toggleMediaMute: () => set((state) => ({ mediaIsMuted: !state.mediaIsMuted })),
   toggleMediaShuffle: () => set((state) => ({ mediaIsShuffle: !state.mediaIsShuffle })),
   toggleMediaRepeat: () => set((state) => ({ mediaIsRepeat: !state.mediaIsRepeat })),

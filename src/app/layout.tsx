@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Roboto } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const roboto = Roboto({
@@ -49,6 +50,12 @@ export const metadata: Metadata = {
     title: "Son-OS — ChromeOS-inspired Web Desktop & Portfolio",
     description: "Interactive web desktop portfolio with ChromeOS aesthetic, window manager, floating shelf, and app launcher.",
   },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Son-OS",
+  },
   icons: {
     icon: "/favicon.ico",
   },
@@ -60,8 +67,43 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full dark">
-      <body className={`${roboto.className} h-full w-full overflow-hidden bg-zinc-950 text-zinc-100 antialiased select-none`}>
+    <html lang="en" className="h-full dark" suppressHydrationWarning>
+      <body
+        className={`${roboto.className} h-full w-full overflow-hidden bg-zinc-950 text-zinc-100 antialiased select-none`}
+        suppressHydrationWarning
+      >
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var raw = localStorage.getItem('sonos_settings');
+                  var theme = 'dark';
+                  var scale = 'normal';
+                  if (raw) {
+                    var parsed = JSON.parse(raw);
+                    if (parsed.state && parsed.state.theme) theme = parsed.state.theme;
+                    if (parsed.state && parsed.state.textScale) scale = parsed.state.textScale;
+                  } else {
+                    var legacyTheme = localStorage.getItem('sonos_theme');
+                    if (legacyTheme) theme = legacyTheme;
+                  }
+                  document.documentElement.setAttribute('data-theme', theme);
+                  document.documentElement.setAttribute('data-text-scale', scale);
+                  if (theme === 'light') {
+                    document.documentElement.classList.add('light');
+                    document.documentElement.classList.remove('dark');
+                  } else {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.classList.remove('light');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
         {/* Semantic HTML & Noscript Fallback for SEO Crawlers */}
         <noscript>
           <div className="p-8 bg-zinc-900 text-zinc-100 font-sans max-w-3xl mx-auto my-12 rounded-2xl border border-white/20 shadow-2xl">

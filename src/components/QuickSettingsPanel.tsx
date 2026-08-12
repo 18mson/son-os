@@ -7,8 +7,6 @@ import {
   Volume2,
   VolumeX,
   Image as ImageIcon,
-  Wifi,
-  Battery,
   Settings as SettingsIcon,
   ChevronRight,
   Sun,
@@ -20,6 +18,7 @@ import {
   Disc,
 } from "lucide-react";
 import { useWindowStore } from "@/store/windowStore";
+import { useSettingsStore } from "@/store/settingsStore";
 import { APPS } from "@/config/appsConfig";
 import { PLAYLIST } from "@/config/musicConfig";
 
@@ -27,9 +26,7 @@ export const QuickSettingsPanel: React.FC = () => {
   const {
     quickSettingsOpen,
     toggleQuickSettings,
-    soundEnabled,
     toggleSound,
-    theme,
     toggleTheme,
     wallpaper,
     cycleWallpaper,
@@ -40,7 +37,19 @@ export const QuickSettingsPanel: React.FC = () => {
     toggleMediaPlay,
     playNextTrack,
     playPrevTrack,
+    setMediaVolume,
   } = useWindowStore();
+
+  const {
+    theme: settingsTheme,
+    toggleTheme: toggleSettingsTheme,
+    soundEnabled: settingsSoundEnabled,
+    toggleSound: toggleSettingsSound,
+    brightness,
+    setBrightness,
+    volume,
+    setVolume,
+  } = useSettingsStore();
 
   const currentTrack = PLAYLIST[mediaTrackIndex] || PLAYLIST[0];
 
@@ -218,111 +227,150 @@ export const QuickSettingsPanel: React.FC = () => {
             </div>
 
             {/* Main Toggle Grid */}
-            <div className="grid grid-cols-2 gap-2.5">
-              {/* Sound Toggle */}
-              <button
-                onClick={() => toggleSound()}
-                className={`p-3 rounded-2xl border transition-all flex flex-col gap-2 text-left cursor-pointer group ${soundEnabled
-                  ? "bg-blue-600/30 border-blue-500/50 text-white"
-                  : "bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10 hover:text-zinc-200"
-                  }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div
-                    className={`p-2 rounded-xl transition-colors ${soundEnabled ? "bg-blue-600 text-white shadow-md shadow-blue-500/30" : "bg-zinc-800 text-zinc-400"
-                      }`}
-                  >
-                    {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+            <div className="flex flex-col gap-2.5">
+              {/* Top 2 Tiles: Sound Toggle & Theme Toggle */}
+              <div className="grid grid-cols-2 gap-2.5">
+                {/* Sound Toggle */}
+                <button
+                  onClick={() => {
+                    toggleSettingsSound();
+                    toggleSound();
+                  }}
+                  className={`p-3 rounded-2xl border transition-all flex flex-col gap-2 text-left cursor-pointer group ${settingsSoundEnabled
+                    ? "bg-blue-600/30 border-blue-500/50 text-white"
+                    : "bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10 hover:text-zinc-200"
+                    }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div
+                      className={`p-2 rounded-xl transition-colors ${settingsSoundEnabled ? "bg-blue-600 text-white shadow-md shadow-blue-500/30" : "bg-zinc-800 text-zinc-400"
+                        }`}
+                    >
+                      {settingsSoundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 group-hover:text-zinc-200">
+                      {settingsSoundEnabled ? "ON" : "OFF"}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 group-hover:text-zinc-200">
-                    {soundEnabled ? "ON" : "OFF"}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-xs font-bold block text-white">Suara Sistem</span>
-                  <span className="text-[10px] text-zinc-400 block mt-0.5">
-                    {soundEnabled ? "Efek audio aktif" : "Audio dibisukan"}
-                  </span>
-                </div>
-              </button>
+                  <div>
+                    <span className="text-xs font-bold block text-white">Suara Sistem</span>
+                    <span className="text-[10px] text-zinc-400 block mt-0.5">
+                      {settingsSoundEnabled ? "Efek audio aktif" : "Audio dibisukan"}
+                    </span>
+                  </div>
+                </button>
 
-              {/* Dark / Light Theme Toggle */}
-              <button
-                onClick={toggleTheme}
-                className={`p-3 rounded-2xl border transition-all flex flex-col gap-2 text-left cursor-pointer group ${theme === 'light'
-                  ? "bg-amber-500/20 border-amber-500/40 text-white"
-                  : "bg-indigo-600/20 border-indigo-500/40 text-white"
-                  }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className={`p-2 rounded-xl transition-colors ${theme === 'light'
-                    ? "bg-amber-500 text-white shadow-md shadow-amber-500/30"
-                    : "bg-indigo-700 text-white shadow-md shadow-indigo-500/30"
-                    }`}>
-                    {theme === 'light' ? <Sun size={18} /> : <Moon size={18} />}
+                {/* Dark / Light Theme Toggle */}
+                <button
+                  onClick={() => {
+                    toggleSettingsTheme();
+                    toggleTheme();
+                  }}
+                  className={`p-3 rounded-2xl border transition-all flex flex-col gap-2 text-left cursor-pointer group ${settingsTheme === 'light'
+                    ? "bg-amber-500/20 border-amber-500/40 text-white"
+                    : "bg-indigo-600/20 border-indigo-500/40 text-white"
+                    }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className={`p-2 rounded-xl transition-colors ${settingsTheme === 'light'
+                      ? "bg-amber-500 text-white shadow-md shadow-amber-500/30"
+                      : "bg-indigo-700 text-white shadow-md shadow-indigo-500/30"
+                      }`}>
+                      {settingsTheme === 'light' ? <Sun size={18} /> : <Moon size={18} />}
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 group-hover:text-zinc-200">
+                      {settingsTheme === 'light' ? 'LIGHT' : 'DARK'}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 group-hover:text-zinc-200">
-                    {theme === 'light' ? 'LIGHT' : 'DARK'}
+                  <div>
+                    <span className="text-xs font-bold block text-white">Tema Tampilan</span>
+                    <span className="text-[10px] text-zinc-400 block mt-0.5">
+                      {settingsTheme === 'light' ? 'Mode Terang aktif' : 'Mode Gelap aktif'}
+                    </span>
+                  </div>
+                </button>
+              </div>
+
+              {/* Master Volume Slider Card */}
+              <div className="p-3 rounded-2xl border border-white/10 bg-white/5 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        toggleSettingsSound();
+                        toggleSound();
+                      }}
+                      title={settingsSoundEnabled ? "Bisukan Suara" : "Aktifkan Suara"}
+                      className={`p-2 rounded-xl border transition-colors cursor-pointer ${settingsSoundEnabled
+                        ? "bg-blue-600/30 text-blue-400 border-blue-500/30"
+                        : "bg-zinc-800 text-zinc-400 border-white/10"
+                        }`}
+                    >
+                      {settingsSoundEnabled && volume > 0 ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                    </button>
+                    <span className="text-xs font-bold text-white">Volume Master</span>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-blue-400">
+                    {settingsSoundEnabled ? `${volume}%` : "Muted"}
                   </span>
                 </div>
-                <div>
-                  <span className="text-xs font-bold block text-white">Tema Tampilan</span>
-                  <span className="text-[10px] text-zinc-400 block mt-0.5">
-                    {theme === 'light' ? 'Mode Terang aktif' : 'Mode Gelap aktif'}
-                  </span>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={settingsSoundEnabled ? volume : 0}
+                  onChange={(e) => {
+                    const newVal = Number(e.target.value);
+                    setVolume(newVal);
+                    setMediaVolume(newVal / 100);
+                    if (!settingsSoundEnabled && newVal > 0) {
+                      toggleSettingsSound();
+                      toggleSound();
+                    }
+                  }}
+                  className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+              </div>
+
+              {/* Brightness Slider Card */}
+              <div className="p-3 rounded-2xl border border-white/10 bg-white/5 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                      <Sun size={18} />
+                    </div>
+                    <span className="text-xs font-bold text-white">Kecerahan Layar</span>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-amber-400">{brightness}%</span>
                 </div>
-              </button>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={brightness}
+                  onChange={(e) => setBrightness(Number(e.target.value))}
+                  className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                />
+              </div>
 
               {/* Wallpaper Cycle Toggle */}
               <button
                 onClick={handleCycleWallpaper}
-                className="p-3 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-200 transition-all flex flex-col gap-2 text-left cursor-pointer group"
+                className="p-3 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-200 transition-all flex items-center justify-between cursor-pointer group"
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
                   <div className="p-2 rounded-xl bg-purple-600/30 text-purple-300 border border-purple-500/30">
                     <ImageIcon size={18} />
                   </div>
-                  <ChevronRight size={14} className="text-zinc-500 group-hover:text-white transition-transform group-hover:translate-x-0.5" />
+                  <div>
+                    <span className="text-xs font-bold block text-white">Ganti Wallpaper</span>
+                    <span className="text-[10px] text-zinc-400 block mt-0.5 capitalize truncate">
+                      Tema: {wallpaper}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-xs font-bold block text-white">Ganti Wallpaper</span>
-                  <span className="text-[10px] text-zinc-400 block mt-0.5 capitalize truncate">
-                    Tema: {wallpaper}
-                  </span>
-                </div>
+                <ChevronRight size={16} className="text-zinc-500 group-hover:text-white transition-transform group-hover:translate-x-0.5" />
               </button>
-
-              {/* Wi-Fi Info Tile */}
-              <div className="p-3 rounded-2xl border border-white/10 bg-white/5 flex flex-col gap-2 text-left">
-                <div className="flex items-center justify-between">
-                  <div className="p-2 rounded-xl bg-emerald-600/30 text-emerald-300 border border-emerald-500/30">
-                    <Wifi size={18} />
-                  </div>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-xs shadow-emerald-400" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold block text-white">Wi-Fi Network</span>
-                  <span className="text-[10px] text-zinc-400 block mt-0.5 truncate">
-                    SonOS-HighSpeed (Connected)
-                  </span>
-                </div>
-              </div>
-
-              {/* Battery Info Tile */}
-              <div className="p-3 rounded-2xl border border-white/10 bg-white/5 flex flex-col gap-2 text-left">
-                <div className="flex items-center justify-between">
-                  <div className="p-2 rounded-xl bg-amber-600/30 text-amber-300 border border-amber-500/30">
-                    <Battery size={18} />
-                  </div>
-                  <span className="text-[10px] font-bold text-amber-400">100%</span>
-                </div>
-                <div>
-                  <span className="text-xs font-bold block text-white">Status Daya</span>
-                  <span className="text-[10px] text-zinc-400 block mt-0.5 truncate">
-                    Terhubung ke Daya AC
-                  </span>
-                </div>
-              </div>
             </div>
           </motion.div>
         </>

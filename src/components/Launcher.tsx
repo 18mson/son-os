@@ -2,8 +2,9 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Pin, PinOff, ExternalLink, Monitor, ChevronUp, ChevronDown } from "lucide-react";
+import { Search, Pin, PinOff, ExternalLink, Monitor, ChevronUp, ChevronDown, ShoppingBag } from "lucide-react";
 import { useWindowStore } from "@/store/windowStore";
+import { useAppStoreStore } from "@/store/appStoreStore";
 import { APPS } from "@/config/appsConfig";
 import { AppIcon } from "./AppIcon";
 import { closeAllContextMenus } from "@/hooks/useContextMenuClose";
@@ -22,7 +23,12 @@ export const Launcher: React.FC = () => {
     addDesktopShortcut,
     removeDesktopShortcut,
     showNotification,
+    theme,
   } = useWindowStore();
+
+  const { isInstalled } = useAppStoreStore();
+
+  const isLight = theme === "light";
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
@@ -87,7 +93,9 @@ export const Launcher: React.FC = () => {
     return () => window.removeEventListener("sonos-close-context-menus", handler);
   }, []);
 
-  const filteredApps = APPS.filter(
+  const installedAppsList = APPS.filter((app) => isInstalled(app.id));
+
+  const filteredApps = installedAppsList.filter(
     (app) =>
       app.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (app.description && app.description.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -151,22 +159,41 @@ export const Launcher: React.FC = () => {
                 />
               </div>
               {/* App grid */}
-              <div className="w-full grid grid-cols-3 gap-3">
-                {(searchQuery ? filteredApps : APPS).map((app) => (
+              {installedAppsList.length === 0 ? (
+                <div className="py-12 flex flex-col items-center justify-center text-center gap-3 text-zinc-400">
+                  <div className="p-3 rounded-2xl bg-indigo-500/20 text-indigo-400">
+                    <ShoppingBag size={28} />
+                  </div>
+                  <p className="text-xs text-zinc-300 font-medium">Belum ada app terinstall — buka App Store untuk mulai</p>
                   <button
-                    key={app.id}
-                    onClick={() => handleOpenApp(app)}
-                    onContextMenu={(e) => handleAppContextMenu(e, app.id)}
-                    aria-label={`Open ${app.title}`}
-                    className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/5 hover:bg-white/15 border border-white/5 hover:border-white/15 transition-all"
+                    onClick={() => {
+                      const appStore = APPS.find((a) => a.id === "app-store");
+                      if (appStore) openWindow(appStore);
+                      handleClose();
+                    }}
+                    className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold shadow-md cursor-pointer"
                   >
-                    <div className={`w-12 h-12 rounded-2xl ${app.accentColor} flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform`}>
-                      <AppIcon name={app.icon} size={22} />
-                    </div>
-                    <span className="text-[11px] font-medium text-zinc-200 text-center line-clamp-1">{app.title}</span>
+                    Buka App Store
                   </button>
-                ))}
-              </div>
+                </div>
+              ) : (
+                <div className="w-full grid grid-cols-3 gap-3">
+                  {(searchQuery ? filteredApps : installedAppsList).map((app) => (
+                    <button
+                      key={app.id}
+                      onClick={() => handleOpenApp(app)}
+                      onContextMenu={(e) => handleAppContextMenu(e, app.id)}
+                      aria-label={`Open ${app.title}`}
+                      className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/5 hover:bg-white/15 border border-white/5 hover:border-white/15 transition-all"
+                    >
+                      <div className={`w-12 h-12 rounded-2xl ${app.accentColor} flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform`}>
+                        <AppIcon name={app.icon} size={22} />
+                      </div>
+                      <span className="text-[11px] font-medium text-zinc-200 text-center line-clamp-1">{app.title}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="h-28 shrink-0 w-full" />
             </motion.div>
           </motion.div>
@@ -190,7 +217,11 @@ export const Launcher: React.FC = () => {
             exit={{ opacity: 0, scale: 0.88, y: 12 }}
             transition={{ type: "spring", duration: 0.28, bounce: 0.06 }}
             style={{ transformOrigin: "bottom left" }}
-            className="fixed bottom-17 left-3 z-45 w-130 rounded-3xl bg-zinc-950/85 backdrop-blur-3xl border border-white/12 shadow-2xl shadow-black/70 select-none overflow-hidden"
+            className={`fixed bottom-17 left-3 z-45 w-130 rounded-3xl backdrop-blur-3xl border shadow-2xl select-none overflow-hidden ${
+              isLight
+                ? "bg-white/90 border-black/10 shadow-slate-400/30 text-slate-900"
+                : "bg-zinc-950/85 border-white/12 shadow-black/70 text-zinc-100"
+            }`}
           >
             {/* Inner content with padding */}
             <div className="flex flex-col gap-0">
@@ -198,7 +229,7 @@ export const Launcher: React.FC = () => {
               {/* ── Search bar ── */}
               <div className="px-4 pt-4 pb-3">
                 <div className="relative">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                  <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${isLight ? "text-slate-400" : "text-zinc-400"}`} size={16} />
                   <input
                     ref={searchInputRef}
                     type="text"
@@ -206,7 +237,11 @@ export const Launcher: React.FC = () => {
                     aria-label="Search apps and projects"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/8 text-white placeholder-zinc-500 border border-white/10 outline-hidden focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/40 transition-all text-sm"
+                    className={`w-full pl-10 pr-4 py-2.5 rounded-xl border outline-hidden focus:ring-2 focus:ring-blue-400/50 transition-all text-sm ${
+                      isLight
+                        ? "bg-slate-100 text-slate-900 placeholder-slate-400 border-slate-300"
+                        : "bg-white/8 text-white placeholder-zinc-500 border-white/10"
+                    }`}
                   />
                 </div>
               </div>
@@ -216,7 +251,26 @@ export const Launcher: React.FC = () => {
                 className="overflow-y-auto px-3"
                 style={{ maxHeight: isExpanded ? "380px" : "auto" }}
               >
-                {filteredApps.length === 0 ? (
+                {installedAppsList.length === 0 ? (
+                  <div className="py-8 px-4 flex flex-col items-center justify-center text-center gap-3">
+                    <div className="p-3 rounded-2xl bg-indigo-500/20 text-indigo-400">
+                      <ShoppingBag size={24} />
+                    </div>
+                    <p className="text-xs text-zinc-300 font-medium max-w-xs">
+                      Belum ada app terinstall — buka App Store untuk mulai
+                    </p>
+                    <button
+                      onClick={() => {
+                        const appStore = APPS.find((a) => a.id === "app-store");
+                        if (appStore) openWindow(appStore);
+                        handleClose();
+                      }}
+                      className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition-all cursor-pointer"
+                    >
+                      Buka App Store
+                    </button>
+                  </div>
+                ) : filteredApps.length === 0 ? (
                   <div className="py-8 text-center text-zinc-500 text-sm">
                     Tidak ada app yang cocok dengan &quot;{searchQuery}&quot;
                   </div>

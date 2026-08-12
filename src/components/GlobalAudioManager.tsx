@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { useWindowStore } from "@/store/windowStore";
+import { useSettingsStore } from "@/store/settingsStore";
 import { PLAYLIST } from "@/config/musicConfig";
 
 export const GlobalAudioManager: React.FC = () => {
@@ -15,17 +16,21 @@ export const GlobalAudioManager: React.FC = () => {
     setMediaCurrentTime,
     setMediaDuration,
     toggleMediaPlay,
+    getPlaylist,
   } = useWindowStore();
 
+  const soundEnabled = useSettingsStore((s) => s.soundEnabled);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const currentTrack = PLAYLIST[mediaTrackIndex] || PLAYLIST[0];
+  const playlist = getPlaylist();
+  const currentTrack = playlist[mediaTrackIndex] || playlist[0] || PLAYLIST[0];
 
   // Synchronize audio volume and mute
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = mediaIsMuted ? 0 : mediaVolume;
+      audioRef.current.volume = (!soundEnabled || mediaIsMuted) ? 0 : mediaVolume;
     }
-  }, [mediaVolume, mediaIsMuted]);
+  }, [mediaVolume, mediaIsMuted, soundEnabled]);
 
   // Synchronize audio play / pause state
   useEffect(() => {

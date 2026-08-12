@@ -1,3 +1,5 @@
+import { useSettingsStore } from "@/store/settingsStore";
+
 // Web Audio API Synthesizer for subtle OS UI Click sound effects
 
 let audioCtx: AudioContext | null = null;
@@ -18,6 +20,7 @@ function getAudioContext(): AudioContext | null {
 
 export function playUiClickSound() {
   try {
+    if (!useSettingsStore.getState().soundEnabled) return;
     const ctx = getAudioContext();
     if (!ctx) return;
 

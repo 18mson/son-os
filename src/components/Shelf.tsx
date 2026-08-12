@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { LayoutGrid, Wifi, Battery, Pin, PinOff, X, ExternalLink } from "lucide-react";
 import { useWindowStore, AppDefinition } from "@/store/windowStore";
+import { useAppStoreStore } from "@/store/appStoreStore";
 import { APPS } from "@/config/appsConfig";
 import { AppIcon } from "./AppIcon";
 import { useContextMenuClose, closeAllContextMenus } from "@/hooks/useContextMenuClose";
@@ -24,6 +25,8 @@ export const Shelf: React.FC = () => {
     reorderPinnedApps,
     toggleQuickSettings,
   } = useWindowStore();
+
+  const { isInstalled } = useAppStoreStore();
 
   const [time, setTime] = useState<string>("");
   const [dateStr, setDateStr] = useState<string>("");
@@ -90,16 +93,16 @@ export const Shelf: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // 1. Pinned Apps (resolved from APPS config)
+  // 1. Pinned Apps (resolved from APPS config, filtered by installed status)
   const pinnedAppDefs = pinnedApps
     .map((id) => APPS.find((a) => a.id === id))
-    .filter((a): a is AppDefinition => a !== undefined);
+    .filter((a): a is AppDefinition => a !== undefined && isInstalled(a.id));
 
-  // 2. Open Windows that are NOT pinned
+  // 2. Open Windows that are NOT pinned (filtered by installed status)
   const unpinnedOpenWindows = windows.filter((w) => !pinnedApps.includes(w.id));
   const unpinnedAppDefs = unpinnedOpenWindows
     .map((w) => APPS.find((a) => a.id === w.id))
-    .filter((a): a is AppDefinition => a !== undefined);
+    .filter((a): a is AppDefinition => a !== undefined && isInstalled(a.id));
 
   const handleAppClick = (app: AppDefinition, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -247,7 +250,11 @@ export const Shelf: React.FC = () => {
 
         {/* 2. App Dock (fixed bottom-center) */}
         {totalShelfItemsCount > 0 && (
-          <div data-shelf-dock className="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 px-3 py-2 rounded-full bg-zinc-950/90 backdrop-blur-2xl border border-white/15 shadow-2xl shadow-black/80 max-w-[80vw] md:max-w-none overflow-x-auto no-scrollbar">
+          <div data-shelf-dock className={`fixed bottom-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 px-3 py-2 rounded-full backdrop-blur-2xl border max-w-[80vw] md:max-w-none overflow-x-auto no-scrollbar transition-all duration-300 ${
+            theme === "light"
+              ? "bg-white/80 border-slate-300/80 shadow-xl shadow-slate-400/20 text-slate-800"
+              : "bg-zinc-950/90 border-white/15 shadow-2xl shadow-black/80 text-zinc-100"
+          }`}>
             {renderAppIcons()}
           </div>
         )}
@@ -261,10 +268,13 @@ export const Shelf: React.FC = () => {
           }}
           title="Buka Panel Quick Settings"
           aria-label="Open Quick Settings Panel"
-          className={`fixed bottom-4 right-4 z-50 flex items-center gap-2.5 px-3 py-1.5 min-h-11 rounded-full text-xs font-medium select-none cursor-pointer transition-all duration-200 backdrop-blur-2xl border border-white/15 shadow-2xl shadow-black/80 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden ${quickSettingsOpen
-            ? "bg-blue-600 text-white shadow-blue-500/30 scale-102"
-            : "bg-zinc-950/90 text-zinc-200 hover:bg-zinc-900 hover:text-white"
-            }`}
+          className={`fixed bottom-4 right-4 z-50 flex items-center gap-2.5 px-3 py-1.5 min-h-11 rounded-full text-xs font-medium select-none cursor-pointer transition-all duration-200 backdrop-blur-2xl border focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden ${
+            quickSettingsOpen
+              ? "bg-blue-600 text-white shadow-blue-500/30 scale-102 border-blue-500"
+              : theme === "light"
+                ? "bg-white/80 border-slate-300/80 text-slate-800 hover:bg-white shadow-xl shadow-slate-400/20"
+                : "bg-zinc-950/90 border-white/15 text-zinc-200 hover:bg-zinc-900 hover:text-white shadow-2xl shadow-black/80"
+          }`}
         >
           <div className="flex items-center gap-2 text-inherit opacity-80">
             <Wifi size={13} />
@@ -280,7 +290,11 @@ export const Shelf: React.FC = () => {
       {/* ── MOBILE VIEW (< md): 1 Single Unified Deck Bar (ChromeOS Mobile Style) ── */}
       <div
         data-shelf-dock
-        className="flex md:hidden fixed bottom-2 left-2 right-2 z-50 items-center justify-between px-2 py-1.5 rounded-full bg-zinc-950/90 backdrop-blur-2xl border border-white/15 shadow-2xl shadow-black/90 text-zinc-100 select-none max-w-[calc(100vw-16px)]"
+        className={`flex md:hidden fixed bottom-2 left-2 right-2 z-50 items-center justify-between px-2 py-1.5 rounded-full backdrop-blur-2xl border select-none max-w-[calc(100vw-16px)] transition-all duration-300 ${
+          theme === "light"
+            ? "bg-white/90 border-slate-300/80 text-slate-900 shadow-xl shadow-slate-400/20"
+            : "bg-zinc-950/90 border-white/15 text-zinc-100 shadow-2xl shadow-black/90"
+        }`}
       >
         {/* Mobile Launcher Button */}
         <button
@@ -359,23 +373,25 @@ export const Shelf: React.FC = () => {
                   <ExternalLink size={14} /> {isOpen ? "Bawa ke Depan" : "Buka App"}
                 </button>
 
-                <button
-                  onClick={() => {
-                    togglePinApp(app.id);
-                    setShelfContextMenu(null);
-                  }}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/10 hover:text-white transition-colors cursor-pointer w-full text-left font-medium"
-                >
-                  {isPinned ? (
-                    <>
-                      <PinOff size={14} className="text-rose-400" /> Unpin dari Shelf
-                    </>
-                  ) : (
-                    <>
-                      <Pin size={14} className="text-blue-400" /> Pin ke Shelf
-                    </>
-                  )}
-                </button>
+                {app.id !== "app-store" && (
+                  <button
+                    onClick={() => {
+                      togglePinApp(app.id);
+                      setShelfContextMenu(null);
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/10 hover:text-white transition-colors cursor-pointer w-full text-left font-medium"
+                  >
+                    {isPinned ? (
+                      <>
+                        <PinOff size={14} className="text-rose-400" /> Unpin dari Shelf
+                      </>
+                    ) : (
+                      <>
+                        <Pin size={14} className="text-blue-400" /> Pin ke Shelf
+                      </>
+                    )}
+                  </button>
+                )}
 
                 {isOpen && (
                   <button

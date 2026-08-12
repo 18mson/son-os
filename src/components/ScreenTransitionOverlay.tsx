@@ -19,7 +19,7 @@ export const ScreenTransitionOverlay: React.FC<ScreenTransitionOverlayProps> = (
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.4, ease: "easeInOut" } }}
-          className="fixed inset-0 z-100 bg-zinc-950 flex flex-col items-center justify-center select-none"
+          className="fixed inset-0 z-9980 bg-zinc-950 flex flex-col items-center justify-center select-none"
         >
           <div className="flex flex-col items-center gap-6">
             {/* ChromeOS / Son-OS Glowing Rings Logo */}

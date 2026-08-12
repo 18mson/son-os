@@ -21,7 +21,7 @@ export const BootScreen: React.FC = () => {
         <motion.div
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.5, ease: "easeInOut" } }}
-          className="fixed inset-0 z-50 bg-zinc-950 flex flex-col items-center justify-center select-none"
+          className="fixed inset-0 z-9999 bg-zinc-950 flex flex-col items-center justify-center select-none"
         >
           <div className="flex flex-col items-center gap-6">
             {/* ChromeOS / Son-OS Glowing Rings Logo */}

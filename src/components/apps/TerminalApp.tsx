@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useWindowStore } from "@/store/windowStore";
+import { useSettingsStore } from "@/store/settingsStore";
 import { APPS } from "@/data/apps";
 
 interface CommandHistory {
@@ -16,7 +17,7 @@ export const TerminalApp: React.FC = () => {
       command: "",
       output: (
         <div className="space-y-1 text-zinc-300">
-          <p className="text-emerald-400 font-bold">Son-OS Terminal v1.0.0 (x86_64-crosh-linux)</p>
+          <p className="text-emerald-400 font-bold">Son-OS Terminal v1.2.0 (x86_64-crosh-linux)</p>
           <p>Ketik <span className="text-amber-300 font-semibold">&apos;help&apos;</span> untuk melihat daftar perintah yang tersedia.</p>
         </div>
       ),
@@ -30,6 +31,17 @@ export const TerminalApp: React.FC = () => {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const openWindow = useWindowStore((state) => state.openWindow);
+  const toggleTheme = useWindowStore((state) => state.toggleTheme);
+  const theme = useWindowStore((state) => state.theme);
+
+  const {
+    setTheme: setSettingsTheme,
+    toggleTheme: toggleSettingsTheme,
+    brightness,
+    setBrightness,
+    volume,
+    setVolume,
+  } = useSettingsStore();
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -53,14 +65,18 @@ export const TerminalApp: React.FC = () => {
         outputNode = (
           <div className="space-y-1 text-xs text-zinc-300">
             <p className="font-semibold text-blue-400">Daftar Perintah (Commands):</p>
-            <p><span className="text-amber-300 w-24 inline-block font-mono">help</span> - Menampilkan pesan bantuan ini</p>
-            <p><span className="text-amber-300 w-24 inline-block font-mono">whoami</span> - Informasi singkat tentang Son</p>
-            <p><span className="text-amber-300 w-24 inline-block font-mono">skills</span> - Daftar keahlian &amp; tech stack</p>
-            <p><span className="text-amber-300 w-24 inline-block font-mono">apps / ls</span> - Daftar aplikasi terinstall di Son-OS</p>
-            <p><span className="text-amber-300 w-24 inline-block font-mono">open &lt;app&gt;</span> - Membuka window aplikasi (cth: open calculator)</p>
-            <p><span className="text-amber-300 w-24 inline-block font-mono">date</span> - Menampilkan waktu &amp; tanggal sistem</p>
-            <p><span className="text-amber-300 w-24 inline-block font-mono">clear</span> - Membersihkan layar terminal</p>
-            <p><span className="text-amber-300 w-24 inline-block font-mono">echo &lt;txt&gt;</span> - Menampilkan teks balasan</p>
+            <p><span className="text-amber-300 w-28 inline-block font-mono">help</span> - Menampilkan pesan bantuan ini</p>
+            <p><span className="text-amber-300 w-28 inline-block font-mono">whoami</span> - Informasi singkat tentang pengembang</p>
+            <p><span className="text-amber-300 w-28 inline-block font-mono">skills</span> - Daftar keahlian &amp; tech stack</p>
+            <p><span className="text-amber-300 w-28 inline-block font-mono">apps / ls</span> - Daftar aplikasi terinstall di Son-OS</p>
+            <p><span className="text-amber-300 w-28 inline-block font-mono">open &lt;app&gt;</span> - Membuka window aplikasi (cth: open calculator)</p>
+            <p><span className="text-amber-300 w-28 inline-block font-mono">theme &lt;dark|light&gt;</span> - Ubah tema tampilan OS</p>
+            <p><span className="text-amber-300 w-28 inline-block font-mono">brightness &lt;0-100&gt;</span> - Ubah kecerahan layar sistem</p>
+            <p><span className="text-amber-300 w-28 inline-block font-mono">volume &lt;0-100&gt;</span> - Ubah volume master sistem</p>
+            <p><span className="text-amber-300 w-28 inline-block font-mono">calc &lt;expr&gt;</span> - Hitung ekspresi matematika (cth: calc 25 * 4)</p>
+            <p><span className="text-amber-300 w-28 inline-block font-mono">reboot</span> - Muat ulang sistem OS</p>
+            <p><span className="text-amber-300 w-28 inline-block font-mono">date</span> - Waktu &amp; tanggal sistem</p>
+            <p><span className="text-amber-300 w-28 inline-block font-mono">clear</span> - Bersihkan layar terminal</p>
           </div>
         );
         break;
@@ -78,9 +94,8 @@ export const TerminalApp: React.FC = () => {
         outputNode = (
           <div className="space-y-1 text-xs text-zinc-300">
             <p className="font-bold text-purple-400">Tech Stack &amp; Keahlian:</p>
-            <p>• Frontend: React, Next.js (App Router), TypeScript, Tailwind CSS v4, Zustand, Framer Motion</p>
-            <p>• Backend: Node.js, Express, REST API, WebSockets</p>
-            <p>• Tools: Git, Vercel, Docker, VS Code</p>
+            <p>• Frontend: React 19, Next.js 16 (App Router), TypeScript, Tailwind CSS v4, Zustand, Framer Motion</p>
+            <p>• Backend &amp; Utils: Node.js, Express, REST API, WebSockets, FFmpeg WASM, pdf-lib</p>
           </div>
         );
         break;
@@ -90,7 +105,9 @@ export const TerminalApp: React.FC = () => {
         outputNode = (
           <div className="space-y-1 text-xs text-zinc-300">
             <p className="font-bold text-amber-400">Aplikasi Terinstall (Gunakan &apos;open &lt;id&gt;&apos; untuk menjalankan):</p>
-            <p className="font-mono text-zinc-400">japanese-quiz, lovely-ever, about, contact, clock, calculator, notes, calendar, music, weather, gallery, terminal</p>
+            <p className="font-mono text-zinc-400">
+              {APPS.map((a) => a.id).join(", ")}
+            </p>
           </div>
         );
         break;
@@ -105,9 +122,86 @@ export const TerminalApp: React.FC = () => {
             openWindow(foundApp);
             outputNode = <p className="text-emerald-400 text-xs">Membuka aplikasi &apos;{targetAppId}&apos;...</p>;
           } else {
-            outputNode = <p className="text-rose-400 text-xs">Aplikasi &apos;{targetAppId}&apos; tidak ditemukan. Gunakan &apos;apps&apos; untuk melihat daftar.</p>;
+            outputNode = <p className="text-rose-400 text-xs">Aplikasi &apos;{targetAppId}&apos; tidak ditemukan. Ketik &apos;apps&apos; untuk melihat daftar.</p>;
           }
         }
+        break;
+
+      case "theme":
+        if (args[0] === "light") {
+          setSettingsTheme("light");
+          if (theme !== "light") toggleTheme();
+          outputNode = <p className="text-amber-400 text-xs font-semibold">Tema sistem diubah ke Mode Terang (Light).</p>;
+        } else if (args[0] === "dark") {
+          setSettingsTheme("dark");
+          if (theme !== "dark") toggleTheme();
+          outputNode = <p className="text-indigo-400 text-xs font-semibold">Tema sistem diubah ke Mode Gelap (Dark).</p>;
+        } else {
+          toggleSettingsTheme();
+          toggleTheme();
+          outputNode = <p className="text-emerald-400 text-xs font-semibold">Tema sistem berhasil diganti secara otomatis.</p>;
+        }
+        break;
+
+      case "brightness":
+        if (!args[0]) {
+          outputNode = <p className="text-zinc-300 text-xs">Kecerahan layar saat ini: <span className="text-amber-400 font-bold">{brightness}%</span></p>;
+        } else {
+          const val = parseInt(args[0], 10);
+          if (isNaN(val) || val < 0 || val > 100) {
+            outputNode = <p className="text-rose-400 text-xs">Error: Kecerahan harus berupa angka 0-100.</p>;
+          } else {
+            setBrightness(val);
+            outputNode = <p className="text-amber-400 text-xs">Kecerahan layar diubah ke {val}%.</p>;
+          }
+        }
+        break;
+
+      case "volume":
+        if (!args[0]) {
+          outputNode = <p className="text-zinc-300 text-xs">Volume master saat ini: <span className="text-blue-400 font-bold">{volume}%</span></p>;
+        } else {
+          const val = parseInt(args[0], 10);
+          if (isNaN(val) || val < 0 || val > 100) {
+            outputNode = <p className="text-rose-400 text-xs">Error: Volume harus berupa angka 0-100.</p>;
+          } else {
+            setVolume(val);
+            outputNode = <p className="text-blue-400 text-xs">Volume master sistem diubah ke {val}%.</p>;
+          }
+        }
+        break;
+
+      case "calc":
+        if (!args.join("")) {
+          outputNode = <p className="text-rose-400 text-xs">Error: Masukkan ekspresi matematika. Contoh: calc 15 * 8</p>;
+        } else {
+          try {
+            const expr = args.join(" ");
+            // Safe mathematical evaluation (only numbers & operators)
+            if (/^[0-9+\-*/().\s]+$/.test(expr)) {
+              const res = Function(`"use strict"; return (${expr})`)();
+              outputNode = <p className="text-emerald-400 text-xs font-bold">{expr} = {res}</p>;
+            } else {
+              outputNode = <p className="text-rose-400 text-xs">Error: Ekspresi mengandung karakter tidak valid.</p>;
+            }
+          } catch {
+            outputNode = <p className="text-rose-400 text-xs">Error: Gagal menghitung ekspresi matematika.</p>;
+          }
+        }
+        break;
+
+      case "reboot":
+      case "reload":
+        outputNode = <p className="text-amber-400 text-xs">Memuat ulang sistem OS...</p>;
+        setTimeout(() => {
+          if (typeof window !== "undefined") window.location.reload();
+        }, 800);
+        break;
+
+      case "settings":
+        const setApp = APPS.find((a) => a.id === "settings");
+        if (setApp) openWindow(setApp);
+        outputNode = <p className="text-emerald-400 text-xs">Membuka Pengaturan Sistem...</p>;
         break;
 
       case "clear":

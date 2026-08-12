@@ -1,8 +1,28 @@
 @import "tailwindcss";
 
-:root {
+:root, [data-theme="dark"] {
   --background: #09090b;
   --foreground: #f4f4f5;
+  --bg-surface: #18181b;
+  --border-color: rgba(255, 255, 255, 0.12);
+  --text-scale-factor: 1;
+}
+
+[data-theme="light"], html.light {
+  --background: #e8eaed;
+  --foreground: #1f2937;
+  --bg-surface: #ffffff;
+  --border-color: rgba(0, 0, 0, 0.12);
+}
+
+html[data-text-scale="small"] {
+  --text-scale-factor: 0.9;
+}
+html[data-text-scale="normal"] {
+  --text-scale-factor: 1;
+}
+html[data-text-scale="large"] {
+  --text-scale-factor: 1.15;
 }
 
 @theme inline {

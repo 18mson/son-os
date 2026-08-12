@@ -31,7 +31,9 @@ const MIN_H = 200;
 
 export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, children }) => {
   const { id, title, icon, accentColor, position, size, isMinimized, isMaximized, zIndex } = windowState;
-  const { closeWindow, minimizeWindow, focusWindow, moveWindow, resizeWindow, toggleMaximizeWindow, activeWindowId } = useWindowStore();
+  const { closeWindow, minimizeWindow, focusWindow, moveWindow, resizeWindow, toggleMaximizeWindow, activeWindowId, theme } = useWindowStore();
+
+  const isLight = theme === 'light';
 
   const [isDragging, setIsDragging] = useState(false);
   const [resizingEdge, setResizingEdge] = useState<ResizeEdge | null>(null);
@@ -98,6 +100,7 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
     e.preventDefault();
     e.stopPropagation();
     if (isMaximized || isMobile) return;
+
     focusWindow(id);
     setResizingEdge(edge);
     resizeRef.current = {
@@ -108,16 +111,15 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
       startPosX: position.x,
       startPosY: position.y,
     };
-  }, [isMaximized, isMobile, focusWindow, id, size, position]);
+  }, [focusWindow, id, isMaximized, isMobile, position.x, position.y, size.h, size.w]);
 
   useEffect(() => {
-    if (!resizingEdge || !resizeRef.current) return;
-
     const handleMouseMove = (e: MouseEvent) => {
-      if (!resizeRef.current) return;
-      const { startX, startY, startW, startH, startPosX, startPosY } = resizeRef.current;
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
+      if (!resizingEdge || !resizeRef.current || isMobile) return;
+
+      const dx = e.clientX - resizeRef.current.startX;
+      const dy = e.clientY - resizeRef.current.startY;
+      const { startW, startH, startPosX, startPosY } = resizeRef.current;
 
       let newW = startW;
       let newH = startH;
@@ -125,58 +127,60 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
       let newY = startPosY;
 
       if (resizingEdge.includes("e")) newW = Math.max(MIN_W, startW + dx);
-      if (resizingEdge.includes("w")) {
-        newW = Math.max(MIN_W, startW - dx);
-        newX = startPosX + (startW - newW);
-      }
       if (resizingEdge.includes("s")) newH = Math.max(MIN_H, startH + dy);
+
+      if (resizingEdge.includes("w")) {
+        const possibleW = startW - dx;
+        if (possibleW >= MIN_W) {
+          newW = possibleW;
+          newX = startPosX + dx;
+        }
+      }
+
       if (resizingEdge.includes("n")) {
-        newH = Math.max(MIN_H, startH - dy);
-        newY = startPosY + (startH - newH);
+        const possibleH = startH - dy;
+        if (possibleH >= MIN_H) {
+          newH = possibleH;
+          newY = Math.max(0, startPosY + dy);
+        }
       }
 
       resizeWindow(id, { w: newW, h: newH });
-      if (newX !== startPosX || newY !== startPosY) moveWindow(id, { x: newX, y: newY });
+      if (newX !== startPosX || newY !== startPosY) {
+        moveWindow(id, { x: newX, y: newY });
+      }
     };
 
     const handleMouseUp = () => {
-      setResizingEdge(null);
-      resizeRef.current = null;
+      if (resizingEdge) {
+        setResizingEdge(null);
+        resizeRef.current = null;
+      }
     };
 
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    if (resizingEdge) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    }
+
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [resizingEdge, id, resizeWindow, moveWindow]);
+  }, [resizingEdge, isMobile, resizeWindow, moveWindow, id]);
 
   if (isMinimized) return null;
 
   const effectiveMaximized = isMaximized || isMobile;
-
-  // Global cursor override during drag/resize
-  const globalCursor = isDragging
-    ? "cursor-grabbing"
-    : resizingEdge
-      ? ""
-      : "";
+  const globalCursor = resizingEdge ? EDGE_CURSOR[resizingEdge] : "";
 
   return (
     <>
-      {/* Full-screen cursor overlay during resize so cursor doesn't flicker */}
-      {resizingEdge && (
-        <div
-          className="fixed inset-0 z-9999"
-          style={{ cursor: EDGE_CURSOR[resizingEdge] }}
-        />
-      )}
-
       <motion.div
-        initial={{ opacity: 0, scale: 0.92, y: 15 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.92, y: 15 }}
+        key={id}
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
         transition={{ type: "spring", duration: 0.3, bounce: 0.05 }}
         onMouseDown={() => focusWindow(id)}
         style={{
@@ -187,10 +191,15 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
           height: isMobile ? "calc(100vh - 60px)" : isMaximized ? "calc(100vh - 72px)" : size.h,
           zIndex: zIndex,
         }}
-        className={`flex flex-col rounded-t-xl md:rounded-xl overflow-hidden shadow-2xl border transition-shadow duration-200 select-none ${isActive
-          ? "border-white/20 shadow-black/70 bg-zinc-950/90 backdrop-blur-2xl ring-1 ring-white/10"
-          : "border-white/10 shadow-black/40 bg-zinc-950/75 backdrop-blur-xl opacity-95"
-          } ${globalCursor}`}
+        className={`flex flex-col rounded-t-xl md:rounded-xl overflow-hidden shadow-2xl border transition-all duration-200 select-none ${
+          isLight
+            ? isActive
+              ? "border-slate-300/80 shadow-slate-900/25 bg-slate-100/95 backdrop-blur-2xl ring-1 ring-black/5"
+              : "border-slate-300/60 shadow-slate-900/15 bg-slate-100/85 backdrop-blur-xl opacity-95"
+            : isActive
+              ? "border-white/20 shadow-black/70 bg-zinc-950/90 backdrop-blur-2xl ring-1 ring-white/10"
+              : "border-white/10 shadow-black/40 bg-zinc-950/75 backdrop-blur-xl opacity-95"
+        } ${globalCursor}`}
         data-window-chrome
       >
         {/* Title bar */}
@@ -198,25 +207,31 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
           data-window-titlebar
           onMouseDown={handleMouseDownTitleBar}
           onDoubleClick={() => !isMobile && toggleMaximizeWindow(id)}
-          className={`h-11 px-3.5 flex items-center justify-between bg-zinc-900/70 border-b border-white/10 shrink-0 ${isDragging ? "cursor-grabbing" : effectiveMaximized ? "cursor-default" : "cursor-grab"}`}
+          className={`h-11 px-3.5 flex items-center justify-between border-b shrink-0 ${
+            isLight
+              ? "bg-slate-200/80 border-slate-300/70 text-slate-800"
+              : "bg-zinc-900/70 border-white/10 text-zinc-200"
+          } ${isDragging ? "cursor-grabbing" : effectiveMaximized ? "cursor-default" : "cursor-grab"}`}
         >
           <div className="flex items-center gap-2.5 min-w-0">
             <div className={`p-1.5 rounded-lg text-white ${accentColor || "bg-blue-600"} shadow-sm`}>
               <AppIcon name={icon} size={15} />
             </div>
-            <span className="text-sm font-medium text-zinc-200 truncate">{title}</span>
+            <span className={`text-sm font-medium truncate ${isLight ? "text-slate-900" : "text-zinc-200"}`}>{title}</span>
           </div>
 
           {/* Window control buttons */}
           <div
-            className="flex items-center gap-1 text-zinc-400"
+            className={`flex items-center gap-1 ${isLight ? "text-slate-600" : "text-zinc-400"}`}
             onMouseDown={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => minimizeWindow(id)}
               title="Minimize"
               aria-label="Minimize Window"
-              className="p-2 sm:p-1.5 rounded-lg hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden transition-colors min-w-9 min-h-9 flex items-center justify-center"
+              className={`p-2 sm:p-1.5 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden transition-colors min-w-9 min-h-9 flex items-center justify-center ${
+                isLight ? "hover:bg-slate-300/60 hover:text-slate-900" : "hover:bg-white/10 hover:text-white"
+              }`}
             >
               <Minus size={14} />
             </button>
@@ -225,7 +240,9 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
                 onClick={() => toggleMaximizeWindow(id)}
                 title={isMaximized ? "Restore" : "Maximize"}
                 aria-label={isMaximized ? "Restore Window" : "Maximize Window"}
-                className="p-2 sm:p-1.5 rounded-lg hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden transition-colors min-w-9 min-h-9 flex items-center justify-center"
+                className={`p-2 sm:p-1.5 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden transition-colors min-w-9 min-h-9 flex items-center justify-center ${
+                  isLight ? "hover:bg-slate-300/60 hover:text-slate-900" : "hover:bg-white/10 hover:text-white"
+                }`}
               >
                 {isMaximized ? <Copy size={13} /> : <Square size={13} />}
               </button>
@@ -234,7 +251,7 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
               onClick={() => closeWindow(id)}
               title="Close"
               aria-label="Close Window"
-              className="p-2 sm:p-1.5 rounded-lg hover:bg-rose-500/80 hover:text-white focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-hidden transition-colors ml-0.5 min-w-9 min-h-9 flex items-center justify-center text-rose-300"
+              className="p-2 sm:p-1.5 rounded-lg hover:bg-rose-500/80 hover:text-white focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-hidden transition-colors ml-0.5 min-w-9 min-h-9 flex items-center justify-center text-rose-500"
             >
               <X size={15} />
             </button>
@@ -242,7 +259,9 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
         </div>
 
         {/* Window Body Content Area */}
-        <div data-window-body className={`flex-1 overflow-auto text-zinc-100 font-sans select-text ${id === 'japanese-quiz' || id === 'lovely-ever' ? 'p-0 flex flex-col' : 'p-4 sm:p-6'
+        <div data-window-body className={`flex-1 overflow-auto font-sans select-text ${
+          isLight ? "text-slate-900 bg-white/40" : "text-zinc-100 bg-transparent"
+        } ${id === 'japanese-quiz' || id === 'lovely-ever' ? 'p-0 flex flex-col' : 'p-4 sm:p-6'
           }`}>
           {children}
         </div>
