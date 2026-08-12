@@ -17,7 +17,8 @@ const getWeatherDesc = (code: number) => {
 };
 
 export const WeatherWidget: React.FC = () => {
-  const { openWindow } = useWindowStore();
+  const { openWindow, theme } = useWindowStore();
+  const isLight = theme === "light";
   const [temp, setTemp] = useState<number>(29);
   const [condition, setCondition] = useState<string>("Cerah Berawan");
 
@@ -50,13 +51,23 @@ export const WeatherWidget: React.FC = () => {
       data-widget
       onClick={handleClick}
       title="Buka Aplikasi Cuaca"
-      className="group relative p-5 rounded-3xl bg-zinc-950/40 border border-white/10 hover:border-white/25 hover:bg-zinc-950/60 backdrop-blur-xl shadow-2xl transition-all duration-300 cursor-pointer select-none flex flex-col justify-between w-64 h-36 hover:scale-102 hover:-translate-y-1"
+      className={`group relative p-5 rounded-3xl overflow-hidden [clip-path:inset(0_round_1.5rem)] backdrop-blur-xl transition-colors duration-300 cursor-pointer select-none flex flex-col justify-between w-64 h-36 shadow-none ${
+        isLight
+          ? "bg-white/45 hover:bg-white/55 border border-white/70 text-slate-900"
+          : "bg-zinc-950/45 hover:bg-zinc-950/55 border border-white/15 text-zinc-100"
+      }`}
     >
-      <div className="flex items-center justify-between text-zinc-400 group-hover:text-white transition-colors">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+      <div className={`flex items-center justify-between transition-colors ${
+        isLight ? "text-slate-600 group-hover:text-slate-900" : "text-zinc-400 group-hover:text-white"
+      }`}>
+        <span className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+          isLight ? "text-amber-600" : "text-amber-400"
+        }`}>
           <MapPin size={13} /> Jakarta, ID
         </span>
-        <div className="p-1 rounded-xl bg-amber-500/20 text-amber-400">
+        <div className={`p-1 rounded-xl ${
+          isLight ? "bg-amber-100 text-amber-600" : "bg-amber-500/20 text-amber-400"
+        }`}>
           <Sun size={16} className="animate-spin-slow" />
         </div>
       </div>
@@ -64,18 +75,24 @@ export const WeatherWidget: React.FC = () => {
       <div className="flex items-baseline justify-between">
         <div>
           <div className="flex items-start">
-            <span className="text-4xl font-black text-white tracking-tight leading-none group-hover:text-amber-200 transition-colors">
+            <span className={`text-4xl font-black tracking-tight leading-none transition-colors ${
+              isLight ? "text-slate-900 group-hover:text-amber-700" : "text-white group-hover:text-amber-200"
+            }`}>
               {temp}
             </span>
-            <span className="text-xl font-bold text-amber-400 ml-0.5">°C</span>
+            <span className={`text-xl font-bold ml-0.5 ${isLight ? "text-amber-600" : "text-amber-400"}`}>°C</span>
           </div>
-          <span className="text-xs text-zinc-400 font-medium mt-1 block group-hover:text-zinc-300">
+          <span className={`text-xs font-medium mt-1 block transition-colors ${
+            isLight ? "text-slate-600 group-hover:text-slate-800" : "text-zinc-400 group-hover:text-zinc-300"
+          }`}>
             {condition}
           </span>
         </div>
 
-        <div className="flex items-center gap-1 text-[11px] text-zinc-400 font-medium">
-          <CloudSun size={18} className="text-amber-300" />
+        <div className={`flex items-center gap-1 text-[11px] font-medium ${
+          isLight ? "text-slate-600" : "text-zinc-400"
+        }`}>
+          <CloudSun size={18} className={isLight ? "text-amber-500" : "text-amber-300"} />
         </div>
       </div>
     </div>

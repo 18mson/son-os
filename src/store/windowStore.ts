@@ -1,515 +1,142 @@
 import { create } from 'zustand';
 import { playUiClickSound } from '@/utils/audio';
-import { PLAYLIST, Track } from '@/config/musicConfig';
+import { PLAYLIST } from '@/config/musicConfig';
+import { WindowStore } from './windowStoreTypes';
+import {
+  getInitialWindows,
+  getInitialActiveWindowId,
+  getInitialPinnedApps,
+  getInitialDesktopShortcuts,
+  getInitialDesktopWidgets,
+} from './windowStoreHelpers';
+import { createWindowActions } from './windowStoreWindowActions';
+import { createDesktopActions } from './windowStoreDesktopActions';
 
-export interface WindowPosition {
-  x: number;
-  y: number;
-}
-
-export interface WindowSize {
-  w: number;
-  h: number;
-}
-
-export interface WindowState {
-  id: string;
-  title: string;
-  icon: string;
-  accentColor?: string;
-  position: WindowPosition;
-  size: WindowSize;
-  isMinimized: boolean;
-  isMaximized: boolean;
-  zIndex: number;
-}
-
-export interface AppDefinition {
-  id: string;
-  title: string;
-  icon: string;
-  accentColor: string;
-  description?: string;
-  defaultSize?: WindowSize;
-  type?: 'iframe' | 'static';
-  liveUrl?: string;
-  githubUrl?: string;
-  category?: 'portfolio' | 'utility' | 'system';
-  isSystemApp?: boolean;
-  isPreinstalled?: boolean;
-}
-
-export interface SystemNotification {
-  id: string;
-  title: string;
-  message: string;
-  appName?: string;
-  icon?: string;
-}
-
-export interface DesktopShortcutItem {
-  id: string;
-  appId: string;
-  x: number;
-  y: number;
-}
-
-export type DesktopWidgetType = 'clock' | 'weather' | 'calendar' | 'notes' | 'system' | 'calculator';
-
-export interface DesktopWidgetConfig {
-  id: string;
-  type: DesktopWidgetType;
-}
-
-const DEFAULT_PINNED_APPS = ["app-store", "japanese-quiz", "lovely-ever", "about", "settings"];
-
-const DEFAULT_DESKTOP_SHORTCUTS: DesktopShortcutItem[] = [
-  { id: "ds-japanese-quiz", appId: "japanese-quiz", x: 28, y: 28 },
-  { id: "ds-lovely-ever", appId: "lovely-ever", x: 28, y: 138 },
-  { id: "ds-about", appId: "about", x: 28, y: 248 },
-  { id: "ds-terminal", appId: "terminal", x: 28, y: 358 },
-];
-
-const DEFAULT_DESKTOP_WIDGETS: DesktopWidgetConfig[] = [
-  { id: "w-clock-def", type: "clock" },
-  { id: "w-weather-def", type: "weather" },
-];
-
-const getInitialDesktopWidgets = (): DesktopWidgetConfig[] => {
-  if (typeof window !== "undefined") {
-    try {
-      const saved = localStorage.getItem("sonos_desktop_widgets");
-      if (saved) return JSON.parse(saved);
-    } catch {
-      // fallback to default
-    }
-  }
-  return DEFAULT_DESKTOP_WIDGETS;
-};
-
-const getInitialPinnedApps = (): string[] => {
-  if (typeof window === "undefined") return DEFAULT_PINNED_APPS;
-  try {
-    const saved = localStorage.getItem("sonos_pinned_apps");
-    const parsed = saved ? JSON.parse(saved) : DEFAULT_PINNED_APPS;
-    return parsed.includes("app-store") ? parsed : ["app-store", ...parsed];
-  } catch {
-    return DEFAULT_PINNED_APPS;
-  }
-};
-
-const getInitialDesktopShortcuts = (): DesktopShortcutItem[] => {
-  if (typeof window === "undefined") return DEFAULT_DESKTOP_SHORTCUTS;
-  try {
-    const saved = localStorage.getItem("sonos_desktop_shortcuts");
-    return saved ? JSON.parse(saved) : DEFAULT_DESKTOP_SHORTCUTS;
-  } catch {
-    return DEFAULT_DESKTOP_SHORTCUTS;
-  }
-};
-
-const getInitialWallpaper = (): string => {
-  if (typeof window === "undefined") return "default";
-  try {
-    const saved = localStorage.getItem("sonos_wallpaper");
-    return saved || "default";
-  } catch {
-    return "default";
-  }
-};
-
-const getInitialSoundEnabled = (): boolean => {
-  if (typeof window === "undefined") return true;
-  try {
-    const saved = localStorage.getItem("sonos_sound_enabled");
-    return saved !== null ? JSON.parse(saved) : true;
-  } catch {
-    return true;
-  }
-};
-
-const getInitialMediaVolume = (): number => {
-  if (typeof window === "undefined") return 0.8;
-  try {
-    const saved = localStorage.getItem("sonos_media_volume");
-    return saved !== null ? Number(saved) : 0.8;
-  } catch {
-    return 0.8;
-  }
-};
-
-const getInitialWindows = (): WindowState[] => {
-  if (typeof window === "undefined") return [];
-  try {
-    const saved = localStorage.getItem("sonos_windows");
-    return saved ? JSON.parse(saved) : [];
-  } catch {
-    return [];
-  }
-};
-
-const getInitialActiveWindowId = (initialWindows: WindowState[]): string | null => {
-  if (typeof window === "undefined" || initialWindows.length === 0) return null;
-  try {
-    const saved = localStorage.getItem("sonos_active_window_id");
-    if (saved && initialWindows.some((w) => w.id === saved)) return saved;
-    const active = initialWindows.filter((w) => !w.isMinimized);
-    if (active.length > 0) {
-      return active.reduce((prev, curr) => (curr.zIndex > prev.zIndex ? curr : prev)).id;
-    }
-  } catch {
-    // fallback
-  }
-  return null;
-};
-
-const getInitialHighestZIndex = (initialWindows: WindowState[]): number => {
-  if (initialWindows.length === 0) return 10;
-  return Math.max(10, ...initialWindows.map((w) => w.zIndex || 10));
-};
-
-const saveWindowsSession = (windows: WindowState[], activeId: string | null) => {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem("sonos_windows", JSON.stringify(windows));
-    if (activeId) {
-      localStorage.setItem("sonos_active_window_id", activeId);
-    } else {
-      localStorage.removeItem("sonos_active_window_id");
-    }
-  } catch {
-    // ignore
-  }
-};
-
-interface WindowStore {
-  windows: WindowState[];
-  launcherOpen: boolean;
-  quickSettingsOpen: boolean;
-  soundEnabled: boolean;
-  theme: 'dark' | 'light';
-  activeWindowId: string | null;
-  highestZIndex: number;
-  wallpaper: string;
-  booted: boolean;
-  notification: SystemNotification | null;
-  pinnedApps: string[];
-  desktopShortcuts: DesktopShortcutItem[];
-  desktopWidgets: DesktopWidgetConfig[];
-  widgetGalleryOpen: boolean;
-
-  // Global Music Player Media State
-  mediaTrackIndex: number;
-  mediaIsPlaying: boolean;
-  mediaCurrentTime: number;
-  mediaDuration: number;
-  mediaVolume: number;
-  mediaIsMuted: boolean;
-  mediaIsShuffle: boolean;
-  mediaIsRepeat: boolean;
-  customTracks: Track[];
-
-  openWindow: (app: AppDefinition, options?: { keepLauncherOpen?: boolean }) => void;
-  closeWindow: (id: string) => void;
-  closeAllWindows: () => void;
-  minimizeWindow: (id: string) => void;
-  focusWindow: (id: string) => void;
-  moveWindow: (id: string, position: WindowPosition) => void;
-  resizeWindow: (id: string, size: WindowSize) => void;
-  toggleMaximizeWindow: (id: string) => void;
-  toggleMinimizeWindow: (id: string) => void;
-  toggleLauncher: (open?: boolean) => void;
-  closeLauncher: () => void;
-  toggleQuickSettings: (open?: boolean) => void;
-  toggleSound: () => void;
-  toggleTheme: () => void;
-  cycleWallpaper: () => void;
-  setWallpaper: (wallpaper: string) => void;
-  setBooted: (booted: boolean) => void;
-  showNotification: (title: string, message: string, appName?: string, icon?: string) => void;
-  clearNotification: () => void;
-  togglePinApp: (appId: string) => void;
-  reorderPinnedApps: (newOrder: string[]) => void;
-  isPinnedApp: (appId: string) => boolean;
-  addDesktopShortcut: (appId: string) => void;
-  removeDesktopShortcut: (id: string) => void;
-  updateDesktopShortcutPos: (id: string, position: { x: number; y: number }) => void;
-  toggleWidgetGallery: (open?: boolean) => void;
-  addWidget: (type: DesktopWidgetType) => void;
-  removeWidget: (id: string) => void;
-  resetWidgets: () => void;
-  toggleMediaPlay: (playing?: boolean) => void;
-  playNextTrack: () => void;
-  playPrevTrack: () => void;
-  selectTrack: (index: number) => void;
-  setMediaCurrentTime: (time: number) => void;
-  setMediaDuration: (duration: number) => void;
-  setMediaVolume: (volume: number) => void;
-  toggleMediaMute: () => void;
-  toggleMediaShuffle: () => void;
-  toggleMediaRepeat: () => void;
-  addCustomTracks: (tracks: Track[]) => void;
-  getPlaylist: () => Track[];
-}
-
-const initialSavedWindows = getInitialWindows();
-const initialSavedActiveId = getInitialActiveWindowId(initialSavedWindows);
-const initialSavedHighestZ = getInitialHighestZIndex(initialSavedWindows);
+export * from './windowStoreTypes';
 
 export const useWindowStore = create<WindowStore>((set, get) => ({
-  windows: initialSavedWindows,
+  windows: getInitialWindows(),
+  activeWindowId: getInitialActiveWindowId(getInitialWindows()),
+  highestZIndex: 100,
   launcherOpen: false,
   quickSettingsOpen: false,
-  soundEnabled: getInitialSoundEnabled(),
-  theme: (typeof window !== 'undefined'
-    ? (localStorage.getItem('sonos_theme') as 'dark' | 'light' | null) ?? 'dark'
-    : 'dark'),
-  activeWindowId: initialSavedActiveId,
-  highestZIndex: initialSavedHighestZ,
-  wallpaper: getInitialWallpaper(),
+  widgetGalleryOpen: false,
+  soundEnabled: true,
+  wifiEnabled: true,
+  bluetoothEnabled: false,
+  nightLightEnabled: false,
+  volume: 80,
+  brightness: 100,
+  theme: typeof window !== "undefined" ? (localStorage.getItem("sonos_theme") as "dark" | "light") || "dark" : "dark",
+  wallpaper: typeof window !== "undefined" ? localStorage.getItem("sonos_wallpaper") || "default" : "default",
   booted: false,
   notification: null,
   pinnedApps: getInitialPinnedApps(),
   desktopShortcuts: getInitialDesktopShortcuts(),
   desktopWidgets: getInitialDesktopWidgets(),
-  widgetGalleryOpen: false,
+
+  // Accessibility & System Preferences
+  reducedMotion: typeof window !== "undefined" ? localStorage.getItem("sonos_reduced_motion") === "true" : false,
+  textScale: (typeof window !== "undefined" ? (localStorage.getItem("sonos_text_scale") as "small" | "normal" | "large") : null) || "normal",
+  highContrast: typeof window !== "undefined" ? localStorage.getItem("sonos_high_contrast") === "true" : false,
+  clockFormat: (typeof window !== "undefined" ? (localStorage.getItem("sonos_clock_format") as "12h" | "24h") : null) || "12h",
+
+  // Global Background Media Player State
   mediaTrackIndex: 0,
   mediaIsPlaying: false,
   mediaCurrentTime: 0,
   mediaDuration: 0,
-  mediaVolume: getInitialMediaVolume(),
+  mediaVolume: typeof window !== "undefined" ? Number(localStorage.getItem("sonos_media_volume") ?? 80) : 80,
   mediaIsMuted: false,
   mediaIsShuffle: false,
   mediaIsRepeat: false,
   customTracks: [],
 
-  openWindow: (app, options) => {
+  ...createWindowActions(set, get),
+  ...createDesktopActions(set, get),
+
+  toggleLauncher: () => {
     if (get().soundEnabled) playUiClickSound();
-    const { windows, highestZIndex, launcherOpen } = get();
-    const existingWindow = windows.find((w) => w.id === app.id);
-
-    const nextZIndex = highestZIndex + 1;
-    const isMobileScreen = typeof window !== 'undefined' && window.innerWidth < 768;
-    const shouldCloseLauncher = options?.keepLauncherOpen ? launcherOpen : false;
-
-    let updatedWindows: WindowState[];
-    let newActiveId: string;
-
-    if (existingWindow) {
-      updatedWindows = windows.map((w) =>
-        w.id === app.id
-          ? { ...w, isMinimized: false, isMaximized: isMobileScreen ? true : w.isMaximized, zIndex: nextZIndex }
-          : w
-      );
-      newActiveId = app.id;
-    } else {
-      const offset = (windows.length % 5) * 28;
-      const defaultW = app.defaultSize?.w || 760;
-      const defaultH = app.defaultSize?.h || 500;
-      
-      const initialX = Math.max(20, typeof window !== 'undefined' ? Math.round((window.innerWidth - defaultW) / 2) + offset : 120 + offset);
-      const initialY = Math.max(20, typeof window !== 'undefined' ? Math.round((window.innerHeight - defaultH) / 2) - 30 + offset : 70 + offset);
-
-      const newWindow: WindowState = {
-        id: app.id,
-        title: app.title,
-        icon: app.icon,
-        accentColor: app.accentColor,
-        position: { x: initialX, y: initialY },
-        size: { w: defaultW, h: defaultH },
-        isMinimized: false,
-        isMaximized: isMobileScreen,
-        zIndex: nextZIndex,
-      };
-
-      updatedWindows = [...windows, newWindow];
-      newActiveId = app.id;
-    }
-
-    set({
-      windows: updatedWindows,
-      activeWindowId: newActiveId,
-      highestZIndex: nextZIndex,
-      launcherOpen: shouldCloseLauncher,
-    });
-    saveWindowsSession(updatedWindows, newActiveId);
+    set((state) => ({ launcherOpen: !state.launcherOpen }));
   },
-
-  closeWindow: (id) => {
-    if (get().soundEnabled) playUiClickSound();
-    const remaining = get().windows.filter((w) => w.id !== id);
-    const activeWindows = remaining.filter((w) => !w.isMinimized);
-    const newActiveId = activeWindows.length > 0
-      ? activeWindows.reduce((prev, curr) => (curr.zIndex > prev.zIndex ? curr : prev)).id
-      : null;
-
-    set({
-      windows: remaining,
-      activeWindowId: newActiveId,
-    });
-    saveWindowsSession(remaining, newActiveId);
-  },
-
-  closeAllWindows: () => {
-    set({ windows: [], activeWindowId: null });
-    saveWindowsSession([], null);
-  },
-
-  minimizeWindow: (id) => {
-    if (get().soundEnabled) playUiClickSound();
-    const updatedWindows = get().windows.map((w) =>
-      w.id === id ? { ...w, isMinimized: true } : w
-    );
-    const activeWindows = updatedWindows.filter((w) => !w.isMinimized);
-    const newActiveId = activeWindows.length > 0
-      ? activeWindows.reduce((prev, curr) => (curr.zIndex > prev.zIndex ? curr : prev)).id
-      : null;
-
-    set({
-      windows: updatedWindows,
-      activeWindowId: newActiveId,
-    });
-    saveWindowsSession(updatedWindows, newActiveId);
-  },
-
-  focusWindow: (id) => {
-    const { windows, highestZIndex, activeWindowId } = get();
-    const target = windows.find((w) => w.id === id);
-
-    if (!target) return;
-
-    if (activeWindowId === id && !target.isMinimized) {
-      return;
-    }
-
-    const nextZIndex = highestZIndex + 1;
-    const updatedWindows = windows.map((w) =>
-      w.id === id ? { ...w, isMinimized: false, zIndex: nextZIndex } : w
-    );
-
-    set({
-      windows: updatedWindows,
-      activeWindowId: id,
-      highestZIndex: nextZIndex,
-    });
-    saveWindowsSession(updatedWindows, id);
-  },
-
-  toggleMinimizeWindow: (id) => {
-    const { windows, activeWindowId } = get();
-    const target = windows.find((w) => w.id === id);
-    if (!target) return;
-
-    if (activeWindowId === id && !target.isMinimized) {
-      get().minimizeWindow(id);
-    } else {
-      get().focusWindow(id);
-    }
-  },
-
-  moveWindow: (id, position) => {
-    const updatedWindows = get().windows.map((w) =>
-      w.id === id ? { ...w, position } : w
-    );
-    set({ windows: updatedWindows });
-    saveWindowsSession(updatedWindows, get().activeWindowId);
-  },
-
-  resizeWindow: (id, size) => {
-    const updatedWindows = get().windows.map((w) =>
-      w.id === id ? { ...w, size } : w
-    );
-    set({ windows: updatedWindows });
-    saveWindowsSession(updatedWindows, get().activeWindowId);
-  },
-
-  toggleMaximizeWindow: (id) => {
-    const updatedWindows = get().windows.map((w) =>
-      w.id === id ? { ...w, isMaximized: !w.isMaximized } : w
-    );
-    set({ windows: updatedWindows });
-    saveWindowsSession(updatedWindows, get().activeWindowId);
-  },
-
-  toggleLauncher: (open) => {
-    set((state) => ({
-      launcherOpen: open !== undefined ? open : !state.launcherOpen,
-    }));
-  },
-
-  closeLauncher: () => {
-    set({ launcherOpen: false });
-  },
+  closeLauncher: () => set({ launcherOpen: false }),
 
   toggleQuickSettings: (open) => {
-    set((state) => ({
-      quickSettingsOpen: open !== undefined ? open : !state.quickSettingsOpen,
-    }));
+    if (get().soundEnabled) playUiClickSound();
+    set((state) => ({ quickSettingsOpen: open !== undefined ? open : !state.quickSettingsOpen }));
   },
 
   toggleSound: () => {
-    const nextState = !get().soundEnabled;
-    if (typeof window !== 'undefined') {
-      try { localStorage.setItem('sonos_sound_enabled', JSON.stringify(nextState)); } catch { /* ignore */ }
-    }
-    get().showNotification(
-      "Audio System",
-      nextState ? "Suara sistem diaktifkan" : "Suara sistem dibisukan",
-      "System Settings",
-      nextState ? "Volume2" : "VolumeX"
-    );
-    set({ soundEnabled: nextState });
+    const next = !get().soundEnabled;
+    if (next) playUiClickSound();
+    set({ soundEnabled: next });
   },
 
+  toggleWifi: () => {
+    if (get().soundEnabled) playUiClickSound();
+    set((state) => ({ wifiEnabled: !state.wifiEnabled }));
+  },
+
+  toggleBluetooth: () => {
+    if (get().soundEnabled) playUiClickSound();
+    set((state) => ({ bluetoothEnabled: !state.bluetoothEnabled }));
+  },
+
+  toggleNightLight: () => {
+    if (get().soundEnabled) playUiClickSound();
+    set((state) => ({ nightLightEnabled: !state.nightLightEnabled }));
+  },
+
+  setVolume: (volume: number) => set({ volume }),
+  setBrightness: (brightness: number) => set({ brightness }),
+
   toggleTheme: () => {
+    if (get().soundEnabled) playUiClickSound();
     const nextTheme = get().theme === 'dark' ? 'light' : 'dark';
-    if (typeof window !== 'undefined') {
-      try { localStorage.setItem('sonos_theme', nextTheme); } catch { /* ignore */ }
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("sonos_theme", nextTheme);
+      } catch {}
     }
-    get().showNotification(
-      nextTheme === 'light' ? 'Mode Terang Aktif' : 'Mode Gelap Aktif',
-      nextTheme === 'light' ? 'Tampilan diubah ke tema terang.' : 'Tampilan diubah ke tema gelap.',
-      'Personalization',
-      nextTheme === 'light' ? 'Sun' : 'Moon'
-    );
     set({ theme: nextTheme });
   },
 
-  cycleWallpaper: () => {
-    const PRESETS = ["default", "ocean", "sunset", "emerald"];
-    const current = get().wallpaper;
-    const currentIndex = PRESETS.indexOf(current);
-    const nextWallpaper = PRESETS[(currentIndex + 1) % PRESETS.length];
-    if (typeof window !== 'undefined') {
-      try { localStorage.setItem('sonos_wallpaper', nextWallpaper); } catch { /* ignore */ }
+  setTheme: (theme: 'dark' | 'light') => {
+    if (get().soundEnabled) playUiClickSound();
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("sonos_theme", theme);
+      } catch {}
     }
-    get().showNotification(
-      "Wallpaper Diperbarui",
-      `Tema wallpaper diubah ke: ${nextWallpaper}`,
-      "Personalization",
-      "Palette"
-    );
-    set({ wallpaper: nextWallpaper });
+    set({ theme });
   },
 
-  setWallpaper: (wallpaper) => {
-    if (typeof window !== 'undefined') {
-      try { localStorage.setItem('sonos_wallpaper', wallpaper); } catch { /* ignore */ }
+  cycleWallpaper: () => {
+    if (get().soundEnabled) playUiClickSound();
+    const wallpapers = ['default', 'sunset', 'ocean', 'cyberpunk', 'abstract'];
+    const currentIndex = wallpapers.indexOf(get().wallpaper);
+    const next = wallpapers[(currentIndex + 1) % wallpapers.length];
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("sonos_wallpaper", next);
+      } catch {}
     }
-    get().showNotification(
-      "Wallpaper Diperbarui",
-      `Tema wallpaper diubah ke: ${wallpaper}`,
-      "Personalization",
-      "Palette"
-    );
+    set({ wallpaper: next });
+  },
+
+  setWallpaper: (wallpaper: string) => {
+    if (get().soundEnabled) playUiClickSound();
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("sonos_wallpaper", wallpaper);
+      } catch {}
+    }
     set({ wallpaper });
   },
 
-  setBooted: (booted) => {
-    set({ booted });
-  },
+  setBooted: (booted: boolean) => set({ booted }),
 
-  showNotification: (title, message, appName = "Son-OS System", icon = "Monitor") => {
+  showNotification: (title: string, message: string, appName = "SonOS System", icon?: string) => {
     set({
       notification: {
         id: `notif-${Date.now()}`,
@@ -521,225 +148,84 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
     });
   },
 
-  clearNotification: () => {
-    set({ notification: null });
-  },
+  clearNotification: () => set({ notification: null }),
 
-  togglePinApp: (appId) => {
-    if (appId === "app-store" && get().pinnedApps.includes("app-store")) {
-      return;
-    }
-    const { pinnedApps } = get();
-    const isPinned = pinnedApps.includes(appId);
-    const updated = isPinned
-      ? pinnedApps.filter((id) => id !== appId)
-      : [...pinnedApps, appId];
-
+  toggleReducedMotion: (enabled?: boolean) => {
+    const next = enabled !== undefined ? enabled : !get().reducedMotion;
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("sonos_pinned_apps", JSON.stringify(updated));
-      } catch {
-        // ignore localStorage write errors
-      }
+        localStorage.setItem("sonos_reduced_motion", JSON.stringify(next));
+      } catch {}
     }
-
-    get().showNotification(
-      isPinned ? "Unpinned dari Shelf" : "Pinned ke Shelf",
-      `Aplikasi '${appId}' ${isPinned ? "dilepas dari" : "disematkan ke"} shelf`,
-      "Shelf Manager",
-      "Pin"
-    );
-
-    set({ pinnedApps: updated });
+    set({ reducedMotion: next });
   },
 
-  reorderPinnedApps: (newOrder) => {
+  setTextScale: (scale: 'small' | 'normal' | 'large') => {
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("sonos_pinned_apps", JSON.stringify(newOrder));
-      } catch {
-        // ignore localStorage write errors
-      }
+        localStorage.setItem("sonos_text_scale", scale);
+      } catch {}
     }
-    set({ pinnedApps: newOrder });
+    set({ textScale: scale });
   },
 
-  isPinnedApp: (appId) => {
-    return get().pinnedApps.includes(appId);
-  },
-
-  addDesktopShortcut: (appId) => {
-    const { desktopShortcuts } = get();
-    const existing = desktopShortcuts.find((s) => s.appId === appId);
-    if (existing) return;
-
-    const count = desktopShortcuts.length;
-    const newShortcut: DesktopShortcutItem = {
-      id: `ds-${appId}-${Date.now()}`,
-      appId,
-      x: 28,
-      y: 28 + (count % 5) * 110,
-    };
-
-    const updated = [...desktopShortcuts, newShortcut];
+  toggleHighContrast: (enabled?: boolean) => {
+    const next = enabled !== undefined ? enabled : !get().highContrast;
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("sonos_desktop_shortcuts", JSON.stringify(updated));
-      } catch {
-        // ignore storage error
-      }
+        localStorage.setItem("sonos_high_contrast", JSON.stringify(next));
+      } catch {}
     }
-
-    get().showNotification(
-      "Shortcut Ditambahkan",
-      `Shortcut '${appId}' berhasil dibuat di Desktop`,
-      "Desktop Manager",
-      "Monitor"
-    );
-
-    set({ desktopShortcuts: updated });
+    set({ highContrast: next });
   },
 
-  removeDesktopShortcut: (id) => {
-    const { desktopShortcuts } = get();
-    const updated = desktopShortcuts.filter((s) => s.id !== id);
+  setClockFormat: (format: '12h' | '24h') => {
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("sonos_desktop_shortcuts", JSON.stringify(updated));
-      } catch {
-        // ignore storage error
-      }
+        localStorage.setItem("sonos_clock_format", format);
+      } catch {}
     }
-
-    get().showNotification(
-      "Shortcut Dihapus",
-      "Shortcut telah dihapus dari Desktop",
-      "Desktop Manager",
-      "Trash"
-    );
-
-    set({ desktopShortcuts: updated });
+    set({ clockFormat: format });
   },
 
-  updateDesktopShortcutPos: (id, position) => {
-    const { desktopShortcuts } = get();
-    const updated = desktopShortcuts.map((s) =>
-      s.id === id ? { ...s, x: position.x, y: position.y } : s
-    );
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("sonos_desktop_shortcuts", JSON.stringify(updated));
-      } catch {
-        // ignore storage error
-      }
-    }
-    set({ desktopShortcuts: updated });
-  },
-
-  toggleWidgetGallery: (open) => {
-    set((state) => ({
-      widgetGalleryOpen: open !== undefined ? open : !state.widgetGalleryOpen,
-    }));
-  },
-
-  addWidget: (type) => {
-    const newWidget: DesktopWidgetConfig = {
-      id: `w-${type}-${Date.now()}`,
-      type,
-    };
-    const updated = [...get().desktopWidgets, newWidget];
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("sonos_desktop_widgets", JSON.stringify(updated));
-      } catch {
-        // ignore storage error
-      }
-    }
-    get().showNotification(
-      "Widget Ditambahkan",
-      `Widget '${type}' berhasil ditambahkan ke Desktop`,
-      "Widget Gallery",
-      "Monitor"
-    );
-    set({ desktopWidgets: updated });
-  },
-
-  removeWidget: (id) => {
-    const updated = get().desktopWidgets.filter((w) => w.id !== id);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("sonos_desktop_widgets", JSON.stringify(updated));
-      } catch {
-        // ignore storage error
-      }
-    }
-    get().showNotification(
-      "Widget Dihapus",
-      "Widget telah dihapus dari Desktop",
-      "Widget Gallery",
-      "Trash"
-    );
-    set({ desktopWidgets: updated });
-  },
-
-  resetWidgets: () => {
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("sonos_desktop_widgets", JSON.stringify(DEFAULT_DESKTOP_WIDGETS));
-      } catch {
-        // ignore storage error
-      }
-    }
-    set({ desktopWidgets: DEFAULT_DESKTOP_WIDGETS });
-  },
-
-  toggleMediaPlay: (playing) => {
+  toggleMediaPlay: (playing?: boolean) => {
     set((state) => ({
       mediaIsPlaying: playing !== undefined ? playing : !state.mediaIsPlaying,
     }));
   },
 
-  addCustomTracks: (newTracks) => {
-    const updated = [...get().customTracks, ...newTracks];
-    set({ customTracks: updated });
-  },
-
-  getPlaylist: () => {
-    return [...PLAYLIST, ...get().customTracks];
-  },
-
   playNextTrack: () => {
-    const playlist = [...PLAYLIST, ...get().customTracks];
-    const { mediaIsShuffle, mediaTrackIndex } = get();
-    if (mediaIsShuffle) {
-      const nextIdx = Math.floor(Math.random() * playlist.length);
-      set({ mediaTrackIndex: nextIdx, mediaIsPlaying: true, mediaCurrentTime: 0 });
+    const state = get();
+    const allTracks = [...PLAYLIST, ...state.customTracks];
+    let nextIndex: number;
+    if (state.mediaIsShuffle) {
+      nextIndex = Math.floor(Math.random() * allTracks.length);
     } else {
-      const nextIdx = (mediaTrackIndex + 1) % playlist.length;
-      set({ mediaTrackIndex: nextIdx, mediaIsPlaying: true, mediaCurrentTime: 0 });
+      nextIndex = (state.mediaTrackIndex + 1) % allTracks.length;
     }
+    set({ mediaTrackIndex: nextIndex, mediaIsPlaying: true, mediaCurrentTime: 0 });
   },
 
   playPrevTrack: () => {
-    const playlist = [...PLAYLIST, ...get().customTracks];
-    const { mediaTrackIndex } = get();
-    const prevIdx = (mediaTrackIndex - 1 + playlist.length) % playlist.length;
-    set({ mediaTrackIndex: prevIdx, mediaIsPlaying: true, mediaCurrentTime: 0 });
+    const state = get();
+    const allTracks = [...PLAYLIST, ...state.customTracks];
+    const prevIndex = (state.mediaTrackIndex - 1 + allTracks.length) % allTracks.length;
+    set({ mediaTrackIndex: prevIndex, mediaIsPlaying: true, mediaCurrentTime: 0 });
   },
 
-  selectTrack: (index) => {
-    set({ mediaTrackIndex: index, mediaIsPlaying: true, mediaCurrentTime: 0 });
-  },
-
-  setMediaCurrentTime: (time) => set({ mediaCurrentTime: time }),
-  setMediaDuration: (duration) => set({ mediaDuration: duration }),
-  setMediaVolume: (volume) => {
-    if (typeof window !== 'undefined') {
-      try { localStorage.setItem('sonos_media_volume', String(volume)); } catch { /* ignore */ }
+  selectTrack: (index: number) => set({ mediaTrackIndex: index, mediaIsPlaying: true, mediaCurrentTime: 0 }),
+  setMediaCurrentTime: (time: number) => set({ mediaCurrentTime: time }),
+  setMediaDuration: (duration: number) => set({ mediaDuration: duration }),
+  setMediaVolume: (volume: number) => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("sonos_media_volume", String(volume));
+      } catch {}
     }
-    set({ mediaVolume: volume, mediaIsMuted: false });
+    set({ mediaVolume: volume, mediaIsMuted: volume === 0 });
   },
   toggleMediaMute: () => set((state) => ({ mediaIsMuted: !state.mediaIsMuted })),
   toggleMediaShuffle: () => set((state) => ({ mediaIsShuffle: !state.mediaIsShuffle })),
   toggleMediaRepeat: () => set((state) => ({ mediaIsRepeat: !state.mediaIsRepeat })),
+  addCustomTrack: (track) => set((state) => ({ customTracks: [...state.customTracks, track] })),
 }));

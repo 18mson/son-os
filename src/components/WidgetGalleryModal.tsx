@@ -9,7 +9,6 @@ import {
   Sun,
   Calendar as CalendarIcon,
   StickyNote,
-  ShieldCheck,
   Calculator,
   RotateCcw,
 } from "lucide-react";
@@ -56,14 +55,6 @@ const WIDGET_CATALOG: WidgetCatalogItem[] = [
     description: "Sticky note untuk menulis pesan singkat langsung di desktop.",
     icon: <StickyNote size={20} className="text-amber-300" />,
     accentColor: "bg-amber-400/20 border-amber-400/30",
-  },
-  {
-    type: "system",
-    title: "Status Sistem",
-    category: "Utilitas",
-    description: "Monitor status RAM, baterai, dan kesehatan sistem Son-OS.",
-    icon: <ShieldCheck size={20} className="text-emerald-400" />,
-    accentColor: "bg-emerald-500/20 border-emerald-500/30",
   },
   {
     type: "calculator",

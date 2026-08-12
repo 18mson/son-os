@@ -12,23 +12,23 @@ export const GlobalAudioManager: React.FC = () => {
     mediaVolume,
     mediaIsMuted,
     mediaIsRepeat,
+    customTracks,
     playNextTrack,
     setMediaCurrentTime,
     setMediaDuration,
     toggleMediaPlay,
-    getPlaylist,
   } = useWindowStore();
 
   const soundEnabled = useSettingsStore((s) => s.soundEnabled);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const playlist = getPlaylist();
+  const playlist = [...PLAYLIST, ...customTracks];
   const currentTrack = playlist[mediaTrackIndex] || playlist[0] || PLAYLIST[0];
 
   // Synchronize audio volume and mute
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = (!soundEnabled || mediaIsMuted) ? 0 : mediaVolume;
+      audioRef.current.volume = (!soundEnabled || mediaIsMuted) ? 0 : mediaVolume / 100;
     }
   }, [mediaVolume, mediaIsMuted, soundEnabled]);
 
@@ -40,7 +40,6 @@ export const GlobalAudioManager: React.FC = () => {
       const playPromise = audioRef.current.play();
       if (playPromise !== undefined) {
         playPromise.catch(() => {
-          // Autoplay policy fallback
           toggleMediaPlay(false);
         });
       }

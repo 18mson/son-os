@@ -6,7 +6,8 @@ import { useWindowStore } from "@/store/windowStore";
 import { APPS } from "@/config/appsConfig";
 
 export const CalendarWidget: React.FC = () => {
-  const { openWindow } = useWindowStore();
+  const { openWindow, theme } = useWindowStore();
+  const isLight = theme === "light";
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
 
   useEffect(() => {
@@ -49,20 +50,30 @@ export const CalendarWidget: React.FC = () => {
       data-widget
       onClick={handleClick}
       title="Buka Aplikasi Kalender"
-      className="group relative p-4 rounded-3xl bg-zinc-950/40 border border-white/10 hover:border-white/25 hover:bg-zinc-950/60 backdrop-blur-xl shadow-2xl transition-all duration-300 cursor-pointer select-none flex flex-col justify-between w-64 h-52 hover:scale-102 hover:-translate-y-1"
+      className={`group relative p-4 rounded-3xl overflow-hidden [clip-path:inset(0_round_1.5rem)] backdrop-blur-xl transition-colors duration-300 cursor-pointer select-none flex flex-col justify-between w-64 h-52 shadow-none ${
+        isLight
+          ? "bg-white/45 hover:bg-white/55 border border-white/70 text-slate-900"
+          : "bg-zinc-950/45 hover:bg-zinc-950/55 border border-white/15 text-zinc-100"
+      }`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between text-zinc-400 group-hover:text-white transition-colors pb-1">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
+      <div className={`flex items-center justify-between transition-colors pb-1 ${
+        isLight ? "text-slate-600 group-hover:text-slate-900" : "text-zinc-400 group-hover:text-white"
+      }`}>
+        <span className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+          isLight ? "text-rose-600" : "text-rose-400"
+        }`}>
           <CalendarIcon size={14} /> Kalender
         </span>
-        <span className="text-xs font-bold text-white">
+        <span className={`text-xs font-bold ${isLight ? "text-slate-900" : "text-white"}`}>
           {monthNames[month]} {year}
         </span>
       </div>
 
       {/* Days of week header */}
-      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-zinc-400 border-b border-white/10 pb-1">
+      <div className={`grid grid-cols-7 gap-1 text-center text-[10px] font-bold border-b pb-1 ${
+        isLight ? "text-slate-500 border-slate-300/60" : "text-zinc-400 border-white/10"
+      }`}>
         <span>Min</span>
         <span>Sen</span>
         <span>Sel</span>
@@ -82,10 +93,13 @@ export const CalendarWidget: React.FC = () => {
           return (
             <div
               key={day}
-              className={`h-5 flex items-center justify-center rounded-full text-[10px] ${isToday
+              className={`h-5 flex items-center justify-center rounded-full text-[10px] ${
+                isToday
                   ? "bg-rose-500 text-white font-bold shadow-md shadow-rose-500/30 scale-110"
-                  : "text-zinc-300 hover:bg-white/10"
-                }`}
+                  : isLight
+                    ? "text-slate-700 hover:bg-slate-200"
+                    : "text-zinc-300 hover:bg-white/10"
+              }`}
             >
               {day}
             </div>

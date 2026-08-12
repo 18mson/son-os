@@ -6,7 +6,8 @@ import { useWindowStore } from "@/store/windowStore";
 import { APPS } from "@/config/appsConfig";
 
 export const ClockWidget: React.FC = () => {
-  const { openWindow } = useWindowStore();
+  const { openWindow, theme } = useWindowStore();
+  const isLight = theme === "light";
   const [timeStr, setTimeStr] = useState<string>("");
   const [dateStr, setDateStr] = useState<string>("");
 
@@ -46,20 +47,34 @@ export const ClockWidget: React.FC = () => {
       data-widget
       onClick={handleClick}
       title="Buka Aplikasi Jam"
-      className="group relative p-5 rounded-3xl bg-zinc-950/40 border border-white/10 hover:border-white/25 hover:bg-zinc-950/60 backdrop-blur-xl shadow-2xl transition-all duration-300 cursor-pointer select-none flex flex-col justify-between w-64 h-36 hover:scale-102 hover:-translate-y-1"
+      className={`group relative p-5 rounded-3xl overflow-hidden [clip-path:inset(0_round_1.5rem)] backdrop-blur-xl transition-colors duration-300 cursor-pointer select-none flex flex-col justify-between w-64 h-36 shadow-none ${
+        isLight
+          ? "bg-white/45 hover:bg-white/55 border border-white/70 text-slate-900"
+          : "bg-zinc-950/45 hover:bg-zinc-950/55 border border-white/15 text-zinc-100"
+      }`}
     >
-      <div className="flex items-center justify-between text-zinc-400 group-hover:text-white transition-colors">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
+      <div className={`flex items-center justify-between transition-colors ${
+        isLight ? "text-slate-500 group-hover:text-slate-900" : "text-zinc-400 group-hover:text-white"
+      }`}>
+        <span className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+          isLight ? "text-blue-600" : "text-blue-400"
+        }`}>
           <Clock size={14} /> Jam Sistem
         </span>
-        <span className="text-[10px] text-zinc-500 group-hover:text-zinc-300 transition-colors">Son-OS</span>
+        <span className={`text-[10px] transition-colors ${
+          isLight ? "text-slate-400 group-hover:text-slate-600" : "text-zinc-500 group-hover:text-zinc-300"
+        }`}>Son-OS</span>
       </div>
 
       <div>
-        <h2 className="text-3xl font-black text-white tracking-tight leading-none group-hover:text-blue-200 transition-colors">
+        <h2 className={`text-3xl font-black tracking-tight leading-none transition-colors ${
+          isLight ? "text-slate-900 group-hover:text-blue-700" : "text-white group-hover:text-blue-200"
+        }`}>
           {timeStr || "10:30 AM"}
         </h2>
-        <p className="text-xs text-zinc-400 font-medium mt-1.5 group-hover:text-zinc-300">
+        <p className={`text-xs font-medium mt-1.5 transition-colors ${
+          isLight ? "text-slate-600 group-hover:text-slate-800" : "text-zinc-400 group-hover:text-zinc-300"
+        }`}>
           {dateStr || "Loading date..."}
         </p>
       </div>

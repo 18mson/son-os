@@ -1,0 +1,99 @@
+import React from "react";
+import { ExternalLink, Pin, PinOff, Monitor } from "lucide-react";
+import { APPS } from "@/config/appsConfig";
+import { AppDefinition, DesktopShortcutItem } from "@/store/windowStore";
+
+interface LauncherContextMenuProps {
+  menuRef: React.RefObject<HTMLDivElement | null>;
+  appContextMenu: { appId: string; x: number; y: number } | null;
+  pinnedApps: string[];
+  desktopShortcuts: DesktopShortcutItem[];
+  onOpenApp: (app: AppDefinition) => void;
+  onTogglePinApp: (appId: string) => void;
+  onAddDesktopShortcut: (appId: string) => void;
+  onRemoveDesktopShortcut: (shortcutId: string) => void;
+  showNotification: (title: string, msg: string, appName: string, icon: string) => void;
+  onCloseMenu: () => void;
+}
+
+export const LauncherContextMenu: React.FC<LauncherContextMenuProps> = ({
+  menuRef,
+  appContextMenu,
+  pinnedApps,
+  desktopShortcuts,
+  onOpenApp,
+  onTogglePinApp,
+  onAddDesktopShortcut,
+  onRemoveDesktopShortcut,
+  showNotification,
+  onCloseMenu,
+}) => {
+  if (!appContextMenu) return null;
+
+  const targetApp = APPS.find((a) => a.id === appContextMenu.appId);
+  if (!targetApp) return null;
+
+  const isPinned = pinnedApps.includes(appContextMenu.appId);
+  const existingShortcut = desktopShortcuts.find((s) => s.appId === targetApp.id);
+
+  return (
+    <div
+      ref={menuRef}
+      style={{
+        position: "fixed",
+        left: `${Math.min(appContextMenu.x, typeof window !== "undefined" ? window.innerWidth - 210 : 300)}px`,
+        top: `${Math.max(8, Math.min(appContextMenu.y - 8, typeof window !== "undefined" ? window.innerHeight - 160 : 400))}px`,
+      }}
+      onClick={(e) => e.stopPropagation()}
+      className="z-60 w-52 rounded-2xl bg-zinc-900/98 border border-white/15 p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 select-none"
+      data-context-menu
+    >
+      <div className="flex flex-col gap-0.5 text-xs text-zinc-200">
+        <button
+          onClick={() => {
+            onOpenApp(targetApp);
+            onCloseMenu();
+          }}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-blue-600 hover:text-white transition-colors cursor-pointer w-full text-left font-medium"
+        >
+          <ExternalLink size={13} /> Buka {targetApp.title}
+        </button>
+
+        <button
+          onClick={() => {
+            onTogglePinApp(targetApp.id);
+            onCloseMenu();
+          }}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/10 hover:text-white transition-colors cursor-pointer w-full text-left font-medium"
+        >
+          {isPinned ? (
+            <>
+              <PinOff size={13} className="text-rose-400" /> Unpin dari Shelf
+            </>
+          ) : (
+            <>
+              <Pin size={13} className="text-blue-400" /> Pin ke Shelf
+            </>
+          )}
+        </button>
+
+        <button
+          onClick={() => {
+            if (existingShortcut) {
+              onRemoveDesktopShortcut(existingShortcut.id);
+              showNotification("Desktop Shortcut", `Shortcut ${targetApp.title} dihapus.`, "Desktop", "Monitor");
+            } else {
+              onAddDesktopShortcut(targetApp.id);
+              showNotification("Desktop Shortcut", `Shortcut ${targetApp.title} ditambahkan ke desktop.`, "Desktop", "Monitor");
+            }
+            onCloseMenu();
+          }}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/10 hover:text-white transition-colors cursor-pointer w-full text-left font-medium"
+        >
+          <Monitor size={13} className="text-emerald-400" />
+          {existingShortcut ? "Hapus dari Desktop" : "Tambah ke Desktop"}
+        </button>
+      </div>
+    </div>
+  );
+};

@@ -17,8 +17,6 @@ export const SnakeGameApp: React.FC = () => {
   ]);
 
   const [food, setFood] = useState<Position>({ x: 5, y: 5 });
-  const [direction, setDirection] = useState<Direction>("UP");
-  const [nextDirection, setNextDirection] = useState<Direction>("UP");
   const [score, setScore] = useState<number>(0);
   const [highScore, setHighScore] = useState<number>(() => {
     if (typeof window !== "undefined") {
@@ -30,6 +28,8 @@ export const SnakeGameApp: React.FC = () => {
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
 
+  const directionRef = useRef<Direction>("UP");
+  const nextDirectionRef = useRef<Direction>("UP");
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const generateFood = useCallback((currentSnake: Position[]): Position => {
@@ -54,31 +54,41 @@ export const SnakeGameApp: React.FC = () => {
     ];
     setSnake(initialSnake);
     setFood(generateFood(initialSnake));
-    setDirection("UP");
-    setNextDirection("UP");
+    directionRef.current = "UP";
+    nextDirectionRef.current = "UP";
     setScore(0);
     setIsGameOver(false);
     setIsPlaying(true);
   };
 
-  const changeDirection = useCallback(
-    (newDir: Direction) => {
-      if (newDir === "UP" && direction !== "DOWN") setNextDirection("UP");
-      if (newDir === "DOWN" && direction !== "UP") setNextDirection("DOWN");
-      if (newDir === "LEFT" && direction !== "RIGHT") setNextDirection("LEFT");
-      if (newDir === "RIGHT" && direction !== "LEFT") setNextDirection("RIGHT");
-    },
-    [direction]
-  );
+  const changeDirection = useCallback((newDir: Direction) => {
+    const current = directionRef.current;
+    if (newDir === "UP" && current !== "DOWN") nextDirectionRef.current = "UP";
+    if (newDir === "DOWN" && current !== "UP") nextDirectionRef.current = "DOWN";
+    if (newDir === "LEFT" && current !== "RIGHT") nextDirectionRef.current = "LEFT";
+    if (newDir === "RIGHT" && current !== "LEFT") nextDirectionRef.current = "RIGHT";
+  }, []);
 
   // Keyboard Event Listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isPlaying) return;
-      if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") changeDirection("UP");
-      if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") changeDirection("DOWN");
-      if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") changeDirection("LEFT");
-      if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") changeDirection("RIGHT");
+      if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
+        e.preventDefault();
+        changeDirection("UP");
+      }
+      if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
+        e.preventDefault();
+        changeDirection("DOWN");
+      }
+      if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
+        e.preventDefault();
+        changeDirection("LEFT");
+      }
+      if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
+        e.preventDefault();
+        changeDirection("RIGHT");
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -90,12 +100,13 @@ export const SnakeGameApp: React.FC = () => {
     if (!isPlaying || isGameOver) return;
 
     const timer = setInterval(() => {
-      setDirection(nextDirection);
+      const currentDir = nextDirectionRef.current;
+      directionRef.current = currentDir;
 
       setSnake((prevSnake) => {
         const head = { ...prevSnake[0] };
 
-        switch (nextDirection) {
+        switch (currentDir) {
           case "UP":
             head.y -= 1;
             break;
@@ -128,13 +139,14 @@ export const SnakeGameApp: React.FC = () => {
 
         // Food collision check
         if (head.x === food.x && head.y === food.y) {
-          const newScore = score + 10;
-          setScore(newScore);
-
-          if (newScore > highScore) {
-            setHighScore(newScore);
-            localStorage.setItem("son-os-snake-highscore", newScore.toString());
-          }
+          setScore((s) => {
+            const newScore = s + 10;
+            if (newScore > highScore) {
+              setHighScore(newScore);
+              localStorage.setItem("son-os-snake-highscore", newScore.toString());
+            }
+            return newScore;
+          });
 
           setFood(generateFood(newSnake));
         } else {
@@ -146,7 +158,7 @@ export const SnakeGameApp: React.FC = () => {
     }, SPEED);
 
     return () => clearInterval(timer);
-  }, [isPlaying, isGameOver, nextDirection, food, score, highScore, generateFood]);
+  }, [isPlaying, isGameOver, food, highScore, generateFood]);
 
   return (
     <div className="flex flex-col h-full bg-zinc-950 text-zinc-100 select-none p-4 items-center justify-between font-mono">
@@ -186,14 +198,15 @@ export const SnakeGameApp: React.FC = () => {
             return (
               <div
                 key={idx}
-                className={`rounded-xs transition-colors ${isHead
+                className={`rounded-xs ${
+                  isHead
                     ? "bg-emerald-400 shadow-md shadow-emerald-400/50 scale-105 z-10"
                     : isBody
                       ? "bg-emerald-600/80"
                       : isFood
                         ? "bg-rose-500 rounded-full animate-pulse scale-90 shadow-md shadow-rose-500/50"
                         : "bg-white/2"
-                  }`}
+                }`}
               />
             );
           })}
@@ -242,34 +255,38 @@ export const SnakeGameApp: React.FC = () => {
           <span>{isPlaying ? "Jeda" : "Lanjut"}</span>
         </button>
 
-        {/* D-Pad */}
-        <div className="grid grid-cols-3 gap-1 w-32">
+        {/* Touch D-Pad Controls */}
+        <div className="grid grid-cols-3 gap-1.5 w-36">
           <div />
           <button
             onClick={() => changeDirection("UP")}
-            className="p-2 rounded-lg bg-white/10 hover:bg-white/20 active:bg-emerald-600 text-white flex items-center justify-center"
+            aria-label="Panah Atas"
+            className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:bg-emerald-600 text-white flex items-center justify-center min-h-10 cursor-pointer"
           >
-            <ArrowUp size={16} />
+            <ArrowUp size={18} />
           </button>
           <div />
 
           <button
             onClick={() => changeDirection("LEFT")}
-            className="p-2 rounded-lg bg-white/10 hover:bg-white/20 active:bg-emerald-600 text-white flex items-center justify-center"
+            aria-label="Panah Kiri"
+            className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:bg-emerald-600 text-white flex items-center justify-center min-h-10 cursor-pointer"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={18} />
           </button>
           <button
             onClick={() => changeDirection("DOWN")}
-            className="p-2 rounded-lg bg-white/10 hover:bg-white/20 active:bg-emerald-600 text-white flex items-center justify-center"
+            aria-label="Panah Bawah"
+            className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:bg-emerald-600 text-white flex items-center justify-center min-h-10 cursor-pointer"
           >
-            <ArrowDown size={16} />
+            <ArrowDown size={18} />
           </button>
           <button
             onClick={() => changeDirection("RIGHT")}
-            className="p-2 rounded-lg bg-white/10 hover:bg-white/20 active:bg-emerald-600 text-white flex items-center justify-center"
+            aria-label="Panah Kanan"
+            className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:bg-emerald-600 text-white flex items-center justify-center min-h-10 cursor-pointer"
           >
-            <ArrowRight size={16} />
+            <ArrowRight size={18} />
           </button>
         </div>
       </div>

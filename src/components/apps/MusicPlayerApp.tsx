@@ -4,7 +4,7 @@
 import React, { useRef } from "react";
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Shuffle, Repeat, Music, Disc, Upload, Plus } from "lucide-react";
 import { useWindowStore } from "@/store/windowStore";
-import { Track } from "@/config/musicConfig";
+import { PLAYLIST, Track } from "@/config/musicConfig";
 
 export const MusicPlayerApp: React.FC = () => {
   const {
@@ -16,6 +16,7 @@ export const MusicPlayerApp: React.FC = () => {
     mediaIsMuted,
     mediaIsShuffle,
     mediaIsRepeat,
+    customTracks,
     toggleMediaPlay,
     playNextTrack,
     playPrevTrack,
@@ -25,13 +26,12 @@ export const MusicPlayerApp: React.FC = () => {
     toggleMediaMute,
     toggleMediaShuffle,
     toggleMediaRepeat,
-    addCustomTracks,
-    getPlaylist,
+    addCustomTrack,
   } = useWindowStore();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const playlist = getPlaylist();
-  const track = playlist[mediaTrackIndex] || playlist[0];
+  const playlist: Track[] = [...PLAYLIST, ...customTracks];
+  const track = playlist[mediaTrackIndex] || playlist[0] || PLAYLIST[0];
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTime = parseFloat(e.target.value);
@@ -42,19 +42,20 @@ export const MusicPlayerApp: React.FC = () => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const newTracks: Track[] = Array.from(files).map((file, idx) => ({
-      id: `custom-${Date.now()}-${idx}`,
-      title: file.name.replace(/\.[^/.]+$/, ""),
-      artist: "File Lokal",
-      album: "Unggahan Pengguna",
-      duration: 180,
-      coverUrl: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=300&q=80",
-      audioUrl: URL.createObjectURL(file),
-    }));
-
     const previousLength = playlist.length;
-    addCustomTracks(newTracks);
-    // Play the newly uploaded track automatically
+    Array.from(files).forEach((file, idx) => {
+      const newTrack: Track = {
+        id: `custom-${Date.now()}-${idx}`,
+        title: file.name.replace(/\.[^/.]+$/, ""),
+        artist: "File Lokal",
+        album: "Unggahan Pengguna",
+        duration: 180,
+        coverUrl: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=300&q=80",
+        audioUrl: URL.createObjectURL(file),
+      };
+      addCustomTrack(newTrack);
+    });
+
     selectTrack(previousLength);
   };
 
@@ -80,91 +81,64 @@ export const MusicPlayerApp: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/10 pb-3 shrink-0">
         <div className="flex items-center gap-2">
-          <Music size={18} className="text-purple-400" />
-          <h2 className="text-sm font-bold text-white tracking-wide">Son-OS Music Player</h2>
+          <div className="p-1.5 rounded-lg bg-purple-600/20 text-purple-400">
+            <Music size={16} />
+          </div>
+          <div>
+            <h2 className="text-xs font-bold tracking-wide">Son-OS Music Player</h2>
+            <p className="text-[10px] text-zinc-400">Pemutar Musik Desktop & Audio Manager</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            title="Tambah lagu lokal (MP3/WAV/OGG)"
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 text-xs font-semibold transition-all cursor-pointer"
-          >
-            <Upload size={13} />
-            <span>Upload Audio</span>
-          </button>
-          <span className="text-[10px] text-zinc-400 font-mono bg-white/5 px-2 py-1 rounded-lg border border-white/10">
-            {mediaTrackIndex + 1} / {playlist.length}
-          </span>
-        </div>
+
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-md transition-all cursor-pointer"
+        >
+          <Upload size={12} /> Unggah MP3
+        </button>
       </div>
 
-      {/* Main Track Display Area */}
-      <div className="flex flex-col sm:flex-row items-center gap-5 my-2">
-        {/* Album Art Cover with Spinning Disk Animation */}
-        <div className="relative group shrink-0">
-          <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-2xl overflow-hidden border border-white/10 shadow-2xl relative bg-zinc-900 flex items-center justify-center">
-            {/* eslint-disable-next-html-element-suppression */}
+      {/* Main Track Display */}
+      <div className="flex flex-col md:flex-row items-center gap-4 py-3 shrink-0">
+        <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden shadow-2xl shrink-0 group border border-white/10 bg-zinc-900 flex items-center justify-center">
+          {track.coverUrl ? (
             <img
-              src={track?.coverUrl}
-              alt={track?.title}
-              className={`w-full h-full object-cover transition-transform duration-700 ${
-                mediaIsPlaying ? "scale-105" : "scale-100"
-              }`}
+              src={track.coverUrl}
+              alt={track.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <Disc className={`text-white/80 ${mediaIsPlaying ? "animate-spin" : ""}`} size={44} />
-            </div>
-          </div>
+          ) : (
+            <Disc className="text-purple-400 animate-spin" size={48} />
+          )}
+          <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
         </div>
 
-        {/* Track Details & Visualizer Bars */}
-        <div className="flex-1 flex flex-col justify-between w-full">
-          <div>
-            <span className="text-[10px] font-semibold text-purple-400 uppercase tracking-wider block mb-0.5">
-              {track?.album}
-            </span>
-            <h3 className="text-base font-bold text-white line-clamp-1">{track?.title}</h3>
-            <p className="text-xs text-zinc-400 font-medium">{track?.artist}</p>
-          </div>
+        <div className="flex flex-col text-center md:text-left min-w-0 flex-1 space-y-1">
+          <h3 className="text-sm font-bold truncate text-white tracking-tight">{track.title}</h3>
+          <p className="text-xs font-medium text-purple-300/80 truncate">{track.artist}</p>
+          <p className="text-[10px] text-zinc-500 truncate">{track.album}</p>
 
-          {/* Animated Equalizer Bars */}
-          <div className="flex items-end gap-1 h-5 my-3">
-            {[40, 70, 30, 90, 60, 80, 45, 100, 50, 75].map((h, idx) => (
-              <span
-                key={idx}
-                className={`flex-1 bg-linear-to-t from-purple-500 to-indigo-400 rounded-full transition-all duration-300 ${
-                  mediaIsPlaying ? "animate-pulse" : "opacity-30"
-                }`}
-                style={{
-                  height: mediaIsPlaying ? `${Math.max(15, (h * (idx + 1)) % 100)}%` : "15%",
-                  animationDelay: `${idx * 0.1}s`,
-                }}
-              />
-            ))}
-          </div>
-
-          {/* Progress Seek Bar */}
-          <div className="space-y-1">
+          <div className="pt-2">
             <input
               type="range"
               min={0}
-              max={mediaDuration || 100}
-              value={mediaCurrentTime}
+              max={mediaDuration || track.duration || 100}
+              value={mediaCurrentTime || 0}
               onChange={handleSeek}
               className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-purple-500"
             />
-            <div className="flex justify-between text-[10px] text-zinc-400 font-mono">
+            <div className="flex justify-between text-[10px] text-zinc-400 font-mono mt-1">
               <span>{formatTime(mediaCurrentTime)}</span>
-              <span>{formatTime(mediaDuration)}</span>
+              <span>{formatTime(mediaDuration || track.duration)}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Playlist Quick Selection List */}
-      <div className="my-1 max-h-24 overflow-y-auto bg-zinc-900/50 border border-white/5 rounded-xl p-1.5 no-scrollbar">
-        <div className="text-[10px] font-semibold text-zinc-400 uppercase px-2 py-0.5 mb-1 flex items-center justify-between">
-          <span>Daftar Putar ({playlist.length})</span>
+      {/* Playlist Selector */}
+      <div className="flex-1 overflow-y-auto max-h-36 my-2 bg-white/5 rounded-xl p-2 border border-white/5 no-scrollbar">
+        <div className="flex items-center justify-between px-2 pb-1 mb-1 border-b border-white/5">
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Playlist ({playlist.length})</span>
           <button
             onClick={() => fileInputRef.current?.click()}
             className="hover:text-purple-400 flex items-center gap-0.5 text-[9px] cursor-pointer"
@@ -173,7 +147,7 @@ export const MusicPlayerApp: React.FC = () => {
           </button>
         </div>
         <div className="space-y-0.5">
-          {playlist.map((t, idx) => (
+          {playlist.map((t: Track, idx: number) => (
             <button
               key={t.id}
               onClick={() => selectTrack(idx)}
@@ -194,30 +168,28 @@ export const MusicPlayerApp: React.FC = () => {
 
       {/* Audio Controls Bar */}
       <div className="flex items-center justify-between pt-3 border-t border-white/10 shrink-0 gap-2">
-        {/* Shuffle & Repeat Buttons */}
         <div className="flex items-center gap-1">
           <button
             onClick={toggleMediaShuffle}
-            className={`p-2 rounded-lg transition-colors cursor-pointer ${
+            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
               mediaIsShuffle ? "text-purple-400 bg-purple-500/20" : "text-zinc-400 hover:text-white"
             }`}
             title="Shuffle"
           >
-            <Shuffle size={15} />
+            <Shuffle size={14} />
           </button>
           <button
             onClick={toggleMediaRepeat}
-            className={`p-2 rounded-lg transition-colors cursor-pointer ${
+            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
               mediaIsRepeat ? "text-purple-400 bg-purple-500/20" : "text-zinc-400 hover:text-white"
             }`}
             title="Repeat"
           >
-            <Repeat size={15} />
+            <Repeat size={14} />
           </button>
         </div>
 
-        {/* Main Playback Buttons */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={playPrevTrack}
             className="p-2 rounded-xl bg-white/10 hover:bg-white/15 text-white transition-colors min-h-9 min-w-9 flex items-center justify-center cursor-pointer"
@@ -241,7 +213,6 @@ export const MusicPlayerApp: React.FC = () => {
           </button>
         </div>
 
-        {/* Volume Controls */}
         <div className="flex items-center gap-2">
           <button
             onClick={toggleMediaMute}
@@ -252,11 +223,10 @@ export const MusicPlayerApp: React.FC = () => {
           <input
             type="range"
             min={0}
-            max={1}
-            step={0.01}
+            max={100}
             value={mediaIsMuted ? 0 : mediaVolume}
             onChange={(e) => {
-              setMediaVolume(parseFloat(e.target.value));
+              setMediaVolume(Number(e.target.value));
             }}
             className="w-16 h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-purple-500 hidden sm:block"
           />

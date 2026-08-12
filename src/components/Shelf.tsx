@@ -1,12 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { LayoutGrid, Wifi, Battery, Pin, PinOff, X, ExternalLink } from "lucide-react";
 import { useWindowStore, AppDefinition } from "@/store/windowStore";
 import { useAppStoreStore } from "@/store/appStoreStore";
 import { APPS } from "@/config/appsConfig";
 import { AppIcon } from "./AppIcon";
 import { useContextMenuClose, closeAllContextMenus } from "@/hooks/useContextMenuClose";
+import { ShelfContextMenu } from "./shelf/ShelfContextMenu";
+import { ShelfMobileDeck } from "./shelf/ShelfMobileDeck";
+import { ShelfDesktopStatusTray } from "./shelf/ShelfDesktopStatusTray";
+import { ShelfDesktopLauncherButton } from "./shelf/ShelfDesktopLauncherButton";
 
 export const Shelf: React.FC = () => {
   const {
@@ -93,131 +96,98 @@ export const Shelf: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // 1. Pinned Apps (resolved from APPS config, filtered by installed status)
   const pinnedAppDefs = pinnedApps
     .map((id) => APPS.find((a) => a.id === id))
-    .filter((a): a is AppDefinition => a !== undefined && isInstalled(a.id));
+    .filter((a): a is AppDefinition => a !== undefined && Boolean(a.isPreinstalled || a.isSystemApp || isInstalled(a.id)));
 
-  // 2. Open Windows that are NOT pinned (filtered by installed status)
   const unpinnedOpenWindows = windows.filter((w) => !pinnedApps.includes(w.id));
-  const unpinnedAppDefs = unpinnedOpenWindows
+  const unpinnedOpenDefs = unpinnedOpenWindows
     .map((w) => APPS.find((a) => a.id === w.id))
-    .filter((a): a is AppDefinition => a !== undefined && isInstalled(a.id));
+    .filter((a): a is AppDefinition => Boolean(a));
 
-  const handleAppClick = (app: AppDefinition, e: React.MouseEvent) => {
-    e.stopPropagation();
-    closeLauncher();
-    const openWin = windows.find((w) => w.id === app.id);
-    if (openWin) {
-      toggleMinimizeWindow(app.id);
-    } else {
-      openWindow(app);
-    }
-  };
+  const totalShelfItemsCount = pinnedAppDefs.length + unpinnedOpenDefs.length;
 
-  const handleContextMenu = (e: React.MouseEvent, app: AppDefinition) => {
-    e.preventDefault();
-    e.stopPropagation();
-    closeAllContextMenus();
-    setShelfContextMenu({
-      app,
-      x: e.clientX,
-      y: e.clientY,
-    });
-  };
-
-  const totalShelfItemsCount = pinnedAppDefs.length + unpinnedAppDefs.length;
-
-  // Helper to render shelf app icons
   const renderAppIcons = () => (
     <>
-      {/* Pinned Apps */}
       {pinnedAppDefs.map((app) => {
-        const openWin = windows.find((w) => w.id === app.id);
-        const isOpen = Boolean(openWin);
-        const isActive = activeWindowId === app.id && openWin && !openWin.isMinimized;
-        const isMinimized = openWin?.isMinimized;
-        const isBeingDragged = draggedAppId === app.id;
+        const win = windows.find((w) => w.id === app.id);
+        const isOpen = Boolean(win);
+        const isActive = activeWindowId === app.id && win && !win.isMinimized;
 
         return (
-          <button
+          <div
             key={app.id}
             draggable
             onDragStart={(e) => handleDragStart(e, app.id)}
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, app.id)}
-            onClick={(e) => handleAppClick(app, e)}
-            onContextMenu={(e) => handleContextMenu(e, app)}
-            title={`${app.title} ${isOpen ? "(Running)" : "(Pinned)"}`}
-            aria-label={`Open App ${app.title}`}
-            className={`relative group p-1.5 sm:p-2 min-w-10 sm:min-w-11 min-h-10 sm:min-h-11 rounded-2xl transition-all duration-200 flex items-center justify-center cursor-grab active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden shrink-0 ${isBeingDragged ? "opacity-30 scale-90" : ""
-              } ${isActive
-                ? "bg-white/20 text-white shadow-inner"
-                : isMinimized
-                  ? "text-zinc-400 hover:bg-white/10 hover:text-zinc-200 opacity-70"
-                  : isOpen
-                    ? "text-zinc-200 hover:bg-white/15 hover:text-white"
-                    : "text-zinc-400 hover:bg-white/10 hover:text-white"
-              }`}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              closeAllContextMenus();
+              setShelfContextMenu({ app, x: e.clientX, y: e.clientY });
+            }}
+            className="relative flex flex-col items-center justify-center cursor-grab active:cursor-grabbing shrink-0 p-1"
           >
-            <div className={`p-1.5 rounded-lg ${app.accentColor || "bg-blue-600"} text-white shadow-sm transition-transform group-hover:scale-105 pointer-events-none`}>
-              <AppIcon name={app.icon} size={16} />
-            </div>
-
-            {/* ChromeOS active running indicator bar */}
+            <button
+              onClick={() => {
+                if (isOpen) {
+                  toggleMinimizeWindow(app.id);
+                } else {
+                  openWindow(app);
+                }
+              }}
+              title={app.title}
+              className={`p-2 rounded-2xl transition-all duration-200 cursor-pointer flex items-center justify-center ${app.accentColor} text-white shadow-md hover:scale-110 active:scale-95 ${
+                isActive ? "ring-2 ring-blue-400 ring-offset-2 ring-offset-zinc-950 scale-105" : ""
+              }`}
+            >
+              <AppIcon name={app.icon} size={20} />
+            </button>
             {isOpen && (
-              <span
-                className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 rounded-full transition-all duration-200 ${isActive
-                  ? "w-4 h-1 bg-blue-400 shadow-sm shadow-blue-400"
-                  : isMinimized
-                    ? "w-1.5 h-1 bg-zinc-500"
-                    : "w-1.5 h-1 bg-zinc-300"
-                  }`}
-              />
+              <span className={`w-1.5 h-1.5 rounded-full mt-1 transition-all ${
+                isActive ? "bg-blue-400 w-3" : "bg-white/60"
+              }`} />
             )}
-          </button>
+          </div>
         );
       })}
 
-      {/* Unpinned Separator if both pinned and unpinned exist */}
-      {pinnedAppDefs.length > 0 && unpinnedAppDefs.length > 0 && (
-        <div className="h-5 w-px bg-white/10 mx-0.5 shrink-0" />
+      {unpinnedOpenDefs.length > 0 && pinnedAppDefs.length > 0 && (
+        <div className="h-6 w-px bg-white/15 mx-1 shrink-0" />
       )}
 
-      {/* Unpinned Open Windows */}
-      {unpinnedAppDefs.map((app) => {
-        const openWin = windows.find((w) => w.id === app.id);
-        if (!openWin) return null;
-        const isActive = activeWindowId === app.id && !openWin.isMinimized;
-        const isMinimized = openWin.isMinimized;
+      {unpinnedOpenDefs.map((app) => {
+        const win = windows.find((w) => w.id === app.id);
+        const isOpen = Boolean(win);
+        const isActive = activeWindowId === app.id && win && !win.isMinimized;
 
         return (
-          <button
-            key={app.id}
-            onClick={(e) => handleAppClick(app, e)}
-            onContextMenu={(e) => handleContextMenu(e, app)}
-            title={app.title}
-            aria-label={`Open App ${app.title}`}
-            className={`relative group p-1.5 sm:p-2 min-w-10 sm:min-w-11 min-h-10 sm:min-h-11 rounded-2xl transition-all duration-200 flex items-center justify-center cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden shrink-0 ${isActive
-              ? "bg-white/20 text-white shadow-inner"
-              : isMinimized
-                ? "text-zinc-400 hover:bg-white/10 hover:text-zinc-200 opacity-70"
-                : "text-zinc-200 hover:bg-white/15 hover:text-white"
-              }`}
+          <div
+            key={`unpinned-${app.id}`}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              closeAllContextMenus();
+              setShelfContextMenu({ app, x: e.clientX, y: e.clientY });
+            }}
+            className="relative flex flex-col items-center justify-center shrink-0 p-1"
           >
-            <div className={`p-1.5 rounded-lg ${app.accentColor || "bg-blue-600"} text-white shadow-sm transition-transform group-hover:scale-105`}>
-              <AppIcon name={app.icon} size={16} />
-            </div>
-
-            <span
-              className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 rounded-full transition-all duration-200 ${isActive
-                ? "w-4 h-1 bg-blue-400 shadow-sm shadow-blue-400"
-                : isMinimized
-                  ? "w-1.5 h-1 bg-zinc-500"
-                  : "w-1.5 h-1 bg-zinc-300"
-                }`}
-            />
-          </button>
+            <button
+              onClick={() => toggleMinimizeWindow(app.id)}
+              title={app.title}
+              className={`p-2 rounded-2xl transition-all duration-200 cursor-pointer flex items-center justify-center ${app.accentColor} text-white shadow-md hover:scale-110 active:scale-95 ${
+                isActive ? "ring-2 ring-blue-400 ring-offset-2 ring-offset-zinc-950 scale-105" : ""
+              }`}
+            >
+              <AppIcon name={app.icon} size={20} />
+            </button>
+            {isOpen && (
+              <span className={`w-1.5 h-1.5 rounded-full mt-1 transition-all ${
+                isActive ? "bg-blue-400 w-3" : "bg-white/60"
+              }`} />
+            )}
+          </div>
         );
       })}
     </>
@@ -225,30 +195,14 @@ export const Shelf: React.FC = () => {
 
   return (
     <>
-      {/* ── DESKTOP VIEW (md and up): 3 Independent Floating Clusters ── */}
+      {/* DESKTOP VIEW (md and up) */}
       <div className="hidden md:block">
-        {/* 1. Launcher Button (fixed bottom-left) */}
-        <button
-          data-launcher-button
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleLauncher();
-          }}
-          title="Launcher"
-          aria-label="Toggle App Launcher"
-          className={`fixed bottom-3 left-3 z-50 p-2.5 min-w-11 min-h-11 flex items-center justify-center rounded-full backdrop-blur-2xl transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden hover:scale-105 active:scale-95 ${theme === "light"
-            ? launcherOpen
-              ? "bg-zinc-950 text-white border border-zinc-800 shadow-xl scale-105"
-              : "bg-white/90 text-zinc-800 border border-black/10 hover:bg-white shadow-md shadow-black/10"
-            : launcherOpen
-              ? "bg-white text-zinc-950 border border-white/40 shadow-xl scale-105"
-              : "bg-zinc-950/90 text-zinc-300 border border-white/15 hover:bg-zinc-900 hover:text-white shadow-2xl shadow-black/80"
-            }`}
-        >
-          <LayoutGrid size={19} className="transition-transform group-hover:scale-110" />
-        </button>
+        <ShelfDesktopLauncherButton
+          theme={theme}
+          launcherOpen={launcherOpen}
+          toggleLauncher={toggleLauncher}
+        />
 
-        {/* 2. App Dock (fixed bottom-center) */}
         {totalShelfItemsCount > 0 && (
           <div data-shelf-dock className={`fixed bottom-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 px-3 py-2 rounded-full backdrop-blur-2xl border max-w-[80vw] md:max-w-none overflow-x-auto no-scrollbar transition-all duration-300 ${
             theme === "light"
@@ -259,156 +213,41 @@ export const Shelf: React.FC = () => {
           </div>
         )}
 
-        {/* 3. Status Tray (fixed bottom-right) */}
-        <button
-          data-status-tray
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleQuickSettings();
-          }}
-          title="Buka Panel Quick Settings"
-          aria-label="Open Quick Settings Panel"
-          className={`fixed bottom-4 right-4 z-50 flex items-center gap-2.5 px-3 py-1.5 min-h-11 rounded-full text-xs font-medium select-none cursor-pointer transition-all duration-200 backdrop-blur-2xl border focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden ${
-            quickSettingsOpen
-              ? "bg-blue-600 text-white shadow-blue-500/30 scale-102 border-blue-500"
-              : theme === "light"
-                ? "bg-white/80 border-slate-300/80 text-slate-800 hover:bg-white shadow-xl shadow-slate-400/20"
-                : "bg-zinc-950/90 border-white/15 text-zinc-200 hover:bg-zinc-900 hover:text-white shadow-2xl shadow-black/80"
-          }`}
-        >
-          <div className="flex items-center gap-2 text-inherit opacity-80">
-            <Wifi size={13} />
-            <Battery size={14} />
-          </div>
-          <div className="flex flex-col items-end leading-tight">
-            <span className="font-semibold">{time || "10:30 AM"}</span>
-            <span className="text-[10px] opacity-75">{dateStr}</span>
-          </div>
-        </button>
+        <ShelfDesktopStatusTray
+          theme={theme}
+          quickSettingsOpen={quickSettingsOpen}
+          toggleQuickSettings={toggleQuickSettings}
+          time={time}
+          dateStr={dateStr}
+        />
       </div>
 
-      {/* ── MOBILE VIEW (< md): 1 Single Unified Deck Bar (ChromeOS Mobile Style) ── */}
-      <div
-        data-shelf-dock
-        className={`flex md:hidden fixed bottom-2 left-2 right-2 z-50 items-center justify-between px-2 py-1.5 rounded-full backdrop-blur-2xl border select-none max-w-[calc(100vw-16px)] transition-all duration-300 ${
-          theme === "light"
-            ? "bg-white/90 border-slate-300/80 text-slate-900 shadow-xl shadow-slate-400/20"
-            : "bg-zinc-950/90 border-white/15 text-zinc-100 shadow-2xl shadow-black/90"
-        }`}
-      >
-        {/* Mobile Launcher Button */}
-        <button
-          data-launcher-button
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleLauncher();
-          }}
-          title="Launcher"
-          aria-label="Toggle App Launcher"
-          className={`p-2 min-w-9 min-h-9 flex items-center justify-center rounded-full transition-all duration-200 shrink-0 ${theme === "light"
-            ? launcherOpen
-              ? "bg-zinc-950 text-white"
-              : "bg-white/90 text-zinc-800"
-            : launcherOpen
-              ? "bg-white text-zinc-950"
-              : "bg-white/10 text-zinc-200"
-            }`}
-        >
-          <LayoutGrid size={17} />
-        </button>
-
-        {totalShelfItemsCount > 0 && <div className="h-5 w-px bg-white/15 mx-1 shrink-0" />}
-
-        {/* Scrollable App Icons in Center */}
-        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar flex-1 justify-center px-1">
-          {renderAppIcons()}
-        </div>
-
-        <div className="h-5 w-px bg-white/15 mx-1 shrink-0" />
-
-        {/* Mobile Status Button */}
-        <button
-          data-status-tray
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleQuickSettings();
-          }}
-          title="Quick Settings"
-          aria-label="Open Quick Settings"
-          className={`px-2.5 py-1 min-h-9 rounded-full text-xs font-semibold shrink-0 transition-colors ${quickSettingsOpen ? "bg-blue-600 text-white" : "text-zinc-200 hover:bg-white/10"
-            }`}
-        >
-          <span>{time || "10:30 AM"}</span>
-        </button>
-      </div>
+      {/* MOBILE VIEW (< md) */}
+      <ShelfMobileDeck
+        theme={theme}
+        launcherOpen={launcherOpen}
+        quickSettingsOpen={quickSettingsOpen}
+        toggleLauncher={toggleLauncher}
+        toggleQuickSettings={toggleQuickSettings}
+        renderAppIcons={renderAppIcons}
+        totalShelfItemsCount={totalShelfItemsCount}
+        time={time}
+      />
 
       {/* Shelf App Context Menu */}
-      {shelfContextMenu && (
-        <div
-          ref={shelfMenuRef}
-          style={{
-            position: "fixed",
-            left: `${Math.min(shelfContextMenu.x, typeof window !== "undefined" ? window.innerWidth - 200 : 300)}px`,
-            bottom: "64px",
-          }}
-          onClick={(e) => e.stopPropagation()}
-          className="z-50 w-48 rounded-2xl bg-zinc-900/95 border border-white/15 p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150"
-          data-context-menu
-        >
-          {(() => {
-            const { app } = shelfContextMenu;
-            const isPinned = pinnedApps.includes(app.id);
-            const isOpen = Boolean(windows.find((w) => w.id === app.id));
-
-            return (
-              <div className="flex flex-col gap-0.5 text-xs text-zinc-200">
-                <button
-                  onClick={() => {
-                    closeLauncher();
-                    openWindow(app);
-                    setShelfContextMenu(null);
-                  }}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-blue-600 hover:text-white transition-colors cursor-pointer w-full text-left font-medium"
-                >
-                  <ExternalLink size={14} /> {isOpen ? "Bawa ke Depan" : "Buka App"}
-                </button>
-
-                {app.id !== "app-store" && (
-                  <button
-                    onClick={() => {
-                      togglePinApp(app.id);
-                      setShelfContextMenu(null);
-                    }}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/10 hover:text-white transition-colors cursor-pointer w-full text-left font-medium"
-                  >
-                    {isPinned ? (
-                      <>
-                        <PinOff size={14} className="text-rose-400" /> Unpin dari Shelf
-                      </>
-                    ) : (
-                      <>
-                        <Pin size={14} className="text-blue-400" /> Pin ke Shelf
-                      </>
-                    )}
-                  </button>
-                )}
-
-                {isOpen && (
-                  <button
-                    onClick={() => {
-                      closeWindow(app.id);
-                      setShelfContextMenu(null);
-                    }}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-colors cursor-pointer w-full text-left font-medium"
-                  >
-                    <X size={14} /> Tutup Window
-                  </button>
-                )}
-              </div>
-            );
-          })()}
-        </div>
-      )}
+      <ShelfContextMenu
+        menuRef={shelfMenuRef}
+        contextMenu={shelfContextMenu}
+        pinnedApps={pinnedApps}
+        isOpen={Boolean(shelfContextMenu && windows.find((w) => w.id === shelfContextMenu.app.id))}
+        onOpenWindow={(app) => {
+          closeLauncher();
+          openWindow(app);
+        }}
+        onTogglePin={(appId) => togglePinApp(appId)}
+        onCloseWindow={(appId) => closeWindow(appId)}
+        onCloseMenu={() => setShelfContextMenu(null)}
+      />
     </>
   );
 };

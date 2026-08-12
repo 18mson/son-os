@@ -251,7 +251,7 @@ export const PaintApp: React.FC = () => {
       </div>
 
       {/* Drawing Canvas Area */}
-      <div ref={containerRef} className="flex-1 w-full h-full rounded-2xl overflow-hidden border border-white/10 bg-zinc-950 relative cursor-crosshair">
+      <div ref={containerRef} className="flex-1 w-full h-full rounded-2xl overflow-hidden border border-white/10 bg-zinc-950 relative cursor-crosshair touch-none">
         <canvas
           ref={canvasRef}
           onMouseDown={startDrawing}
@@ -261,7 +261,7 @@ export const PaintApp: React.FC = () => {
           onTouchStart={startDrawing}
           onTouchMove={draw}
           onTouchEnd={stopDrawing}
-          className="w-full h-full block"
+          className="w-full h-full block touch-none"
         />
       </div>
     </div>

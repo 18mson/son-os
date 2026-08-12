@@ -47,17 +47,38 @@ export const DesktopShortcut: React.FC<DesktopShortcutProps> = ({ shortcut, isSe
       <motion.div
         drag
         dragMomentum={false}
-        initial={{ x: shortcut.x, y: shortcut.y }}
+        dragElastic={0.05}
+        animate={{ x: shortcut.x, y: shortcut.y }}
+        transition={{ type: "spring", stiffness: 450, damping: 28 }}
+        whileDrag={{ scale: 1.08, zIndex: 40, cursor: "grabbing" }}
         onDragEnd={(_, info) => {
-          const newX = Math.max(10, Math.min(shortcut.x + info.offset.x, typeof window !== "undefined" ? window.innerWidth - 90 : 800));
-          const newY = Math.max(10, Math.min(shortcut.y + info.offset.y, typeof window !== "undefined" ? window.innerHeight - 120 : 600));
-          updateDesktopShortcutPos(shortcut.id, { x: newX, y: newY });
+          const GRID_W = 96;
+          const GRID_H = 104;
+          const START_X = 24;
+          const START_Y = 24;
+
+          const rawX = shortcut.x + info.offset.x;
+          const rawY = shortcut.y + info.offset.y;
+
+          const col = Math.max(0, Math.round((rawX - START_X) / GRID_W));
+          const row = Math.max(0, Math.round((rawY - START_Y) / GRID_H));
+
+          const screenW = typeof window !== "undefined" ? window.innerWidth : 1280;
+          const screenH = typeof window !== "undefined" ? window.innerHeight : 800;
+
+          const maxCol = Math.max(0, Math.floor((screenW - 120) / GRID_W));
+          const maxRow = Math.max(0, Math.floor((screenH - 160) / GRID_H));
+
+          const finalX = START_X + Math.min(col, maxCol) * GRID_W;
+          const finalY = START_Y + Math.min(row, maxRow) * GRID_H;
+
+          updateDesktopShortcutPos(shortcut.id, { x: finalX, y: finalY });
         }}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
         onContextMenu={handleContextMenu}
         style={{ position: "absolute", left: 0, top: 0 }}
-        className={`group z-10 flex flex-col items-center gap-1.5 p-2 rounded-2xl transition-all cursor-grab active:cursor-grabbing w-22 select-none ${
+        className={`group z-10 pointer-events-auto flex flex-col items-center gap-1.5 p-2 rounded-2xl cursor-grab active:cursor-grabbing w-22 select-none ${
           isSelected
             ? "bg-blue-500/30 border border-blue-400 ring-2 ring-blue-400/40 shadow-lg shadow-blue-500/20"
             : "hover:bg-white/10 border border-transparent hover:border-white/15"

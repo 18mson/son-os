@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useSyncExternalStore } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useWindowStore } from "@/store/windowStore";
 import { WindowComponent } from "./Window";
@@ -13,97 +13,61 @@ import { ScreenTransitionOverlay } from "./ScreenTransitionOverlay";
 import { QuickSettingsPanel } from "./QuickSettingsPanel";
 import { SystemNotificationToast } from "./SystemNotificationToast";
 import { GlobalAudioManager } from "./GlobalAudioManager";
-import { ClockWidget } from "./widgets/ClockWidget";
-import { WeatherWidget } from "./widgets/WeatherWidget";
-import { CalendarWidget } from "./widgets/CalendarWidget";
-import { QuickNotesWidget } from "./widgets/QuickNotesWidget";
-import { SystemMonitorWidget } from "./widgets/SystemMonitorWidget";
-import { MiniCalcWidget } from "./widgets/MiniCalcWidget";
 import { WidgetGalleryModal } from "./WidgetGalleryModal";
 import { ScreenBrightnessOverlay } from "./ScreenBrightnessOverlay";
-import { Minus } from "lucide-react";
+import { Trash2, Plus } from "lucide-react";
 import { DesktopShortcut } from "./DesktopShortcut";
-import { closeAllContextMenus } from "@/hooks/useContextMenuClose";
-import { APPS } from "@/config/appsConfig";
-
-interface WallpaperConfig {
-  bgClass: string;
-  glowTopLeft: string;
-  glowBottomRight: string;
-}
-
-const WALLPAPER_CONFIGS: Record<string, WallpaperConfig> = {
-  default: {
-    bgClass: "bg-linear-to-br from-slate-950 via-zinc-900 to-indigo-950",
-    glowTopLeft: "bg-indigo-600/35",
-    glowBottomRight: "bg-purple-600/35",
-  },
-  ocean: {
-    bgClass: "bg-linear-to-br from-slate-950 via-cyan-950 to-blue-950",
-    glowTopLeft: "bg-cyan-500/40",
-    glowBottomRight: "bg-blue-600/40",
-  },
-  sunset: {
-    bgClass: "bg-linear-to-br from-zinc-950 via-rose-950 to-amber-950",
-    glowTopLeft: "bg-rose-500/40",
-    glowBottomRight: "bg-amber-500/40",
-  },
-  emerald: {
-    bgClass: "bg-linear-to-br from-zinc-950 via-teal-950 to-emerald-950",
-    glowTopLeft: "bg-emerald-500/40",
-    glowBottomRight: "bg-teal-500/40",
-  },
-};
-
-const LIGHT_WALLPAPER_CONFIGS: Record<string, WallpaperConfig> = {
-  default: {
-    bgClass: "bg-linear-to-br from-indigo-100 via-sky-50 to-slate-200",
-    glowTopLeft: "bg-indigo-400/30",
-    glowBottomRight: "bg-purple-400/30",
-  },
-  ocean: {
-    bgClass: "bg-linear-to-br from-cyan-100 via-sky-100 to-blue-200",
-    glowTopLeft: "bg-cyan-400/30",
-    glowBottomRight: "bg-blue-400/30",
-  },
-  sunset: {
-    bgClass: "bg-linear-to-br from-amber-100 via-rose-100 to-orange-200",
-    glowTopLeft: "bg-rose-400/30",
-    glowBottomRight: "bg-amber-400/30",
-  },
-  emerald: {
-    bgClass: "bg-linear-to-br from-emerald-100 via-teal-100 to-green-200",
-    glowTopLeft: "bg-emerald-400/30",
-    glowBottomRight: "bg-teal-400/30",
-  },
-};
+import { DesktopWidgetsLayer } from "./desktop/DesktopWidgetsLayer";
+import { useContextMenuClose, closeAllContextMenus } from "@/hooks/useContextMenuClose";
+import { useDesktopGlobalHandlers } from "@/hooks/useDesktopGlobalHandlers";
+import { WALLPAPER_CONFIGS, LIGHT_WALLPAPER_CONFIGS } from "@/config/wallpaperConfig";
 
 export const Desktop: React.FC = () => {
   const {
     windows,
     wallpaper,
     theme,
-    launcherOpen,
-    closeLauncher,
-    activeWindowId,
-    closeWindow,
-    focusWindow,
-    toggleLauncher,
-    toggleQuickSettings,
     desktopShortcuts,
+    toggleWidgetGallery,
     desktopWidgets,
     removeWidget,
+    reorderWidgets,
+    reducedMotion,
+    textScale,
+    highContrast,
   } = useWindowStore();
 
+  const { mounted, isTransitioning, transitionText } = useDesktopGlobalHandlers();
+
+  const [widgetMenu, setWidgetMenu] = useState<{ id: string; type: string; x: number; y: number } | null>(null);
+  const widgetMenuRef = useRef<HTMLDivElement>(null);
+  useContextMenuClose(Boolean(widgetMenu), () => setWidgetMenu(null), widgetMenuRef);
+
   useEffect(() => {
+    const root = document.documentElement;
     if (theme === "light") {
-      document.documentElement.classList.add("light");
-      document.documentElement.classList.remove("dark");
+      root.classList.add("light");
+      root.classList.remove("dark");
     } else {
-      document.documentElement.classList.add("dark");
-      document.documentElement.classList.remove("light");
+      root.classList.add("dark");
+      root.classList.remove("light");
     }
-  }, [theme]);
+
+    if (reducedMotion) {
+      root.classList.add("reduced-motion");
+    } else {
+      root.classList.remove("reduced-motion");
+    }
+
+    if (highContrast) {
+      root.classList.add("high-contrast");
+    } else {
+      root.classList.remove("high-contrast");
+    }
+
+    root.setAttribute("data-text-scale", textScale);
+  }, [theme, reducedMotion, highContrast, textScale]);
+
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [selectionBox, setSelectionBox] = useState<{
     startX: number;
@@ -112,95 +76,6 @@ export const Desktop: React.FC = () => {
     currentY: number;
   } | null>(null);
   const [selectedShortcutIds, setSelectedShortcutIds] = useState<string[]>([]);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [transitionText, setTransitionText] = useState("Beralih ke Desktop Mode...");
-  // useSyncExternalStore: returns false on server, true on client (avoids hydration mismatch)
-  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
-  const wasMobileRef = useRef<boolean>(typeof window !== "undefined" ? window.innerWidth < 768 : false);
-
-  useEffect(() => {
-    const handleResize = () => {
-      const isMobileNow = window.innerWidth < 768;
-      // Detect transition in EITHER direction (Mobile <-> Desktop)
-      if (wasMobileRef.current !== isMobileNow) {
-        closeLauncher();
-        toggleQuickSettings(false);
-        setTransitionText(isMobileNow ? "Beralih ke Mobile Mode..." : "Beralih ke Desktop Mode...");
-        setIsTransitioning(true);
-        setTimeout(() => {
-          setIsTransitioning(false);
-        }, 1300);
-      }
-      wasMobileRef.current = isMobileNow;
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [closeLauncher, toggleQuickSettings]);
-
-  // Global Keyboard Shortcuts:
-  // - Alt+Tab / Ctrl+Tab: Cycle focus between open non-minimized windows
-  // - Ctrl+W / Cmd+W: Close active window
-  // - Ctrl+Space / Alt+Space: Toggle app launcher
-  // - Esc: Close launcher or close active window
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const targetTag = (e.target as HTMLElement)?.tagName?.toLowerCase();
-      const isInput = targetTag === "input" || targetTag === "textarea" || (e.target as HTMLElement)?.isContentEditable;
-
-      if (e.key === "Escape") {
-        if (launcherOpen) {
-          closeLauncher();
-        } else if (activeWindowId) {
-          closeWindow(activeWindowId);
-        }
-      } else if ((e.altKey && e.code === "Space") || (e.ctrlKey && e.code === "Space")) {
-        e.preventDefault();
-        toggleLauncher();
-      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "w" && !isInput) {
-        if (activeWindowId) {
-          e.preventDefault();
-          closeWindow(activeWindowId);
-        }
-      } else if ((e.altKey || e.ctrlKey) && e.key === "Tab") {
-        const activeWindows = windows.filter((w) => !w.isMinimized);
-        if (activeWindows.length > 1) {
-          e.preventDefault();
-          const currentIndex = activeWindows.findIndex((w) => w.id === activeWindowId);
-          const nextIndex = (currentIndex + 1) % activeWindows.length;
-          focusWindow(activeWindows[nextIndex].id);
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [launcherOpen, activeWindowId, windows, closeLauncher, closeWindow, focusWindow, toggleLauncher]);
-
-  // Dynamic Browser Tab Title based on active window
-  useEffect(() => {
-    if (activeWindowId) {
-      const activeWin = windows.find((w) => w.id === activeWindowId && !w.isMinimized);
-      const app = APPS.find((a) => a.id === activeWindowId);
-      if (activeWin && app) {
-        document.title = `${app.title} — Son-OS`;
-        return;
-      }
-    }
-    document.title = "Son-OS — ChromeOS-inspired Web Desktop";
-  }, [activeWindowId, windows]);
-
-  // Sync theme class to <html>
-  useEffect(() => {
-    const root = document.documentElement;
-    if (theme === 'light') {
-      root.classList.add('light');
-      root.classList.remove('dark');
-    } else {
-      root.classList.add('dark');
-      root.classList.remove('light');
-    }
-  }, [theme]);
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -260,7 +135,6 @@ export const Desktop: React.FC = () => {
   };
 
   const isCustomUrl = wallpaper.startsWith("http://") || wallpaper.startsWith("https://") || wallpaper.startsWith("/");
-  // Use mounted guard: before hydration, always fall back to dark/default to match server render
   const isLight = mounted && theme === "light";
   const activeConfig = isLight
     ? LIGHT_WALLPAPER_CONFIGS[wallpaper] || LIGHT_WALLPAPER_CONFIGS.default
@@ -272,27 +146,22 @@ export const Desktop: React.FC = () => {
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      className={`relative w-screen h-screen overflow-hidden select-none transition-all duration-700 ${isCustomUrl ? "bg-zinc-950" : activeConfig.bgClass
-        }`}
+      className={`relative w-screen h-screen overflow-hidden select-none transition-all duration-700 ${
+        isCustomUrl ? "bg-zinc-950" : activeConfig.bgClass
+      }`}
     >
       {/* Boot Screen Startup Overlay */}
       <BootScreen />
 
-      {/* Screen Transition Loading Overlay (Mobile <-> Desktop Switch) */}
+      {/* Screen Transition Loading Overlay */}
       <ScreenTransitionOverlay isVisible={isTransitioning} modeText={transitionText} />
 
-      {/* Custom Image Wallpaper Layer */}
+      {/* Custom Image Wallpaper */}
       {isCustomUrl && (
-        <>
-          <div
-            className="absolute inset-0 bg-cover bg-center transition-all duration-700 image-rendering-crisp"
-            style={{
-              backgroundImage: `url("${wallpaper.replace(/w=\d+/, "w=2560").replace(/q=\d+/, "q=95")}")`,
-            }}
-          />
-          {/* Subtle Ambient Shadow Overlay for System Contrast */}
-          <div className="absolute inset-0 bg-linear-to-b from-black/20 via-transparent to-black/30 pointer-events-none" />
-        </>
+        <div
+          className="absolute inset-0 bg-cover bg-center transition-all duration-700"
+          style={{ backgroundImage: `url(${wallpaper})` }}
+        />
       )}
 
       {/* Dynamic Ambient Glowing Orbs */}
@@ -316,31 +185,15 @@ export const Desktop: React.FC = () => {
         />
       )}
 
-      {/* Dynamic Desktop Widgets (macOS Sonoma / Sequoia Style) */}
-      <div className="absolute top-6 right-6 hidden md:flex flex-col gap-4 z-1 pointer-events-auto no-desktop-select max-h-[calc(100vh-100px)] overflow-y-auto pr-1 no-scrollbar">
-        {desktopWidgets.map((w) => (
-          <div key={w.id} className="relative group">
-            {/* macOS Sonoma style Minus (-) Remove Button on hover */}
-            <button
-              onClick={() => removeWidget(w.id)}
-              title="Hapus Widget dari Desktop"
-              className="absolute -top-2 -left-2 z-20 w-6 h-6 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 cursor-pointer"
-            >
-              <Minus size={13} strokeWidth={3} />
-            </button>
-
-            {w.type === "clock" && <ClockWidget />}
-            {w.type === "weather" && <WeatherWidget />}
-            {w.type === "calendar" && <CalendarWidget />}
-            {w.type === "notes" && <QuickNotesWidget />}
-            {w.type === "system" && <SystemMonitorWidget />}
-            {w.type === "calculator" && <MiniCalcWidget />}
-          </div>
-        ))}
-      </div>
+      {/* Dynamic Desktop Widgets */}
+      <DesktopWidgetsLayer
+        desktopWidgets={desktopWidgets}
+        reorderWidgets={reorderWidgets}
+        setWidgetMenu={setWidgetMenu}
+      />
 
       {/* Desktop Shortcuts Layer */}
-      <div className="absolute inset-0 z-1 pointer-events-auto overflow-hidden">
+      <div className="absolute inset-0 z-3 pointer-events-none overflow-hidden">
         {desktopShortcuts.map((shortcut) => (
           <DesktopShortcut
             key={shortcut.id}
@@ -368,10 +221,42 @@ export const Desktop: React.FC = () => {
         />
       )}
 
+      {/* Right Click Widget Context Menu */}
+      {widgetMenu && (
+        <div
+          ref={widgetMenuRef}
+          style={{ position: "fixed", left: widgetMenu.x, top: widgetMenu.y }}
+          onClick={(e) => e.stopPropagation()}
+          className="z-50 w-52 rounded-2xl bg-zinc-900/95 border border-white/15 p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 select-none"
+          data-context-menu
+        >
+          <div className="flex flex-col gap-0.5 text-xs text-zinc-200 font-medium">
+            <button
+              onClick={() => {
+                toggleWidgetGallery(true);
+                setWidgetMenu(null);
+              }}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-blue-600 hover:text-white transition-colors cursor-pointer w-full text-left"
+            >
+              <Plus size={14} /> Kelola Galeri Widget
+            </button>
+            <button
+              onClick={() => {
+                removeWidget(widgetMenu.id);
+                setWidgetMenu(null);
+              }}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-colors cursor-pointer w-full text-left"
+            >
+              <Trash2 size={14} /> Hapus Widget Ini
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Floating Shelf */}
       <Shelf />
 
-      {/* System Tray Overlays (Stacked dynamically: QuickSettingsPanel bottom, SystemNotificationToast above) */}
+      {/* System Tray Overlays */}
       <div className="fixed bottom-18 right-3 sm:right-4 z-50 flex flex-col-reverse items-end gap-3 pointer-events-none">
         <QuickSettingsPanel />
         <SystemNotificationToast />
@@ -380,10 +265,10 @@ export const Desktop: React.FC = () => {
       {/* Fullscreen Overlay Launcher */}
       <Launcher />
 
-      {/* macOS Sonoma Style Widget Gallery Modal */}
+      {/* Widget Gallery Modal */}
       <WidgetGalleryModal />
 
-      {/* Screen Hardware Brightness Overlay (z-[999999], pointer-events: none) */}
+      {/* Screen Hardware Brightness Overlay */}
       <ScreenBrightnessOverlay />
 
       {/* Global Background Audio Manager */}

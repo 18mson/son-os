@@ -176,17 +176,17 @@ export const WeatherApp: React.FC = () => {
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-2">
               Prakiraan 5 Hari
             </span>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-5 gap-1 sm:gap-2">
               {weather.daily.map((d, idx) => {
                 const dateObj = new Date(d.date);
                 const dayName = idx === 0 ? "Hari Ini" : dateObj.toLocaleDateString("id-ID", { weekday: "short" });
                 return (
                   <div
                     key={d.date}
-                    className="flex flex-col items-center p-2 rounded-2xl bg-white/5 border border-white/5 text-center"
+                    className="flex flex-col items-center p-1 sm:p-2 rounded-2xl bg-white/5 border border-white/5 text-center"
                   >
-                    <span className="text-[10px] text-zinc-400 font-medium">{dayName}</span>
-                    <div className="my-1.5">{getWeatherIcon(d.code, 18)}</div>
+                    <span className="text-[10px] text-zinc-400 font-medium truncate w-full">{dayName}</span>
+                    <div className="my-1 sm:my-1.5">{getWeatherIcon(d.code, 18)}</div>
                     <span className="text-xs font-bold text-white font-mono">{d.maxTemp}°</span>
                     <span className="text-[9px] text-zinc-500 font-mono">{d.minTemp}°</span>
                   </div>

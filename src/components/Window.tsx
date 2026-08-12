@@ -188,10 +188,10 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
           left: effectiveMaximized ? 0 : position.x,
           top: effectiveMaximized ? 0 : position.y,
           width: effectiveMaximized ? "100vw" : size.w,
-          height: isMobile ? "calc(100vh - 60px)" : isMaximized ? "calc(100vh - 72px)" : size.h,
+          height: isMobile ? "calc(100vh - 56px)" : isMaximized ? "calc(100vh - 72px)" : size.h,
           zIndex: zIndex,
         }}
-        className={`flex flex-col rounded-t-xl md:rounded-xl overflow-hidden shadow-2xl border transition-all duration-200 select-none ${
+        className={`flex flex-col rounded-t-xl md:rounded-xl overflow-hidden shadow-2xl border transition-colors duration-200 select-none ${
           isLight
             ? isActive
               ? "border-slate-300/80 shadow-slate-900/25 bg-slate-100/95 backdrop-blur-2xl ring-1 ring-black/5"
@@ -261,7 +261,7 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
         {/* Window Body Content Area */}
         <div data-window-body className={`flex-1 overflow-auto font-sans select-text ${
           isLight ? "text-slate-900 bg-white/40" : "text-zinc-100 bg-transparent"
-        } ${id === 'japanese-quiz' || id === 'lovely-ever' ? 'p-0 flex flex-col' : 'p-4 sm:p-6'
+        } ${['japanese-quiz', 'lovely-ever', 'file-manager', 'settings', 'notes', 'pdf', 'contact', 'calendar', 'paint', 'terminal', 'audio-converter'].includes(id) ? 'p-0 flex flex-col h-full' : 'p-3 sm:p-6'
           }`}>
           {children}
         </div>
