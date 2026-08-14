@@ -31,6 +31,7 @@ const MIN_H = 200;
 
 const FULL_BLEED_APPS = [
   "camera",
+  "photobooth",
   "app-store",
   "gallery",
   "music",
@@ -207,10 +208,12 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
           left: effectiveMaximized ? 0 : position.x,
           top: effectiveMaximized ? 0 : position.y,
           width: effectiveMaximized ? "100vw" : size.w,
-          height: isMobile ? "calc(100vh - 56px)" : isMaximized ? "calc(100vh - 72px)" : size.h,
+          height: isMobile ? "100dvh" : isMaximized ? "calc(100vh - 72px)" : size.h,
           zIndex: zIndex,
         }}
-        className={`flex flex-col rounded-t-xl md:rounded-xl overflow-hidden shadow-2xl border transition-colors duration-200 select-none ${
+        className={`flex flex-col ${
+          isMobile ? "rounded-none border-0" : "rounded-t-xl md:rounded-xl border"
+        } overflow-hidden shadow-2xl transition-colors duration-200 select-none ${
           isLight
             ? isActive
               ? "border-slate-300/80 shadow-slate-900/25 bg-slate-100/95 backdrop-blur-2xl ring-1 ring-black/5"

@@ -3,7 +3,7 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import { Moon, ShieldAlert, Sparkles } from "lucide-react";
-import { DeviceProfile } from "@/config/deviceProfiles";
+import { DeviceProfile } from "@/lib/camera";
 
 interface CameraViewportProps {
   videoRef: React.RefObject<HTMLVideoElement | null>;

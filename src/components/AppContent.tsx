@@ -148,6 +148,15 @@ const CameraApp = dynamic(() => import("./apps/CameraApp").then((mod) => mod.Cam
   ),
 });
 
+const PhotoboothApp = dynamic(() => import("./apps/PhotoboothApp").then((mod) => mod.PhotoboothApp), {
+  loading: () => (
+    <div className="flex flex-col items-center justify-center h-full p-8 text-zinc-400 gap-3">
+      <Loader2 className="animate-spin text-pink-400" size={28} />
+      <span className="text-xs font-medium">Memuat Photobooth...</span>
+    </div>
+  ),
+});
+
 const PdfApp = dynamic(() => import("./apps/PdfApp").then((mod) => mod.PdfApp), {
   loading: () => (
     <div className="flex flex-col items-center justify-center h-full p-8 text-zinc-400 gap-3">
@@ -194,6 +203,8 @@ export const AppContent: React.FC<AppContentProps> = ({ appId }) => {
       return <AppStoreApp />;
     case "camera":
       return <CameraApp />;
+    case "photobooth":
+      return <PhotoboothApp />;
     case "pdf":
       return <PdfApp />;
     case "file-manager":

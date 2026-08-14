@@ -12,12 +12,13 @@ import {
   CheckCircle2,
   Cpu,
 } from "lucide-react";
-import { useCameraStream } from "@/hooks/useCameraStream";
+import {
+  useCameraStream,
+  processCapturedImageData,
+} from "@/lib/camera";
 import { CameraViewport } from "./camera/CameraViewport";
 import { CameraControls } from "./camera/CameraControls";
 import { CameraDebugPanel } from "./camera/CameraDebugPanel";
-import { captureSharpestBurstFrame } from "./camera/processing/multiFrameCapture";
-import { processCapturedImageData } from "./camera/processing/imageProcessor";
 
 export const CameraApp: React.FC = () => {
   const {
@@ -27,8 +28,8 @@ export const CameraApp: React.FC = () => {
     isLoading,
     error,
     diagnostics,
-    currentLadderIndex,
     isTorchOn,
+    takePhoto,
     switchFacingMode,
     toggleTorch,
     reinitialize,
@@ -50,23 +51,20 @@ export const CameraApp: React.FC = () => {
     }
   }, [stream]);
 
-  // Handle Capture dengan Multi-frame Burst (EIS) & Post-processing
+  // Handle Capture dengan 2-Tier Engine (ImageCapture API -> Canvas Fallback) + Post-processing
   const handleCapture = useCallback(async () => {
     if (!videoRef.current || isCapturing) return;
 
     setIsCapturing(true);
     try {
-      const burstCount = deviceProfile.postProcessing.multiFrameBurstCount || 1;
-
-      // 1. Ambil frame terbaik via burst sharpness ranking
-      const rawCanvas = await captureSharpestBurstFrame(
-        videoRef.current,
-        burstCount,
-        facingMode
-      );
+      // 1. Ambil still frame via Tier 1 ImageCapture API (atau Tier 2 Canvas Grab)
+      const captureResult = await takePhoto({
+        videoElement: videoRef.current,
+        fillLightMode: isTorchOn ? "flash" : "off",
+      });
 
       // 2. Terapkan post-processing native (Color correction + Denoise + Sharpening)
-      const processedDataUrl = processCapturedImageData(rawCanvas, {
+      const processedDataUrl = processCapturedImageData(captureResult.canvas, {
         colorCorrection: deviceProfile.colorCorrection,
         postProcessing: deviceProfile.postProcessing,
         isLowLight,
@@ -74,14 +72,15 @@ export const CameraApp: React.FC = () => {
 
       setCapturedImage(processedDataUrl);
       setLastProcessingDetails(
-        `${deviceProfile.modelName} • ${rawCanvas.width}x${rawCanvas.height} • Burst ${burstCount}x • Ladder #${currentLadderIndex + 1}`
+        `${deviceProfile.modelName} • ${captureResult.width}x${captureResult.height} • ${captureResult.method === "image-capture" ? "ImageCapture (Sensor HD)" : "Canvas Stream"
+        } • ${captureResult.durationMs}ms`
       );
     } catch (err) {
       console.error("Capture processing error:", err);
     } finally {
       setIsCapturing(false);
     }
-  }, [currentLadderIndex, deviceProfile, facingMode, isCapturing, isLowLight]);
+  }, [deviceProfile, isCapturing, isLowLight, isTorchOn, takePhoto]);
 
   const handleDownload = () => {
     if (!capturedImage) return;

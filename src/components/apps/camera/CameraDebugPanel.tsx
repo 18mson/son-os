@@ -2,7 +2,7 @@
 "use client";
 
 import React from "react";
-import { CameraDiagnostics } from "@/hooks/useCameraStream";
+import { CameraDiagnostics } from "@/lib/camera";
 import { X, CheckCircle, AlertTriangle, Cpu, Eye, ShieldCheck, Zap } from "lucide-react";
 
 interface CameraDebugPanelProps {

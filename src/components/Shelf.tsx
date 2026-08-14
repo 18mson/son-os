@@ -237,6 +237,7 @@ export const Shelf: React.FC = () => {
         theme={theme}
         launcherOpen={launcherOpen}
         quickSettingsOpen={quickSettingsOpen}
+        hasActiveWindow={effectiveWindows.some((w) => !w.isMinimized)}
         toggleLauncher={toggleLauncher}
         toggleQuickSettings={toggleQuickSettings}
         renderAppIcons={renderAppIcons}

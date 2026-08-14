@@ -129,7 +129,6 @@ export const processTerminalCommand = (
       }
       try {
         const sanitized = args.join(" ").replace(/[^0-9+\-*/.() ]/g, "");
-        // eslint-disable-next-line no-eval
         const res = eval(sanitized);
         return <p className="text-emerald-400 text-xs font-mono">= {res}</p>;
       } catch {
