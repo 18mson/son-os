@@ -100,43 +100,43 @@ export const CameraApp: React.FC = () => {
   return (
     <div className="flex flex-col h-full w-full bg-zinc-950 text-zinc-100 select-none overflow-hidden font-sans relative">
       {/* Top Bar Header */}
-      <div className="px-4 py-2.5 border-b border-white/10 bg-zinc-900/90 flex items-center justify-between shrink-0 z-20 backdrop-blur-md">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-linear-to-br from-purple-500 to-pink-600 text-white shadow-md">
-            <Camera size={18} />
+      <div className="px-3 sm:px-4 py-2 sm:py-2.5 border-b border-white/10 bg-zinc-900/90 flex items-center justify-between shrink-0 z-20 backdrop-blur-md">
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+          <div className="p-1.5 sm:p-2 rounded-xl bg-linear-to-br from-purple-500 to-pink-600 text-white shadow-md shrink-0">
+            <Camera size={16} className="sm:w-4.5 sm:h-4.5" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xs font-bold text-white tracking-wide">SonOS Camera</h1>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-purple-300 border border-purple-500/20">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <h1 className="text-xs font-bold text-white tracking-wide truncate">SonOS Camera</h1>
+              <span className="text-[9px] sm:text-[10px] font-mono px-1.5 sm:px-2 py-0.5 rounded bg-white/10 text-purple-300 border border-purple-500/20 truncate max-w-27.5 sm:max-w-none">
                 {deviceProfile.modelName.split("(")[0].trim()}
               </span>
             </div>
-            <p className="text-[10px] text-zinc-400">
+            <p className="text-[9px] sm:text-[10px] text-zinc-400 truncate">
               {deviceProfile.hasOIS ? "Hardware OIS Stabilized" : "Software Multi-frame EIS Active"}
             </p>
           </div>
         </div>
 
         {capturedImage ? (
-          <span className="text-[10px] font-medium text-pink-400 bg-pink-500/10 px-2.5 py-1 rounded-full border border-pink-500/20 flex items-center gap-1">
+          <span className="text-[10px] font-medium text-pink-400 bg-pink-500/10 px-2 sm:px-2.5 py-1 rounded-full border border-pink-500/20 flex items-center gap-1 shrink-0">
             <Sparkles size={12} /> Captured
           </span>
         ) : (
-          <div className="flex items-center gap-2 text-[10px] text-zinc-400">
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-800 border border-white/5">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] text-zinc-400 shrink-0">
+            <span className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded bg-zinc-800 border border-white/5">
               <Cpu size={11} className="text-purple-400" />
-              {deviceProfile.chipsetTier}
+              <span className="hidden xs:inline">{deviceProfile.chipsetTier}</span>
             </span>
           </div>
         )}
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 relative flex items-center justify-center bg-black overflow-hidden">
+      <div className="flex-1 min-h-0 relative flex flex-col items-center justify-center bg-black overflow-hidden">
         {error ? (
           /* Error Fallback View */
-          <div className="flex flex-col items-center justify-center text-center p-6 max-w-sm gap-3 bg-zinc-900/90 border border-white/10 rounded-2xl shadow-2xl z-30">
+          <div className="flex flex-col items-center justify-center text-center p-6 max-w-sm gap-3 bg-zinc-900/90 border border-white/10 rounded-2xl shadow-2xl z-30 m-4">
             <AlertCircle size={36} className="text-rose-400" />
             <h2 className="text-sm font-semibold text-white">Gagal Mengakses Kamera</h2>
             <p className="text-xs text-zinc-400 leading-relaxed">{error}</p>
@@ -149,8 +149,8 @@ export const CameraApp: React.FC = () => {
           </div>
         ) : capturedImage ? (
           /* Photo Preview View */
-          <div className="relative w-full h-full flex flex-col items-center justify-between p-4 bg-zinc-950">
-            <div className="relative w-full flex-1 max-h-[calc(100%-80px)] flex items-center justify-center">
+          <div className="relative w-full h-full flex flex-col items-center justify-between p-3 sm:p-4 bg-zinc-950 overflow-hidden">
+            <div className="relative w-full flex-1 min-h-0 flex items-center justify-center">
               <Image
                 src={capturedImage}
                 alt="Captured"
@@ -161,23 +161,23 @@ export const CameraApp: React.FC = () => {
             </div>
 
             {/* Post-Capture Info Footer */}
-            <div className="w-full flex flex-col items-center gap-3 shrink-0 pt-2">
+            <div className="w-full flex flex-col items-center gap-2 sm:gap-3 shrink-0 pt-2 z-20">
               {lastProcessingDetails && (
-                <div className="text-[10px] text-zinc-400 flex items-center gap-1.5 bg-zinc-900/80 px-3 py-1 rounded-full border border-white/5">
-                  <CheckCircle2 size={12} className="text-emerald-400" />
-                  <span>{lastProcessingDetails}</span>
+                <div className="text-[10px] text-zinc-400 flex items-center gap-1.5 bg-zinc-900/80 px-3 py-1 rounded-full border border-white/5 truncate max-w-full">
+                  <CheckCircle2 size={12} className="text-emerald-400 shrink-0" />
+                  <span className="truncate">{lastProcessingDetails}</span>
                 </div>
               )}
               <div className="flex items-center gap-3">
                 <button
                   onClick={handleDownload}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/30 transition-all cursor-pointer"
+                  className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/30 transition-all cursor-pointer"
                 >
                   <Download size={15} /> Simpan Foto
                 </button>
                 <button
                   onClick={handleRetake}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all cursor-pointer"
+                  className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all cursor-pointer"
                 >
                   <RefreshCw size={15} /> Ambil Ulang
                 </button>
@@ -186,7 +186,7 @@ export const CameraApp: React.FC = () => {
           </div>
         ) : (
           /* Live Camera View */
-          <div className="relative w-full h-full flex flex-col justify-between">
+          <div className="relative w-full h-full flex flex-col justify-between overflow-hidden">
             {isLoading && (
               <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-xs text-zinc-300 text-xs gap-2">
                 <RefreshCw className="animate-spin text-purple-400" size={20} />
@@ -194,7 +194,7 @@ export const CameraApp: React.FC = () => {
               </div>
             )}
 
-            <div className="flex-1 relative w-full h-full">
+            <div className="flex-1 min-h-0 relative w-full h-full overflow-hidden">
               <CameraViewport
                 videoRef={videoRef}
                 facingMode={facingMode}

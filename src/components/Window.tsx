@@ -29,6 +29,25 @@ const EDGE_CURSOR: Record<ResizeEdge, string> = {
 const MIN_W = 320;
 const MIN_H = 200;
 
+const FULL_BLEED_APPS = [
+  "camera",
+  "app-store",
+  "gallery",
+  "music",
+  "snake",
+  "japanese-quiz",
+  "lovely-ever",
+  "file-manager",
+  "settings",
+  "notes",
+  "pdf",
+  "contact",
+  "calendar",
+  "paint",
+  "terminal",
+  "audio-converter",
+];
+
 export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, children }) => {
   const { id, title, icon, accentColor, position, size, isMinimized, isMaximized, zIndex } = windowState;
   const { closeWindow, minimizeWindow, focusWindow, moveWindow, resizeWindow, toggleMaximizeWindow, activeWindowId, theme } = useWindowStore();
@@ -261,7 +280,7 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
         {/* Window Body Content Area */}
         <div data-window-body className={`flex-1 overflow-auto font-sans select-text ${
           isLight ? "text-slate-900 bg-white/40" : "text-zinc-100 bg-transparent"
-        } ${['japanese-quiz', 'lovely-ever', 'file-manager', 'settings', 'notes', 'pdf', 'contact', 'calendar', 'paint', 'terminal', 'audio-converter'].includes(id) ? 'p-0 flex flex-col h-full' : 'p-3 sm:p-6'
+        } ${FULL_BLEED_APPS.includes(id) ? "p-0 flex flex-col h-full" : "p-3 sm:p-6"
           }`}>
           {children}
         </div>

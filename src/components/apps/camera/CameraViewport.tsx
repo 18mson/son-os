@@ -72,9 +72,8 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
         autoPlay
         playsInline
         muted
-        className={`w-full h-full object-cover transition-transform duration-300 ${
-          facingMode === "user" ? "-scale-x-100" : "scale-x-100"
-        }`}
+        className={`w-full h-full object-cover transition-transform duration-300 ${facingMode === "user" ? "-scale-x-100" : "scale-x-100"
+          }`}
       />
 
       {/* Rule of Thirds Grid Overlay */}
@@ -93,25 +92,25 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
       )}
 
       {/* Floating Status Badges Top Left */}
-      <div className="absolute top-4 left-4 flex flex-wrap items-center gap-2 pointer-events-none z-10">
+      <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 flex flex-wrap items-center gap-1.5 sm:gap-2 pointer-events-none z-10">
         {/* Low-Light Indicator */}
         {isLowLight && (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[11px] font-medium backdrop-blur-md animate-pulse">
-            <Moon size={12} />
+          <div className="flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] sm:text-[11px] font-medium backdrop-blur-md animate-pulse">
+            <Moon size={11} className="sm:w-3 sm:h-3" />
             <span>Low Light</span>
           </div>
         )}
 
         {/* OIS / EIS Status */}
         {deviceProfile.hasOIS ? (
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-medium backdrop-blur-md">
-            <Sparkles size={11} />
+          <div className="flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[9px] sm:text-[10px] font-medium backdrop-blur-md">
+            <Sparkles size={10} className="sm:w-2.75 sm:h-2.75" />
             <span>OIS Ready</span>
           </div>
         ) : (
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-[10px] font-medium backdrop-blur-md">
-            <ShieldAlert size={11} />
-            <span>Software EIS (Burst)</span>
+          <div className="flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-[9px] sm:text-[10px] font-medium backdrop-blur-md">
+            <ShieldAlert size={10} className="sm:w-2.75 sm:h-2.75" />
+            <span>Software EIS</span>
           </div>
         )}
       </div>
