@@ -1,11 +1,18 @@
 // src/components/apps/photobooth/lib/compositor.ts
-import { PhotoboothTheme } from "../themes/themes.config";
+import { PhotoboothTheme, PhotoboothLayout } from "../themes/themes.config";
+import { PhotoboothFilter } from "../filters/filters.config";
+import { renderCanvasPattern, renderThemeOrnaments } from "./canvasDecorators";
 
 export interface ComposeOptions {
   theme: PhotoboothTheme;
+  filter?: PhotoboothFilter;
+  layout?: PhotoboothLayout;
+  shotCount?: number;
   frames: (HTMLCanvasElement | string)[];
   customCaption?: string;
   customDate?: string;
+  showTimestamp?: boolean;
+  showStickers?: boolean;
 }
 
 /**
@@ -22,7 +29,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 }
 
 /**
- * Menggambar foto (canvas atau image) ke dalam slot target dengan mode object-fit 'cover'.
+ * Menggambar foto (canvas atau image) ke dalam slot target dengan mode object-fit 'cover' dan filter warna.
  */
 function drawImageCover(
   ctx: CanvasRenderingContext2D,
@@ -31,9 +38,15 @@ function drawImageCover(
   y: number,
   w: number,
   h: number,
-  radius = 12
+  radius = 12,
+  canvasFilter?: string
 ) {
   ctx.save();
+
+  // Terapkan filter jika ada
+  if (canvasFilter && canvasFilter !== "none") {
+    ctx.filter = canvasFilter;
+  }
 
   // Buat rounded clipping path
   ctx.beginPath();
@@ -56,11 +69,9 @@ function drawImageCover(
   let sHeight = srcHeight;
 
   if (srcRatio > targetRatio) {
-    // Crop samping
     sWidth = srcHeight * targetRatio;
     sx = (srcWidth - sWidth) / 2;
   } else {
-    // Crop atas/bawah
     sHeight = srcWidth / targetRatio;
     sy = (srcHeight - sHeight) / 2;
   }
@@ -70,13 +81,26 @@ function drawImageCover(
 }
 
 /**
- * Generic Photobooth Compositor.
- * Menyatukan array captured frames + theme layout + frame overlay menjadi satu gambar final.
+ * Advanced Photobooth Compositor.
+ * Menyatukan frames + layout (1 kolom, 2 kolom, 1 baris, polaroid) + tema + ornamen + filter.
  */
 export async function composePhotoboothImage(options: ComposeOptions): Promise<string> {
-  const { theme, frames, customCaption, customDate } = options;
+  const {
+    theme,
+    filter,
+    layout: inputLayout,
+    shotCount: inputShotCount,
+    frames,
+    customCaption,
+    customDate,
+    showTimestamp = true,
+    showStickers = true,
+  } = options;
 
-  // Berikan jeda 1 tick agar UI thread dapat me-render loading spinner / transition
+  const layout = inputLayout || theme.layout;
+  const shotCount = inputShotCount || theme.shotCount;
+
+  // Berikan jeda 1 tick agar UI thread dapat me-render transition
   await new Promise((resolve) => setTimeout(resolve, 16));
 
   // 1. Siapkan sumber frame
@@ -90,7 +114,7 @@ export async function composePhotoboothImage(options: ComposeOptions): Promise<s
     }
   }
 
-  // 2. Setup Dimensi Canvas Final berdasarkan Layout Theme
+  // 2. Setup Dimensi Canvas Final berdasarkan Layout
   const outCanvas = document.createElement("canvas");
   const ctx = outCanvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) throw new Error("Gagal menginisialisasi Canvas Context");
@@ -110,19 +134,22 @@ export async function composePhotoboothImage(options: ComposeOptions): Promise<s
     hour12: false,
   });
 
-  const footerText = customCaption || theme.subtext || "SON-OS PHOTOBOOTH";
+  const footerText = (customCaption && customCaption.trim()) || theme.subtext || "SON-OS PHOTOBOOTH";
+  const slotBoxes: { x: number; y: number; w: number; h: number }[] = [];
 
-  if (theme.layout === "single") {
-    // -------------------------------------------------------------
-    // POLAROID (SINGLE) LAYOUT
-    // Output: 1080 x 1320 (Classic instant print)
-    // -------------------------------------------------------------
+  const canvasFilter = filter?.canvasFilter || "none";
+
+  // -------------------------------------------------------------
+  // LAYOUT 1: SINGLE POLAROID (1:1 / Single Shot)
+  // -------------------------------------------------------------
+  if (layout === "single") {
     outCanvas.width = 1080;
-    outCanvas.height = 1320;
+    outCanvas.height = 1360;
 
     // Background Card
     ctx.fillStyle = theme.frameColor;
     ctx.fillRect(0, 0, outCanvas.width, outCanvas.height);
+    renderCanvasPattern(ctx, outCanvas.width, outCanvas.height, theme);
 
     // Border halus
     ctx.strokeStyle = "rgba(0, 0, 0, 0.08)";
@@ -133,60 +160,63 @@ export async function composePhotoboothImage(options: ComposeOptions): Promise<s
     const photoMargin = 70;
     const photoWidth = outCanvas.width - photoMargin * 2; // 940
     const photoHeight = photoWidth; // 1:1
-    const photoY = 70;
+    const photoY = 75;
+
+    slotBoxes.push({ x: photoMargin, y: photoY, w: photoWidth, h: photoHeight });
 
     if (loadedSources[0]) {
-      drawImageCover(ctx, loadedSources[0], photoMargin, photoY, photoWidth, photoHeight, 8);
+      drawImageCover(ctx, loadedSources[0], photoMargin, photoY, photoWidth, photoHeight, 8, canvasFilter);
     }
 
     // Photo inner subtle shadow border
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.12)";
     ctx.lineWidth = 1.5;
     ctx.strokeRect(photoMargin, photoY, photoWidth, photoHeight);
+
+    if (showStickers) {
+      renderThemeOrnaments(ctx, outCanvas.width, outCanvas.height, theme, slotBoxes);
+    }
 
     // Footer Caption & Date
     ctx.fillStyle = theme.textColor;
     ctx.textAlign = "center";
     ctx.font = "bold 26px 'Courier New', Courier, monospace";
-    ctx.fillText(footerText, outCanvas.width / 2, 1140);
+    ctx.fillText(footerText, outCanvas.width / 2, 1160);
 
-    ctx.font = "500 18px 'Courier New', Courier, monospace";
-    ctx.fillStyle = theme.textColor === "#ffffff" || theme.textColor === "#f4f4f5" ? "rgba(255, 255, 255, 0.6)" : "rgba(0, 0, 0, 0.5)";
-    ctx.fillText(`${dateStr} • ${timeStr}`, outCanvas.width / 2, 1180);
-  } else if (theme.layout === "strip") {
-    // -------------------------------------------------------------
-    // FILM STRIP (VERTICAL 4 SHOTS) LAYOUT
-    // Output: 640 x 1920 (Classic 1:3 photobooth bookmark strip)
-    // -------------------------------------------------------------
-    outCanvas.width = 640;
-    outCanvas.height = 1920;
+    if (showTimestamp) {
+      ctx.font = "500 18px 'Courier New', Courier, monospace";
+      ctx.fillStyle = theme.textColor === "#ffffff" || theme.textColor === "#f4f4f5" ? "rgba(255, 255, 255, 0.6)" : "rgba(0, 0, 0, 0.5)";
+      ctx.fillText(`${dateStr} • ${timeStr}`, outCanvas.width / 2, 1205);
+    }
+  }
+
+  // -------------------------------------------------------------
+  // LAYOUT 2: STRIP 1-KOLOM (Vertical Strip 1x2, 1x3, 1x4, 1x6)
+  // -------------------------------------------------------------
+  else if (layout === "strip-1col") {
+    const photoWidth = 560;
+    const photoHeight = Math.round(photoWidth / theme.aspectRatio); // 420 (for 4:3)
+    const paddingX = 45;
+    const gap = 24;
+    const startY = 48;
+    const footerHeight = 150;
+
+    outCanvas.width = photoWidth + paddingX * 2; // 650
+    outCanvas.height = startY + shotCount * (photoHeight + gap) - gap + footerHeight;
 
     ctx.fillStyle = theme.frameColor;
     ctx.fillRect(0, 0, outCanvas.width, outCanvas.height);
+    renderCanvasPattern(ctx, outCanvas.width, outCanvas.height, theme);
 
-    // Film side perforations/dots aesthetic
-    ctx.fillStyle = theme.textColor === "#f4f4f5" ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.1)";
-    for (let py = 30; py < outCanvas.height - 80; py += 45) {
-      ctx.beginPath();
-      ctx.arc(16, py, 4, 0, Math.PI * 2);
-      ctx.arc(outCanvas.width - 16, py, 4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    const paddingX = 40;
-    const photoWidth = outCanvas.width - paddingX * 2; // 560
-    const photoHeight = Math.round(photoWidth / theme.aspectRatio); // 420
-    const gap = 24;
-    const startY = 40;
-
-    for (let i = 0; i < theme.shotCount; i++) {
+    for (let i = 0; i < shotCount; i++) {
       const currentY = startY + i * (photoHeight + gap);
-      const frameSource = loadedSources[i];
+      const box = { x: paddingX, y: currentY, w: photoWidth, h: photoHeight };
+      slotBoxes.push(box);
 
+      const frameSource = loadedSources[i];
       if (frameSource) {
-        drawImageCover(ctx, frameSource, paddingX, currentY, photoWidth, photoHeight, 10);
+        drawImageCover(ctx, frameSource, paddingX, currentY, photoWidth, photoHeight, 10, canvasFilter);
       } else {
-        // Placeholder empty slot
         ctx.fillStyle = "rgba(128, 128, 128, 0.1)";
         ctx.fillRect(paddingX, currentY, photoWidth, photoHeight);
       }
@@ -196,76 +226,140 @@ export async function composePhotoboothImage(options: ComposeOptions): Promise<s
       ctx.strokeRect(paddingX, currentY, photoWidth, photoHeight);
     }
 
+    if (showStickers) {
+      renderThemeOrnaments(ctx, outCanvas.width, outCanvas.height, theme, slotBoxes);
+    }
+
     // Footer
-    const footerY = startY + theme.shotCount * (photoHeight + gap) + 30;
+    const footerY = startY + shotCount * (photoHeight + gap) + 36;
     ctx.fillStyle = theme.textColor;
     ctx.textAlign = "center";
     ctx.font = "bold 20px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-    ctx.letterSpacing = "2px";
     ctx.fillText(`${theme.badgeEmoji ? theme.badgeEmoji + " " : ""}${footerText}`, outCanvas.width / 2, footerY);
 
-    ctx.font = "14px monospace";
-    ctx.fillStyle = theme.textColor === "#f4f4f5" ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.4)";
-    ctx.fillText(`${dateStr} • ${timeStr}`, outCanvas.width / 2, footerY + 28);
-  } else if (theme.layout === "grid") {
-    // -------------------------------------------------------------
-    // GRID 2x2 (4 SHOTS) LAYOUT
-    // Output: 1200 x 1400
-    // -------------------------------------------------------------
-    outCanvas.width = 1200;
-    outCanvas.height = 1400;
+    if (showTimestamp) {
+      ctx.font = "14px monospace";
+      ctx.fillStyle = theme.textColor === "#f4f4f5" || theme.textColor === "#ffffff" ? "rgba(255, 255, 255, 0.55)" : "rgba(0, 0, 0, 0.45)";
+      ctx.fillText(`${dateStr} • ${timeStr}`, outCanvas.width / 2, footerY + 28);
+    }
+  }
+
+  // -------------------------------------------------------------
+  // LAYOUT 3: GRID 2-KOLOM (2x1, 2x2, 2x3)
+  // -------------------------------------------------------------
+  else if (layout === "grid-2col") {
+    const cols = 2;
+    const rows = Math.ceil(shotCount / cols);
+    const margin = 50;
+    const gap = 24;
+    const totalWidth = 1200;
+    const photoWidth = (totalWidth - margin * 2 - gap * (cols - 1)) / cols; // 538
+    const photoHeight = Math.round(photoWidth / theme.aspectRatio); // ~403
+    const startY = 60;
+    const footerHeight = 160;
+
+    outCanvas.width = totalWidth;
+    outCanvas.height = startY + rows * (photoHeight + gap) - gap + footerHeight;
 
     ctx.fillStyle = theme.frameColor;
     ctx.fillRect(0, 0, outCanvas.width, outCanvas.height);
+    renderCanvasPattern(ctx, outCanvas.width, outCanvas.height, theme);
 
-    const margin = 50;
-    const gap = 24;
-    const cols = 2;
-    const photoWidth = (outCanvas.width - margin * 2 - gap * (cols - 1)) / cols; // 538
-    const photoHeight = Math.round(photoWidth / theme.aspectRatio); // ~403
-    const startY = 60;
-
-    for (let i = 0; i < theme.shotCount; i++) {
+    for (let i = 0; i < shotCount; i++) {
       const row = Math.floor(i / cols);
       const col = i % cols;
       const x = margin + col * (photoWidth + gap);
       const y = startY + row * (photoHeight + gap);
+      const box = { x, y, w: photoWidth, h: photoHeight };
+      slotBoxes.push(box);
 
       const frameSource = loadedSources[i];
       if (frameSource) {
-        drawImageCover(ctx, frameSource, x, y, photoWidth, photoHeight, 14);
+        drawImageCover(ctx, frameSource, x, y, photoWidth, photoHeight, 14, canvasFilter);
       } else {
         ctx.fillStyle = "rgba(128, 128, 128, 0.1)";
         ctx.fillRect(x, y, photoWidth, photoHeight);
       }
 
-      ctx.strokeStyle = "rgba(0, 0, 0, 0.08)";
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
       ctx.lineWidth = 1.5;
       ctx.strokeRect(x, y, photoWidth, photoHeight);
     }
 
-    // Grid Footer Brand
-    const footerY = startY + 2 * photoHeight + gap + 70;
+    if (showStickers) {
+      renderThemeOrnaments(ctx, outCanvas.width, outCanvas.height, theme, slotBoxes);
+    }
+
+    // Grid Footer
+    const footerY = startY + rows * (photoHeight + gap) + 40;
     ctx.fillStyle = theme.textColor;
     ctx.textAlign = "center";
-    ctx.font = "bold 26px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    ctx.font = "bold 24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     ctx.fillText(`${theme.badgeEmoji ? theme.badgeEmoji + " " : ""}${footerText}`, outCanvas.width / 2, footerY);
 
-    ctx.font = "16px monospace";
-    ctx.fillStyle = theme.textColor === "#27272a" ? "rgba(0, 0, 0, 0.45)" : "rgba(255, 255, 255, 0.5)";
-    ctx.fillText(`${dateStr} • ${timeStr}`, outCanvas.width / 2, footerY + 34);
-  }
-
-  // 3. Optional: Coba muat file overlay PNG transparan jika ada path eksternal
-  if (theme.framePath && !theme.framePath.startsWith("/assets/photobooth/frames/")) {
-    try {
-      const overlayImg = await loadImage(theme.framePath);
-      ctx.drawImage(overlayImg, 0, 0, outCanvas.width, outCanvas.height);
-    } catch {
-      // Abaikan jika custom frame asset belum diunggah
+    if (showTimestamp) {
+      ctx.font = "16px monospace";
+      ctx.fillStyle = theme.textColor === "#1c1917" || theme.textColor === "#0f172a" ? "rgba(0, 0, 0, 0.45)" : "rgba(255, 255, 255, 0.55)";
+      ctx.fillText(`${dateStr} • ${timeStr}`, outCanvas.width / 2, footerY + 32);
     }
   }
 
-  // 4. Return Data URL (PNG)
+  // -------------------------------------------------------------
+  // LAYOUT 4: STRIP 1-BARIS (Horizontal 1x2, 1x3, 1x4)
+  // -------------------------------------------------------------
+  else if (layout === "strip-1row") {
+    const photoHeight = 440;
+    const photoWidth = Math.round(photoHeight * theme.aspectRatio); // ~586
+    const margin = 45;
+    const gap = 20;
+    const startX = margin;
+    const startY = 45;
+    const footerHeight = 110;
+
+    outCanvas.width = margin * 2 + shotCount * photoWidth + (shotCount - 1) * gap;
+    outCanvas.height = startY + photoHeight + footerHeight;
+
+    ctx.fillStyle = theme.frameColor;
+    ctx.fillRect(0, 0, outCanvas.width, outCanvas.height);
+    renderCanvasPattern(ctx, outCanvas.width, outCanvas.height, theme);
+
+    for (let i = 0; i < shotCount; i++) {
+      const x = startX + i * (photoWidth + gap);
+      const y = startY;
+      const box = { x, y, w: photoWidth, h: photoHeight };
+      slotBoxes.push(box);
+
+      const frameSource = loadedSources[i];
+      if (frameSource) {
+        drawImageCover(ctx, frameSource, x, y, photoWidth, photoHeight, 12, canvasFilter);
+      } else {
+        ctx.fillStyle = "rgba(128, 128, 128, 0.1)";
+        ctx.fillRect(x, y, photoWidth, photoHeight);
+      }
+
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(x, y, photoWidth, photoHeight);
+    }
+
+    if (showStickers) {
+      renderThemeOrnaments(ctx, outCanvas.width, outCanvas.height, theme, slotBoxes);
+    }
+
+    // Horizontal Strip Footer
+    const footerY = startY + photoHeight + 45;
+    ctx.fillStyle = theme.textColor;
+    ctx.textAlign = "center";
+    ctx.font = "bold 22px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    ctx.fillText(`${theme.badgeEmoji ? theme.badgeEmoji + " " : ""}${footerText}`, outCanvas.width / 2, footerY);
+
+    if (showTimestamp) {
+      ctx.font = "15px monospace";
+      ctx.fillStyle = theme.textColor === "#1c1917" || theme.textColor === "#0f172a" ? "rgba(0, 0, 0, 0.45)" : "rgba(255, 255, 255, 0.55)";
+      ctx.fillText(`${dateStr} • ${timeStr}`, outCanvas.width / 2, footerY + 28);
+    }
+  }
+
+  // 3. Return Data URL (PNG)
   return outCanvas.toDataURL("image/png", 1.0);
 }

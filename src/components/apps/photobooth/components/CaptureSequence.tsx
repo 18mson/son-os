@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
-import { RotateCw, RefreshCw, X, Play, Camera, AlertCircle } from "lucide-react";
+import { RefreshCw, X, Play, AlertCircle, Sparkles } from "lucide-react";
 import {
   useCameraStream,
   processCapturedImageToCanvas,
@@ -11,6 +11,7 @@ import {
 import { usePhotoboothStore } from "@/store/photoboothStore";
 import { CountdownOverlay } from "./CountdownOverlay";
 import { composePhotoboothImage } from "../lib/compositor";
+import { PHOTOBOOTH_FILTERS, PhotoboothFilter } from "../filters/filters.config";
 
 export const CaptureSequence: React.FC = () => {
   const {
@@ -19,7 +20,15 @@ export const CaptureSequence: React.FC = () => {
     currentShotIndex,
     capturedPreviewUrls,
     capturedFrames,
+    selectedFilterId,
+    customCaption,
+    showTimestamp,
+    showStickers,
     getSelectedTheme,
+    getSelectedFilter,
+    getActiveLayout,
+    getActiveShotCount,
+    setFilter,
     setStep,
     setCountdown,
     addCapturedFrame,
@@ -27,20 +36,19 @@ export const CaptureSequence: React.FC = () => {
     setFinalResult,
     setError,
     resetSession,
-    retakeCurrentSession,
   } = usePhotoboothStore();
 
   const theme = getSelectedTheme();
-  const totalShots = theme.shotCount;
+  const filter = getSelectedFilter();
+  const layout = getActiveLayout();
+  const totalShots = getActiveShotCount();
 
   const {
     stream,
     deviceProfile,
-    facingMode,
     isLoading: isStreamLoading,
     error: streamError,
     takePhoto,
-    switchFacingMode,
     reinitialize,
   } = useCameraStream({
     preferredFacingMode: "user",
@@ -97,9 +105,13 @@ export const CaptureSequence: React.FC = () => {
 
       // 2. Terapkan color correction & denoise
       const processedCanvas = processCapturedImageToCanvas(captureResult.canvas, {
-        colorCorrection: theme.id === "polaroid" 
-          ? { ...deviceProfile.colorCorrection, saturation: deviceProfile.colorCorrection.saturation * 1.05, contrast: 1.08 }
-          : deviceProfile.colorCorrection,
+        colorCorrection: {
+          ...deviceProfile.colorCorrection,
+          saturation: deviceProfile.colorCorrection.saturation * filter.colorCorrection.saturation,
+          contrast: deviceProfile.colorCorrection.contrast * filter.colorCorrection.contrast,
+          brightness: deviceProfile.colorCorrection.brightness * filter.colorCorrection.brightness,
+          warmth: deviceProfile.colorCorrection.warmth + filter.colorCorrection.warmth,
+        },
         postProcessing: deviceProfile.postProcessing,
         isLowLight,
       });
@@ -117,7 +129,13 @@ export const CaptureSequence: React.FC = () => {
         const allFrames = [...capturedFrames, processedCanvas];
         const finalUrl = await composePhotoboothImage({
           theme,
+          filter,
+          layout,
+          shotCount: totalShots,
           frames: allFrames,
+          customCaption,
+          showTimestamp,
+          showStickers,
         });
 
         setFinalResult(finalUrl);
@@ -126,7 +144,7 @@ export const CaptureSequence: React.FC = () => {
         setTimeout(() => {
           setStep("counting");
           setCountdown(theme.countdownSeconds);
-        }, 1000);
+        }, 900);
       }
     } catch (err) {
       console.error("Gagal mengambil foto photobooth:", err);
@@ -138,14 +156,19 @@ export const CaptureSequence: React.FC = () => {
     addCapturedFrame,
     capturedFrames,
     currentShotIndex,
+    customCaption,
     deviceProfile,
+    filter,
     isCapturing,
     isLowLight,
+    layout,
     setComposing,
     setCountdown,
     setError,
     setFinalResult,
     setStep,
+    showStickers,
+    showTimestamp,
     takePhoto,
     theme,
     totalShots,
@@ -196,7 +219,7 @@ export const CaptureSequence: React.FC = () => {
               <span>{theme.name}</span>
             </h2>
             <span className="text-[10px] text-zinc-400 font-mono">
-              {totalShots} {totalShots === 1 ? "Shot" : "Shots"} • {theme.layout}
+              {totalShots} {totalShots === 1 ? "Shot" : "Shots"} • {layout.replace("-", " ")}
             </span>
           </div>
         </div>
@@ -212,7 +235,7 @@ export const CaptureSequence: React.FC = () => {
                 key={idx}
                 className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded-lg border-2 overflow-hidden flex items-center justify-center transition-all ${
                   isTaken
-                    ? "border-emerald-500 bg-zinc-800"
+                    ? "border-emerald-500 bg-zinc-800 shadow"
                     : isCurrent
                     ? "border-purple-500 bg-purple-500/20 animate-pulse"
                     : "border-white/20 bg-zinc-900"
@@ -249,75 +272,89 @@ export const CaptureSequence: React.FC = () => {
               <RefreshCw size={14} /> Coba Lagi
             </button>
           </div>
+        ) : isStreamLoading ? (
+          <div className="flex flex-col items-center justify-center gap-3">
+            <div className="w-9 h-9 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs text-zinc-400 font-mono">Mengaktifkan Sensor Kamera...</p>
+          </div>
         ) : (
-          <>
-            {/* Live Video Element */}
+          <div className="relative w-full h-full flex items-center justify-center">
+            {/* Live Camera Viewfinder with Realtime CSS Filter */}
             <video
               ref={videoRef}
               autoPlay
               playsInline
               muted
-              className={`w-full h-full object-cover transition-transform duration-300 ${
-                facingMode === "user" ? "-scale-x-100" : "scale-x-100"
-              }`}
+              style={{ filter: filter.cssFilter }}
+              className="w-full h-full object-cover -scale-x-100 transition-all duration-300"
             />
 
-            {/* Loading Indicator */}
-            {isStreamLoading && (
-              <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/70 backdrop-blur-xs text-zinc-300 text-xs gap-2">
-                <RefreshCw className="animate-spin text-purple-400" size={22} />
-                Menghubungkan kamera...
-              </div>
+            {/* Flash Effect on capture */}
+            {isCapturing && (
+              <div className="absolute inset-0 bg-white z-40 animate-out fade-out duration-300 pointer-events-none" />
             )}
 
-            {/* Countdown and Flash Overlay */}
-            <CountdownOverlay
-              countdown={countdown}
-              isCapturing={isCapturing}
-              shotIndex={currentShotIndex}
-              totalShots={totalShots}
-            />
-          </>
+            {/* Countdown Overlay */}
+            {currentStep === "counting" && (
+              <CountdownOverlay
+                countdown={countdown}
+                isCapturing={isCapturing}
+                shotIndex={currentShotIndex}
+                totalShots={totalShots}
+              />
+            )}
+          </div>
         )}
       </div>
 
-      {/* Bottom Controls Bar */}
-      <div className="px-4 sm:px-8 py-3 sm:py-5 bg-zinc-950/95 border-t border-white/10 flex items-center justify-between shrink-0 relative z-20 backdrop-blur-md">
-        {/* Switch Camera */}
-        <button
-          onClick={switchFacingMode}
-          title="Ganti Kamera Depan / Belakang"
-          aria-label="Ganti Kamera"
-          className="w-12 h-12 sm:w-11 sm:h-11 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 text-zinc-300 active:scale-95 transition-all cursor-pointer"
-        >
-          <RotateCw size={20} />
-        </button>
-
-        {/* Center Action Button */}
-        {currentStep === "ready" ? (
-          <button
-            onClick={handleStartCaptureSequence}
-            className="px-6 py-3.5 rounded-full bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-sm shadow-xl shadow-purple-600/40 flex items-center gap-2.5 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-          >
-            <Play size={18} fill="currentColor" />
-            <span>Mulai Foto ({totalShots} Shot)</span>
-          </button>
-        ) : (
-          <div className="flex items-center gap-2 text-xs font-semibold text-purple-300 bg-purple-500/10 border border-purple-500/20 px-4 py-2.5 rounded-full">
-            <Camera size={16} className="animate-pulse text-pink-400" />
-            <span>Sesi Sedang Berjalan...</span>
+      {/* Bottom Live Controls & Quick Filter Selector Bar */}
+      <div className="px-4 py-3 bg-zinc-900/90 border-t border-white/10 flex flex-col gap-2.5 shrink-0 z-20 backdrop-blur-md">
+        {/* Quick Filter Swatches (available when ready) */}
+        {currentStep === "ready" && (
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full mx-auto">
+            <span className="text-[10px] font-bold text-zinc-400 flex items-center gap-1 pr-1">
+              <Sparkles size={11} className="text-purple-400" />
+              <span>Filter:</span>
+            </span>
+            {PHOTOBOOTH_FILTERS.map((f: PhotoboothFilter) => (
+              <button
+                key={f.id}
+                onClick={() => setFilter(f.id)}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap flex items-center gap-1 transition-all cursor-pointer ${
+                  selectedFilterId === f.id
+                    ? "bg-purple-600 text-white font-bold shadow-md scale-105"
+                    : "bg-zinc-800 text-zinc-400 hover:text-white border border-white/5"
+                }`}
+              >
+                <span>{f.badgeEmoji}</span>
+                <span>{f.name}</span>
+              </button>
+            ))}
           </div>
         )}
 
-        {/* Reset / Retake Button */}
-        <button
-          onClick={retakeCurrentSession}
-          title="Ulangi Sesi dari Awal"
-          aria-label="Ulangi Sesi"
-          className="w-12 h-12 sm:w-11 sm:h-11 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 text-zinc-300 active:scale-95 transition-all cursor-pointer"
-        >
-          <RefreshCw size={20} />
-        </button>
+        {/* Action Button */}
+        <div className="flex items-center justify-center">
+          {currentStep === "ready" && (
+            <button
+              onClick={handleStartCaptureSequence}
+              disabled={!stream || isStreamLoading}
+              className="flex items-center justify-center gap-2 px-8 py-3 rounded-2xl bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-bold shadow-xl shadow-purple-600/30 transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50"
+            >
+              <Play size={17} fill="currentColor" />
+              <span>Mulai Jepret ({totalShots}x)</span>
+            </button>
+          )}
+
+          {(currentStep === "counting" || currentStep === "capturing") && (
+            <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 py-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+              <span>
+                Mengambil Shot {currentShotIndex + 1} dari {totalShots}...
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
