@@ -20,7 +20,6 @@ export function drawSparkleStar(
   ctx.fillStyle = color;
 
   ctx.beginPath();
-  // Bentuk bintang 4 sudut melengkung Y2K
   ctx.moveTo(cx, cy - size);
   ctx.quadraticCurveTo(cx, cy, cx + size, cy);
   ctx.quadraticCurveTo(cx, cy, cx, cy + size);
@@ -29,7 +28,6 @@ export function drawSparkleStar(
   ctx.closePath();
   ctx.fill();
 
-  // Titik pusat bersinar
   ctx.fillStyle = "#ffffff";
   ctx.beginPath();
   ctx.arc(cx, cy, size * 0.2, 0, Math.PI * 2);
@@ -138,12 +136,10 @@ export function drawCatPaw(
   ctx.save();
   ctx.fillStyle = color;
 
-  // Bantalan utama
   ctx.beginPath();
   ctx.ellipse(cx, cy + size * 0.2, size * 0.5, size * 0.4, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Jari-jari
   const toes = [
     { dx: -size * 0.45, dy: -size * 0.25, r: size * 0.18 },
     { dx: -size * 0.18, dy: -size * 0.45, r: size * 0.2 },
@@ -161,7 +157,120 @@ export function drawCatPaw(
 }
 
 /**
- * Menggambar daun & sulur emas (Botanical Romance)
+ * Menggambar Bunga Sakura Jepang 5 Kelopak (Sakura Blossom)
+ */
+export function drawSakuraFlower(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  size: number,
+  petalColor = "#f472b6",
+  centerColor = "#f43f5e"
+) {
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // 5 kelopak sakura mekar
+  const numPetals = 5;
+  for (let i = 0; i < numPetals; i++) {
+    const angle = (i * 2 * Math.PI) / numPetals;
+    ctx.save();
+    ctx.rotate(angle);
+
+    ctx.fillStyle = petalColor;
+    ctx.beginPath();
+    // Bentuk lekukan kelopak sakura berlekuk di ujung
+    ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(-size * 0.35, -size * 0.4, -size * 0.45, -size * 0.85, -size * 0.15, -size);
+    ctx.lineTo(0, -size * 0.88); // celah kecil khas sakura
+    ctx.lineTo(size * 0.15, -size);
+    ctx.bezierCurveTo(size * 0.45, -size * 0.85, size * 0.35, -size * 0.4, 0, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // Putik tengah sakura
+  ctx.fillStyle = centerColor;
+  ctx.beginPath();
+  ctx.arc(0, 0, size * 0.22, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Serbuk sari putih
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.arc(0, 0, size * 0.1, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+/**
+ * Menggambar Kelopak Sakura yang Berguguran
+ */
+export function drawSakuraPetal(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  size: number,
+  angle: number,
+  color = "#f9a8d4"
+) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(angle);
+
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.bezierCurveTo(-size * 0.4, -size * 0.4, -size * 0.4, -size * 0.9, -size * 0.1, -size);
+  ctx.lineTo(0, -size * 0.85);
+  ctx.lineTo(size * 0.1, -size);
+  ctx.bezierCurveTo(size * 0.4, -size * 0.9, size * 0.4, -size * 0.4, 0, 0);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
+/**
+ * Menggambar Ranting Bunga Sakura dengan Tunas Daun
+ */
+export function drawSakuraBranch(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  length: number,
+  angle: number
+) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(angle);
+
+  // Ranting cokelat kayu elegan
+  ctx.strokeStyle = "#78350f";
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.quadraticCurveTo(length * 0.4, length * 0.15, length, 0);
+  ctx.stroke();
+
+  // Bunga-bunga sakura mekar di ranting
+  drawSakuraFlower(ctx, length * 0.3, length * 0.08, 14, "#fbcfe8", "#f43f5e");
+  drawSakuraFlower(ctx, length * 0.7, length * 0.05, 17, "#f472b6", "#e11d48");
+  drawSakuraFlower(ctx, length, 0, 12, "#fda4af", "#f43f5e");
+
+  // Kelopak jatuh di dekat ranting
+  drawSakuraPetal(ctx, length * 0.5, length * 0.3, 8, 0.6, "#f9a8d4");
+  drawSakuraPetal(ctx, length * 0.9, length * 0.25, 7, -0.4, "#f472b6");
+
+  ctx.restore();
+}
+
+/**
+ * Menggambar Daun & Sulur Emas (Botanical Romance)
  */
 export function drawGoldLeafBranch(
   ctx: CanvasRenderingContext2D,
@@ -179,23 +288,19 @@ export function drawGoldLeafBranch(
   ctx.lineWidth = 2;
   ctx.fillStyle = color;
 
-  // Batang utama
   ctx.beginPath();
   ctx.moveTo(0, 0);
   ctx.quadraticCurveTo(length * 0.5, -length * 0.15, length, 0);
   ctx.stroke();
 
-  // Daun-daun
   for (let i = 0.2; i <= 0.9; i += 0.2) {
     const x = length * i;
     const y = -length * 0.15 * Math.sin(i * Math.PI);
 
-    // Daun atas
     ctx.beginPath();
     ctx.ellipse(x, y - 8, 9, 4.5, -0.4, 0, Math.PI * 2);
     ctx.fill();
 
-    // Daun bawah
     ctx.beginPath();
     ctx.ellipse(x + 4, y + 8, 9, 4.5, 0.4, 0, Math.PI * 2);
     ctx.fill();
@@ -221,7 +326,7 @@ export function drawBarcode(
   let curX = x;
 
   for (let i = 0; i < barCount; i++) {
-    const barWidth = (i % 3 === 0 ? 3 : i % 5 === 0 ? 1 : 2);
+    const barWidth = i % 3 === 0 ? 3 : i % 5 === 0 ? 1 : 2;
     if (i % 2 === 0) {
       ctx.fillRect(curX, y, barWidth, h);
     }
@@ -243,6 +348,7 @@ export function renderCanvasPattern(
   if (!theme.patternType || theme.patternType === "none") return;
 
   ctx.save();
+
   if (theme.patternType === "dots") {
     ctx.fillStyle = theme.textColor === "#e11d48" ? "rgba(244, 63, 94, 0.08)" : "rgba(255, 255, 255, 0.06)";
     const gap = 32;
@@ -277,7 +383,29 @@ export function renderCanvasPattern(
       const sz = 3 + (i % 5) * 1.5;
       drawSparkleStar(ctx, sx, sy, sz, "rgba(232, 121, 249, 0.35)", false);
     }
+  } else if (theme.patternType === "petals") {
+    // Taburan kelopak sakura halus berguguran di background
+    const petalCount = 28;
+    for (let i = 0; i < petalCount; i++) {
+      const px = (i * 97) % width;
+      const py = (i * 153) % height;
+      const sz = 6 + (i % 4) * 2;
+      const ang = (i * 45 * Math.PI) / 180;
+      drawSakuraPetal(ctx, px, py, sz, ang, "rgba(244, 114, 182, 0.22)");
+    }
+  } else if (theme.patternType === "halftone") {
+    // Pola Ben-Day dots komik pop art
+    ctx.fillStyle = "rgba(220, 38, 38, 0.1)";
+    const gap = 16;
+    for (let x = gap / 2; x < width; x += gap) {
+      for (let y = gap / 2; y < height; y += gap) {
+        ctx.beginPath();
+        ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
   }
+
   ctx.restore();
 }
 
@@ -297,67 +425,100 @@ export function renderThemeOrnaments(
   ctx.save();
 
   switch (type) {
-    case "y2k-cyber": {
-      // Bintang sudut hologram besar
-      drawSparkleStar(ctx, 36, 40, 20, "#e879f9");
-      drawSparkleStar(ctx, width - 36, 40, 20, "#22d3ee");
-      drawSparkleStar(ctx, 42, height - 80, 16, "#f472b6");
-      drawSparkleStar(ctx, width - 42, height - 80, 18, "#c084fc");
+    case "sakura-blossom": {
+      // Ranting Sakura mekar di pojok atas kiri & kanan
+      drawSakuraBranch(ctx, 15, 30, 90, 0.25);
+      drawSakuraBranch(ctx, width - 15, 30, 90, 2.85);
 
-      // Stiker Hati & Planet Y2K
-      drawHeart(ctx, width / 2 - 80, height - 70, 12, "#f43f5e", "#ffffff");
-      drawHeart(ctx, width / 2 + 80, height - 70, 12, "#38bdf8", "#ffffff");
+      // Bunga mekar besar di sela-sela bawah
+      drawSakuraFlower(ctx, 38, height - 70, 20, "#f472b6", "#e11d48");
+      drawSakuraFlower(ctx, width - 38, height - 70, 20, "#fda4af", "#e11d48");
 
-      // Mini corner cyber brackets pada setiap foto slot
+      // Kelopak berguguran di sekitar foto
+      slotBoxes.forEach((b, idx) => {
+        if (idx % 2 === 0) {
+          drawSakuraPetal(ctx, b.x + b.w + 12, b.y + 10, 10, 0.4, "#f472b6");
+        } else {
+          drawSakuraPetal(ctx, b.x - 12, b.y + b.h - 10, 10, -0.6, "#fb7185");
+        }
+      });
+      break;
+    }
+
+    case "pop-art": {
+      // Bold Comic Book Action Bursts
+      // 1. BOOM! burst di pojok atas kanan
+      ctx.save();
+      ctx.translate(width - 65, 55);
+      ctx.rotate(0.1);
+      ctx.fillStyle = "#ef4444";
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 3.5;
+
+      ctx.beginPath();
+      const spikes = 10;
+      const outerR = 34;
+      const innerR = 18;
+      for (let i = 0; i < spikes * 2; i++) {
+        const r = i % 2 === 0 ? outerR : innerR;
+        const a = (i * Math.PI) / spikes;
+        const x = Math.cos(a) * r;
+        const y = Math.sin(a) * r;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#fef08a";
+      ctx.font = "900 13px 'Arial Black', Impact, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("BOOM!", 0, 5);
+      ctx.restore();
+
+      // 2. WOW! speech bubble di pojok kiri bawah
+      ctx.save();
+      ctx.translate(55, height - 65);
+      ctx.rotate(-0.08);
+
+      ctx.fillStyle = "#3b82f6";
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(-30, -18, 60, 36, 12);
+      } else {
+        ctx.rect(-30, -18, 60, 36);
+      }
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "900 12px 'Arial Black', sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("WOW!", 0, 4);
+      ctx.restore();
+
+      // Bold Comic Frame Borders pada slot foto
       slotBoxes.forEach((b) => {
-        ctx.strokeStyle = "rgba(232, 121, 249, 0.7)";
+        ctx.strokeStyle = "#000000";
         ctx.lineWidth = 3;
-        const bLen = 14;
-
-        // Top Left
-        ctx.beginPath();
-        ctx.moveTo(b.x - 4, b.y + bLen);
-        ctx.lineTo(b.x - 4, b.y - 4);
-        ctx.lineTo(b.x + bLen, b.y - 4);
-        ctx.stroke();
-
-        // Top Right
-        ctx.beginPath();
-        ctx.moveTo(b.x + b.w + 4 - bLen, b.y - 4);
-        ctx.lineTo(b.x + b.w + 4, b.y - 4);
-        ctx.lineTo(b.x + b.w + 4, b.y + bLen);
-        ctx.stroke();
-
-        // Bottom Left
-        ctx.beginPath();
-        ctx.moveTo(b.x - 4, b.y + b.h - bLen);
-        ctx.lineTo(b.x - 4, b.y + b.h + 4);
-        ctx.lineTo(b.x + bLen, b.y + b.h + 4);
-        ctx.stroke();
-
-        // Bottom Right
-        ctx.beginPath();
-        ctx.moveTo(b.x + b.w + 4 - bLen, b.y + b.h + 4);
-        ctx.lineTo(b.x + b.w + 4, b.y + b.h + 4);
-        ctx.lineTo(b.x + b.w + 4, b.y + b.h - bLen);
-        ctx.stroke();
+        ctx.strokeRect(b.x, b.y, b.w, b.h);
       });
       break;
     }
 
     case "kawaii-doodles": {
-      // Pita imut di atas foto pertama
       if (slotBoxes.length > 0) {
         drawKawaiiBow(ctx, width / 2, slotBoxes[0].y - 18, 16, "#f43f5e");
       }
 
-      // Tapak kucing & hati pastel
       drawCatPaw(ctx, 35, 45, 14, "#fda4af");
       drawCatPaw(ctx, width - 35, 45, 14, "#fda4af");
       drawHeart(ctx, 35, height - 70, 14, "#f43f5e", "#ffe4e6");
       drawHeart(ctx, width - 35, height - 70, 14, "#f43f5e", "#ffe4e6");
 
-      // Bunga & bintang kecil manis di sela-sela slot
       slotBoxes.forEach((b, idx) => {
         if (idx % 2 === 0) {
           drawSparkleStar(ctx, b.x + b.w - 10, b.y - 10, 8, "#fb7185", false);
@@ -368,8 +529,48 @@ export function renderThemeOrnaments(
       break;
     }
 
+    case "y2k-cyber": {
+      drawSparkleStar(ctx, 36, 40, 20, "#e879f9");
+      drawSparkleStar(ctx, width - 36, 40, 20, "#22d3ee");
+      drawSparkleStar(ctx, 42, height - 80, 16, "#f472b6");
+      drawSparkleStar(ctx, width - 42, height - 80, 18, "#c084fc");
+
+      drawHeart(ctx, width / 2 - 80, height - 70, 12, "#f43f5e", "#ffffff");
+      drawHeart(ctx, width / 2 + 80, height - 70, 12, "#38bdf8", "#ffffff");
+
+      slotBoxes.forEach((b) => {
+        ctx.strokeStyle = "rgba(232, 121, 249, 0.7)";
+        ctx.lineWidth = 3;
+        const bLen = 14;
+
+        ctx.beginPath();
+        ctx.moveTo(b.x - 4, b.y + bLen);
+        ctx.lineTo(b.x - 4, b.y - 4);
+        ctx.lineTo(b.x + bLen, b.y - 4);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(b.x + b.w + 4 - bLen, b.y - 4);
+        ctx.lineTo(b.x + b.w + 4, b.y - 4);
+        ctx.lineTo(b.x + b.w + 4, b.y + bLen);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(b.x - 4, b.y + b.h - bLen);
+        ctx.lineTo(b.x - 4, b.y + b.h + 4);
+        ctx.lineTo(b.x + bLen, b.y + b.h + 4);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(b.x + b.w + 4 - bLen, b.y + b.h + 4);
+        ctx.lineTo(b.x + b.w + 4, b.y + b.h + 4);
+        ctx.lineTo(b.x + b.w + 4, b.y + b.h - bLen);
+        ctx.stroke();
+      });
+      break;
+    }
+
     case "party-confetti": {
-      // Confetti potongan warna-warni jatuh
       const colors = ["#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#ec4899", "#8b5cf6"];
       for (let i = 0; i < 45; i++) {
         const cx = (i * 73) % width;
@@ -380,7 +581,7 @@ export function renderThemeOrnaments(
         ctx.rotate((i * 45 * Math.PI) / 180);
         ctx.fillStyle = col;
         if (i % 3 === 0) {
-          ctx.fillRect(-4, -2, 8, 4); // Strip pita
+          ctx.fillRect(-4, -2, 8, 4);
         } else if (i % 3 === 1) {
           ctx.beginPath();
           ctx.arc(0, 0, 3, 0, Math.PI * 2);
@@ -394,14 +595,12 @@ export function renderThemeOrnaments(
     }
 
     case "film-roll": {
-      // Lubang perforasi 35mm tepi kiri dan kanan
       ctx.fillStyle = "#0a0a0c";
       const holeW = 12;
       const holeH = 18;
       const holeRadius = 3;
 
       for (let y = 25; y < height - 60; y += 38) {
-        // Kiri
         ctx.beginPath();
         if (ctx.roundRect) {
           ctx.roundRect(10, y, holeW, holeH, holeRadius);
@@ -413,7 +612,6 @@ export function renderThemeOrnaments(
         ctx.fill();
       }
 
-      // Nomor frame merah analog samping
       slotBoxes.forEach((b, idx) => {
         ctx.fillStyle = "#ef4444";
         ctx.font = "bold 11px monospace";
@@ -426,7 +624,6 @@ export function renderThemeOrnaments(
     }
 
     case "retro-tokyo": {
-      // Katakana corner badges
       ctx.fillStyle = "#22d3ee";
       ctx.font = "bold 13px 'Courier New', monospace";
       ctx.textAlign = "left";
@@ -436,7 +633,6 @@ export function renderThemeOrnaments(
       ctx.textAlign = "right";
       ctx.fillText("SON-OS 1998", width - 36, 38);
 
-      // CRT Scanlines halus
       ctx.strokeStyle = "rgba(0, 0, 0, 0.15)";
       ctx.lineWidth = 1;
       for (let y = 0; y < height; y += 4) {
@@ -449,10 +645,8 @@ export function renderThemeOrnaments(
     }
 
     case "newspaper": {
-      // Barcode di pojok bawah
       drawBarcode(ctx, 35, height - 70, 90, 32, "#1c1917");
 
-      // Stempel bulat 'VERIFIED'
       ctx.save();
       ctx.translate(width - 70, height - 55);
       ctx.rotate(-0.15);
@@ -472,45 +666,10 @@ export function renderThemeOrnaments(
     }
 
     case "botanical-love": {
-      // Sulur daun emas di 4 sudut
       drawGoldLeafBranch(ctx, 30, 35, 60, 0.4, "#d97706");
       drawGoldLeafBranch(ctx, width - 30, 35, 60, 2.7, "#d97706");
       drawGoldLeafBranch(ctx, 30, height - 40, 60, -0.4, "#d97706");
       drawGoldLeafBranch(ctx, width - 30, height - 40, 60, -2.7, "#d97706");
-      break;
-    }
-
-    case "pop-art": {
-      // Balon teks comic 'POW!' atau 'SNAP!'
-      ctx.save();
-      ctx.translate(width - 55, 45);
-      ctx.rotate(0.12);
-      ctx.fillStyle = "#eab308";
-      ctx.strokeStyle = "#000000";
-      ctx.lineWidth = 3;
-
-      // Burst star comic
-      ctx.beginPath();
-      const spikes = 8;
-      const outerR = 28;
-      const innerR = 14;
-      for (let i = 0; i < spikes * 2; i++) {
-        const r = i % 2 === 0 ? outerR : innerR;
-        const a = (i * Math.PI) / spikes;
-        const x = Math.cos(a) * r;
-        const y = Math.sin(a) * r;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = "#dc2626";
-      ctx.font = "black 11px Impact, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("SNAP!", 0, 4);
-      ctx.restore();
       break;
     }
   }

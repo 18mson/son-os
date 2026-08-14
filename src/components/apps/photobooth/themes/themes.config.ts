@@ -15,7 +15,8 @@ export type OrnamentType =
   | "botanical-love"
   | "pop-art"
   | "retro-tokyo"
-  | "cyber-hud";
+  | "cyber-hud"
+  | "sakura-blossom";
 
 export interface PhotoboothTheme {
   id: string;
@@ -36,7 +37,7 @@ export interface PhotoboothTheme {
   badgeEmoji: string;
   ornamentType: OrnamentType;
   borderRadius?: number;
-  patternType?: "none" | "dots" | "grid" | "stars" | "stripes" | "noise";
+  patternType?: "none" | "dots" | "grid" | "stars" | "stripes" | "noise" | "petals" | "halftone";
 }
 
 export const PHOTOBOOTH_THEMES: PhotoboothTheme[] = [
@@ -102,7 +103,79 @@ export const PHOTOBOOTH_THEMES: PhotoboothTheme[] = [
   },
 
   // -------------------------------------------------------------
-  // 2. ORNAMENT & PLAYFUL THEMES (Banyak Hiasan & Doodles)
+  // 2. JAPANESE SAKURA BLOSSOM (New Theme)
+  // -------------------------------------------------------------
+  {
+    id: "sakura-japan",
+    name: "Kyoto Sakura Spring",
+    category: "aesthetic",
+    description: "Musim semi Jepang dengan kelopak bunga sakura merah muda & ornamen ranting mekar",
+    shotCount: 4,
+    allowedShotCounts: [2, 3, 4, 6],
+    layout: "strip-1col",
+    allowedLayouts: ["strip-1col", "grid-2col", "single", "strip-1row"],
+    accentColor: "bg-linear-to-br from-pink-400 via-rose-300 to-pink-500",
+    countdownSeconds: 3,
+    frameColor: "#fff5f7",
+    secondaryColor: "#f43f5e",
+    textColor: "#9f1239",
+    aspectRatio: 4 / 3,
+    subtext: "桜 • KYOTO SAKURA SPRING • 春",
+    badgeEmoji: "🌸",
+    ornamentType: "sakura-blossom",
+    patternType: "petals",
+  },
+
+  // -------------------------------------------------------------
+  // 3. COMIC POP ART (Redesigned Bold Western Comic Theme)
+  // -------------------------------------------------------------
+  {
+    id: "pop-art-comic",
+    name: "Comic Boom! Pop Art",
+    category: "aesthetic",
+    description: "Gaya komik cetak klasik dengan pola halftone Ben-Day, ledakan BOOM!, & balon dialog",
+    shotCount: 4,
+    allowedShotCounts: [2, 3, 4, 6],
+    layout: "grid-2col",
+    allowedLayouts: ["grid-2col", "strip-1col", "strip-1row"],
+    accentColor: "bg-linear-to-br from-yellow-400 via-red-500 to-blue-600",
+    countdownSeconds: 3,
+    frameColor: "#fef08a",
+    secondaryColor: "#dc2626",
+    textColor: "#000000",
+    aspectRatio: 4 / 3,
+    subtext: "💥 BOOM! PHOTO HEROES ⚡",
+    badgeEmoji: "💥",
+    ornamentType: "pop-art",
+    patternType: "halftone",
+  },
+
+  // -------------------------------------------------------------
+  // 4. KAWAII PINK DOODLES (Redesigned Soft Cute Theme)
+  // -------------------------------------------------------------
+  {
+    id: "kawaii-doodles",
+    name: "Kawaii Pink Doodles",
+    category: "ornament",
+    description: "Hiasan pita imut, jejak kaki kucing, doodle hati & sticker pastel",
+    shotCount: 4,
+    allowedShotCounts: [2, 4, 6],
+    layout: "grid-2col",
+    allowedLayouts: ["grid-2col", "strip-1col"],
+    accentColor: "bg-linear-to-br from-pink-400 via-rose-300 to-pink-500",
+    countdownSeconds: 3,
+    frameColor: "#fff0f5",
+    secondaryColor: "#f43f5e",
+    textColor: "#e11d48",
+    aspectRatio: 4 / 3,
+    subtext: "♡ CUTIE SWEET CLUB ♡",
+    badgeEmoji: "🎀",
+    ornamentType: "kawaii-doodles",
+    patternType: "dots",
+  },
+
+  // -------------------------------------------------------------
+  // 5. Y2K CYBER & PARTY
   // -------------------------------------------------------------
   {
     id: "y2k-cyber-sparkle",
@@ -123,26 +196,6 @@ export const PHOTOBOOTH_THEMES: PhotoboothTheme[] = [
     badgeEmoji: "🛸",
     ornamentType: "y2k-cyber",
     patternType: "stars",
-  },
-  {
-    id: "kawaii-doodles",
-    name: "Kawaii Doodles & Bows",
-    category: "ornament",
-    description: "Hiasan pita imut, jejak kaki kucing, doodle hati & sticker pastel",
-    shotCount: 4,
-    allowedShotCounts: [2, 4, 6],
-    layout: "grid-2col",
-    allowedLayouts: ["grid-2col", "strip-1col"],
-    accentColor: "bg-linear-to-br from-pink-400 via-rose-300 to-pink-500",
-    countdownSeconds: 3,
-    frameColor: "#fff0f5",
-    secondaryColor: "#f43f5e",
-    textColor: "#e11d48",
-    aspectRatio: 4 / 3,
-    subtext: "♡ CUTIE PIE CLUB ♡",
-    badgeEmoji: "🎀",
-    ornamentType: "kawaii-doodles",
-    patternType: "dots",
   },
   {
     id: "party-confetti",
@@ -166,7 +219,7 @@ export const PHOTOBOOTH_THEMES: PhotoboothTheme[] = [
   },
 
   // -------------------------------------------------------------
-  // 3. RETRO & ANALOG FILM
+  // 6. RETRO FILM & EDITORIAL
   // -------------------------------------------------------------
   {
     id: "kodak-35mm",
@@ -208,10 +261,6 @@ export const PHOTOBOOTH_THEMES: PhotoboothTheme[] = [
     ornamentType: "retro-tokyo",
     patternType: "grid",
   },
-
-  // -------------------------------------------------------------
-  // 4. AESTHETIC & EDITORIAL
-  // -------------------------------------------------------------
   {
     id: "editorial-newspaper",
     name: "The Daily Gazette",
@@ -251,26 +300,6 @@ export const PHOTOBOOTH_THEMES: PhotoboothTheme[] = [
     badgeEmoji: "🌿",
     ornamentType: "botanical-love",
     patternType: "none",
-  },
-  {
-    id: "pop-art-comic",
-    name: "Pop Art Comic",
-    category: "aesthetic",
-    description: "Pola titik halftone Roy Lichtenstein, balon dialog komik & warna primer tegas",
-    shotCount: 4,
-    allowedShotCounts: [2, 3, 4, 6],
-    layout: "grid-2col",
-    allowedLayouts: ["grid-2col", "strip-1col", "strip-1row"],
-    accentColor: "bg-linear-to-br from-red-500 via-yellow-400 to-blue-600",
-    countdownSeconds: 3,
-    frameColor: "#fffbe6",
-    secondaryColor: "#dc2626",
-    textColor: "#0f172a",
-    aspectRatio: 4 / 3,
-    subtext: "POW! PHOTO BOOTH HEROES",
-    badgeEmoji: "💥",
-    ornamentType: "pop-art",
-    patternType: "dots",
   },
 ];
 
