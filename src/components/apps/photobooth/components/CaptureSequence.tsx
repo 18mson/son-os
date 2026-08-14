@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
-import { RefreshCw, X, Play, AlertCircle, Sparkles } from "lucide-react";
+import { RefreshCw, X, Play, AlertCircle, SwitchCamera } from "lucide-react";
 import {
   useCameraStream,
   processCapturedImageToCanvas,
@@ -11,7 +11,6 @@ import {
 import { usePhotoboothStore } from "@/store/photoboothStore";
 import { CountdownOverlay } from "./CountdownOverlay";
 import { composePhotoboothImage } from "../lib/compositor";
-import { PHOTOBOOTH_FILTERS, PhotoboothFilter } from "../filters/filters.config";
 
 export const CaptureSequence: React.FC = () => {
   const {
@@ -20,7 +19,6 @@ export const CaptureSequence: React.FC = () => {
     currentShotIndex,
     capturedPreviewUrls,
     capturedFrames,
-    selectedFilterId,
     customCaption,
     showTimestamp,
     showStickers,
@@ -28,7 +26,6 @@ export const CaptureSequence: React.FC = () => {
     getSelectedFilter,
     getActiveLayout,
     getActiveShotCount,
-    setFilter,
     setStep,
     setCountdown,
     addCapturedFrame,
@@ -46,9 +43,11 @@ export const CaptureSequence: React.FC = () => {
   const {
     stream,
     deviceProfile,
+    facingMode,
     isLoading: isStreamLoading,
     error: streamError,
     takePhoto,
+    switchFacingMode,
     reinitialize,
   } = useCameraStream({
     preferredFacingMode: "user",
@@ -204,11 +203,12 @@ export const CaptureSequence: React.FC = () => {
   return (
     <div className="relative w-full h-full flex flex-col bg-black text-white font-sans select-none overflow-hidden">
       {/* Top Header Bar */}
-      <div className="px-4 py-2.5 bg-zinc-900/90 border-b border-white/10 flex items-center justify-between shrink-0 z-20 backdrop-blur-md">
+      <div className="px-3 sm:px-4 py-2.5 bg-zinc-900/90 border-b border-white/10 flex items-center justify-between shrink-0 z-20 backdrop-blur-md">
         <div className="flex items-center gap-2">
           <button
             onClick={resetSession}
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-zinc-300 transition-colors cursor-pointer"
+            disabled={currentStep === "counting" || currentStep === "capturing"}
+            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-zinc-300 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             title="Ganti Tema"
           >
             <X size={16} />
@@ -224,37 +224,55 @@ export const CaptureSequence: React.FC = () => {
           </div>
         </div>
 
-        {/* Thumbnail Strip Status */}
-        <div className="flex items-center gap-1.5">
-          {Array.from({ length: totalShots }).map((_, idx) => {
-            const isTaken = idx < capturedPreviewUrls.length;
-            const isCurrent = idx === currentShotIndex && currentStep !== "ready";
+        {/* Right side: Camera switch & Thumbnail progress */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Switch Camera Button (Front / Rear) */}
+          {currentStep === "ready" && (
+            <button
+              onClick={switchFacingMode}
+              disabled={isStreamLoading}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-zinc-200 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+              title="Ganti Kamera Depan / Belakang"
+            >
+              <SwitchCamera size={14} className="text-purple-400" />
+              <span className="hidden sm:inline">
+                {facingMode === "user" ? "Kamera Belakang" : "Kamera Depan"}
+              </span>
+            </button>
+          )}
 
-            return (
-              <div
-                key={idx}
-                className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded-lg border-2 overflow-hidden flex items-center justify-center transition-all ${
-                  isTaken
-                    ? "border-emerald-500 bg-zinc-800 shadow"
-                    : isCurrent
-                    ? "border-purple-500 bg-purple-500/20 animate-pulse"
-                    : "border-white/20 bg-zinc-900"
-                }`}
-              >
-                {isTaken && capturedPreviewUrls[idx] ? (
-                  <Image
-                    src={capturedPreviewUrls[idx]}
-                    alt={`Shot ${idx + 1}`}
-                    fill
-                    unoptimized
-                    className="object-cover"
-                  />
-                ) : (
-                  <span className="text-[10px] font-mono text-zinc-400">{idx + 1}</span>
-                )}
-              </div>
-            );
-          })}
+          {/* Thumbnail Strip Status */}
+          <div className="flex items-center gap-1.5">
+            {Array.from({ length: totalShots }).map((_, idx) => {
+              const isTaken = idx < capturedPreviewUrls.length;
+              const isCurrent = idx === currentShotIndex && currentStep !== "ready";
+
+              return (
+                <div
+                  key={idx}
+                  className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded-lg border-2 overflow-hidden flex items-center justify-center transition-all ${
+                    isTaken
+                      ? "border-emerald-500 bg-zinc-800 shadow"
+                      : isCurrent
+                      ? "border-purple-500 bg-purple-500/20 animate-pulse"
+                      : "border-white/20 bg-zinc-900"
+                  }`}
+                >
+                  {isTaken && capturedPreviewUrls[idx] ? (
+                    <Image
+                      src={capturedPreviewUrls[idx]}
+                      alt={`Shot ${idx + 1}`}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                  ) : (
+                    <span className="text-[10px] font-mono text-zinc-400">{idx + 1}</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -279,15 +297,28 @@ export const CaptureSequence: React.FC = () => {
           </div>
         ) : (
           <div className="relative w-full h-full flex items-center justify-center">
-            {/* Live Camera Viewfinder with Realtime CSS Filter */}
+            {/* Live Camera Viewfinder with FacingMode Mirroring */}
             <video
               ref={videoRef}
               autoPlay
               playsInline
               muted
               style={{ filter: filter.cssFilter }}
-              className="w-full h-full object-cover -scale-x-100 transition-all duration-300"
+              className={`w-full h-full object-cover transition-transform duration-300 ${
+                facingMode === "user" ? "-scale-x-100" : "scale-x-100"
+              }`}
             />
+
+            {/* Quick Floating Switch Camera Button (on top right of viewfinder) */}
+            {currentStep === "ready" && (
+              <button
+                onClick={switchFacingMode}
+                className="sm:hidden absolute top-3 right-3 p-2.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white shadow-lg z-10 active:scale-95 transition-transform"
+                title="Ganti Kamera"
+              >
+                <SwitchCamera size={18} />
+              </button>
+            )}
 
             {/* Flash Effect on capture */}
             {isCapturing && (
@@ -307,54 +338,27 @@ export const CaptureSequence: React.FC = () => {
         )}
       </div>
 
-      {/* Bottom Live Controls & Quick Filter Selector Bar */}
-      <div className="px-4 py-3 bg-zinc-900/90 border-t border-white/10 flex flex-col gap-2.5 shrink-0 z-20 backdrop-blur-md">
-        {/* Quick Filter Swatches (available when ready) */}
+      {/* Bottom Action Controls */}
+      <div className="px-4 py-3 bg-zinc-900/90 border-t border-white/10 flex items-center justify-center shrink-0 z-20 backdrop-blur-md">
         {currentStep === "ready" && (
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full mx-auto">
-            <span className="text-[10px] font-bold text-zinc-400 flex items-center gap-1 pr-1">
-              <Sparkles size={11} className="text-purple-400" />
-              <span>Filter:</span>
-            </span>
-            {PHOTOBOOTH_FILTERS.map((f: PhotoboothFilter) => (
-              <button
-                key={f.id}
-                onClick={() => setFilter(f.id)}
-                className={`px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap flex items-center gap-1 transition-all cursor-pointer ${
-                  selectedFilterId === f.id
-                    ? "bg-purple-600 text-white font-bold shadow-md scale-105"
-                    : "bg-zinc-800 text-zinc-400 hover:text-white border border-white/5"
-                }`}
-              >
-                <span>{f.badgeEmoji}</span>
-                <span>{f.name}</span>
-              </button>
-            ))}
-          </div>
+          <button
+            onClick={handleStartCaptureSequence}
+            disabled={!stream || isStreamLoading}
+            className="flex items-center justify-center gap-2 px-8 py-3 rounded-2xl bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-bold shadow-xl shadow-purple-600/30 transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50"
+          >
+            <Play size={17} fill="currentColor" />
+            <span>Mulai Jepret ({totalShots}x)</span>
+          </button>
         )}
 
-        {/* Action Button */}
-        <div className="flex items-center justify-center">
-          {currentStep === "ready" && (
-            <button
-              onClick={handleStartCaptureSequence}
-              disabled={!stream || isStreamLoading}
-              className="flex items-center justify-center gap-2 px-8 py-3 rounded-2xl bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-bold shadow-xl shadow-purple-600/30 transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50"
-            >
-              <Play size={17} fill="currentColor" />
-              <span>Mulai Jepret ({totalShots}x)</span>
-            </button>
-          )}
-
-          {(currentStep === "counting" || currentStep === "capturing") && (
-            <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 py-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
-              <span>
-                Mengambil Shot {currentShotIndex + 1} dari {totalShots}...
-              </span>
-            </div>
-          )}
-        </div>
+        {(currentStep === "counting" || currentStep === "capturing") && (
+          <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 py-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+            <span>
+              Mengambil Shot {currentShotIndex + 1} dari {totalShots}...
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
