@@ -26,6 +26,8 @@ export const CameraDebugPanel: React.FC<CameraDebugPanelProps> = ({
     streamResolution,
     actualFps,
     availableCameras,
+    availableLenses,
+    activeLens,
     errorLog,
   } = diagnostics;
 
@@ -154,19 +156,59 @@ export const CameraDebugPanel: React.FC<CameraDebugPanelProps> = ({
         )}
       </div>
 
-      {/* Hardware Cameras Enumerate */}
+      {/* Hardware Cameras & Detected Lenses */}
       <div className="p-3 rounded-xl bg-zinc-900/90 border border-white/10 flex flex-col gap-2">
-        <div className="text-[11px] font-semibold text-zinc-300">
-          Detected Hardware Video Inputs ({availableCameras.length})
+        <div className="text-[11px] font-semibold text-zinc-300 flex items-center justify-between">
+          <span>Detected Hardware Cameras ({availableCameras.length})</span>
+          {activeLens && (
+            <span className="text-[10px] text-amber-400 font-bold bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+              Active: {activeLens.displayName}
+            </span>
+          )}
         </div>
-        <div className="flex flex-col gap-1 text-[10px]">
-          {availableCameras.map((cam, idx) => (
-            <div key={cam.deviceId || idx} className="p-1.5 rounded bg-black/40 flex items-center gap-2">
-              <CheckCircle size={12} className="text-emerald-400 shrink-0" />
-              <span className="text-white truncate">{cam.label || `Camera ${idx + 1}`}</span>
-              <span className="text-zinc-500 ml-auto text-[9px]">{cam.deviceId.slice(0, 8)}...</span>
-            </div>
-          ))}
+        <div className="flex flex-col gap-1.5 text-[10px]">
+          {availableLenses.length > 0
+            ? availableLenses.map((lens, idx) => {
+                const isActive = activeLens?.deviceId === lens.deviceId;
+                return (
+                  <div
+                    key={lens.deviceId || idx}
+                    className={`p-2 rounded flex items-center justify-between gap-2 border ${
+                      isActive
+                        ? "bg-purple-950/40 border-purple-500/40 text-purple-200"
+                        : "bg-black/40 border-white/5 text-zinc-300"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <CheckCircle
+                        size={13}
+                        className={isActive ? "text-amber-400 shrink-0" : "text-zinc-600 shrink-0"}
+                      />
+                      <div className="truncate">
+                        <span className="font-semibold text-white mr-1.5">{lens.displayName}</span>
+                        <span className="text-zinc-400 text-[9px] block sm:inline truncate">
+                          ({lens.label})
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-white/10 text-zinc-300 uppercase">
+                        {lens.shortLabel}
+                      </span>
+                      <span className="text-zinc-500 text-[9px] hidden sm:inline">
+                        {lens.deviceId.slice(0, 6)}...
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
+            : availableCameras.map((cam, idx) => (
+                <div key={cam.deviceId || idx} className="p-1.5 rounded bg-black/40 flex items-center gap-2">
+                  <CheckCircle size={12} className="text-emerald-400 shrink-0" />
+                  <span className="text-white truncate">{cam.label || `Camera ${idx + 1}`}</span>
+                  <span className="text-zinc-500 ml-auto text-[9px]">{cam.deviceId.slice(0, 8)}...</span>
+                </div>
+              ))}
         </div>
       </div>
 

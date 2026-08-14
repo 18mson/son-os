@@ -13,6 +13,12 @@ import {
   isImageCaptureSupported,
   CapturePhotoResult,
 } from "./capturePhoto";
+import {
+  ParsedCameraDevice,
+  parseCameraDevices,
+  findBestLensForFacing,
+  LensType,
+} from "./lensDetection";
 
 export interface CameraDiagnostics {
   deviceProfile: DeviceProfile;
@@ -23,6 +29,8 @@ export interface CameraDiagnostics {
   streamResolution: { width: number; height: number };
   actualFps: number;
   availableCameras: MediaDeviceInfo[];
+  availableLenses: ParsedCameraDevice[];
+  activeLens: ParsedCameraDevice | null;
   isImageCaptureSupported: boolean;
   lastCaptureInfo: CapturePhotoResult | null;
   errorLog: string[];
@@ -30,13 +38,19 @@ export interface CameraDiagnostics {
 
 export interface UseCameraStreamOptions {
   preferredFacingMode?: "user" | "environment";
+  preferredDeviceId?: string;
   autoStart?: boolean;
 }
 
 export function useCameraStream(options: UseCameraStreamOptions = {}) {
-  const { preferredFacingMode = "user", autoStart = true } = options;
+  const { preferredFacingMode = "user", preferredDeviceId, autoStart = true } = options;
 
   const [facingMode, setFacingMode] = useState<"user" | "environment">(preferredFacingMode);
+  const [selectedCameraId, setSelectedCameraId] = useState<string | null>(preferredDeviceId || null);
+  const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
+  const [availableLenses, setAvailableLenses] = useState<ParsedCameraDevice[]>([]);
+  const [activeLens, setActiveLens] = useState<ParsedCameraDevice | null>(null);
+
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [deviceProfile, setDeviceProfile] = useState<DeviceProfile>(GENERIC_DESKTOP_PROFILE);
   const [isLoading, setIsLoading] = useState(autoStart);
@@ -45,54 +59,107 @@ export function useCameraStream(options: UseCameraStreamOptions = {}) {
   const [currentLadderIndex, setCurrentLadderIndex] = useState(0);
   const [isTorchOn, setIsTorchOn] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(1);
+  const [zoomRange, setZoomRange] = useState<{ min: number; max: number; step?: number } | null>(null);
 
   const streamRef = useRef<MediaStream | null>(null);
   const trackRef = useRef<MediaStreamTrack | null>(null);
   const isMountedRef = useRef(true);
 
-  // Ambil daftar kamera fisik
-  const getAvailableCameras = useCallback(async (): Promise<MediaDeviceInfo[]> => {
+  // Ambil daftar kamera fisik dan parse lensanya
+  const getAvailableCameras = useCallback(async (): Promise<{
+    raw: MediaDeviceInfo[];
+    parsed: ParsedCameraDevice[];
+  }> => {
     try {
-      if (!navigator.mediaDevices?.enumerateDevices) return [];
+      if (!navigator.mediaDevices?.enumerateDevices) {
+        return { raw: [], parsed: [] };
+      }
       const devices = await navigator.mediaDevices.enumerateDevices();
-      return devices.filter((d) => d.kind === "videoinput");
+      const videoInputs = devices.filter((d) => d.kind === "videoinput");
+      const parsed = parseCameraDevices(videoInputs);
+      return { raw: videoInputs, parsed };
     } catch {
-      return [];
+      return { raw: [], parsed: [] };
     }
   }, []);
 
-  // Tangga resolusi/constraints (Ladder Fallback)
+  // Tangga resolusi/constraints (Ladder Fallback) dengan dukungan deviceId / Lensa spesifik
   const attemptStreamWithLadder = useCallback(
     async (
       ladder: CameraConstraintLadder[],
       startIndex: number,
-      availableCameras: MediaDeviceInfo[],
+      cameras: { raw: MediaDeviceInfo[]; parsed: ParsedCameraDevice[] },
       profile: DeviceProfile,
-      targetFacing: "user" | "environment"
-    ): Promise<{ stream: MediaStream; track: MediaStreamTrack; usedLadderIndex: number } | null> => {
+      targetFacing: "user" | "environment",
+      targetDeviceId?: string | null
+    ): Promise<{
+      stream: MediaStream;
+      track: MediaStreamTrack;
+      usedLadderIndex: number;
+      activeLens: ParsedCameraDevice | null;
+    } | null> => {
       let lastError: unknown = null;
       const errorsList: string[] = [];
 
       for (let i = startIndex; i < ladder.length; i++) {
         const step = ladder[i];
+
+        // Buat constraints video dengan prioritas deviceId jika diberikan
         const videoConstraints: MediaTrackConstraints = {
           width: { ideal: step.idealWidth },
           height: { ideal: step.idealHeight },
           frameRate: { ideal: step.idealFrameRate, max: step.maxFrameRate },
-          facingMode: { ideal: targetFacing },
         };
 
+        if (targetDeviceId) {
+          videoConstraints.deviceId = { exact: targetDeviceId };
+        } else {
+          videoConstraints.facingMode = { ideal: targetFacing };
+        }
+
         try {
-          const mediaStream = await navigator.mediaDevices.getUserMedia({
-            video: videoConstraints,
-            audio: false,
-          });
+          let mediaStream: MediaStream;
+          try {
+            mediaStream = await navigator.mediaDevices.getUserMedia({
+              video: videoConstraints,
+              audio: false,
+            });
+          } catch (exactErr) {
+            // Jika exact deviceId gagal (misal permission berubah), coba tanpa exact deviceId
+            if (targetDeviceId) {
+              const fallbackConstraints: MediaTrackConstraints = {
+                width: { ideal: step.idealWidth },
+                height: { ideal: step.idealHeight },
+                frameRate: { ideal: step.idealFrameRate, max: step.maxFrameRate },
+                facingMode: { ideal: targetFacing },
+              };
+              mediaStream = await navigator.mediaDevices.getUserMedia({
+                video: fallbackConstraints,
+                audio: false,
+              });
+            } else {
+              throw exactErr;
+            }
+          }
 
           const videoTrack = mediaStream.getVideoTracks()[0];
           if (!videoTrack) throw new Error("Tidak ada video track yang ditemukan.");
 
           const capabilities = typeof videoTrack.getCapabilities === "function" ? videoTrack.getCapabilities() : null;
           const settings = videoTrack.getSettings();
+
+          // Deteksi zoom capabilities
+          if (capabilities && "zoom" in capabilities) {
+            const zoomCap = (capabilities as { zoom?: { min: number; max: number; step?: number } }).zoom;
+            if (zoomCap) {
+              setZoomRange({ min: zoomCap.min, max: zoomCap.max, step: zoomCap.step || 0.1 });
+              if (settings.zoom) {
+                setCurrentZoom(settings.zoom);
+              }
+            }
+          } else {
+            setZoomRange(null);
+          }
 
           // Bias exposure compensation jika didukung (misal untuk G45 non-OIS)
           if (
@@ -115,6 +182,13 @@ export function useCameraStream(options: UseCameraStreamOptions = {}) {
             }
           }
 
+          // Cari info lensa aktif dari settings.deviceId atau track label
+          const activeDeviceId = settings.deviceId || targetDeviceId;
+          const currentActiveLens =
+            cameras.parsed.find((l) => l.deviceId === activeDeviceId) ||
+            cameras.parsed.find((l) => l.label === videoTrack.label) ||
+            null;
+
           setDiagnostics({
             deviceProfile: profile,
             activeConstraints: videoConstraints,
@@ -126,13 +200,20 @@ export function useCameraStream(options: UseCameraStreamOptions = {}) {
               height: settings.height || step.idealHeight,
             },
             actualFps: settings.frameRate || step.idealFrameRate,
-            availableCameras,
+            availableCameras: cameras.raw,
+            availableLenses: cameras.parsed,
+            activeLens: currentActiveLens,
             isImageCaptureSupported: isImageCaptureSupported(),
             lastCaptureInfo: null,
             errorLog: errorsList,
           });
 
-          return { stream: mediaStream, track: videoTrack, usedLadderIndex: i };
+          return {
+            stream: mediaStream,
+            track: videoTrack,
+            usedLadderIndex: i,
+            activeLens: currentActiveLens,
+          };
         } catch (err: unknown) {
           lastError = err;
           const errMsg = `Ladder tier ${i} (${step.idealWidth}x${step.idealHeight}) gagal: ${err instanceof Error ? err.name : String(err)}`;
@@ -147,7 +228,7 @@ export function useCameraStream(options: UseCameraStreamOptions = {}) {
   );
 
   const initCamera = useCallback(
-    async (targetFacing = facingMode) => {
+    async (targetFacing = facingMode, explicitDeviceId?: string | null) => {
       await Promise.resolve();
       if (!isMountedRef.current) return;
       setIsLoading(true);
@@ -178,17 +259,47 @@ export function useCameraStream(options: UseCameraStreamOptions = {}) {
         if (!isMountedRef.current) return;
         setDeviceProfile(detected);
 
-        const cameras = await getAvailableCameras();
+        // 1. Ambil daftar kamera fisik yang sudah teridentifikasi
+        let cameraList = await getAvailableCameras();
+
+        // Tentukan deviceId terbaik:
+        // Jika explicitDeviceId diberikan, gunakan itu.
+        // Jika tidak, cari lensa terbaik untuk targetFacing (misal: otomatis pilih Lensa Utama 1x untuk belakang, bukan Ultra-Wide!).
+        let chosenDeviceId: string | null = explicitDeviceId !== undefined ? explicitDeviceId : selectedCameraId;
+
+        if (!chosenDeviceId && cameraList.parsed.length > 0) {
+          const bestLens = findBestLensForFacing(cameraList.parsed, targetFacing);
+          if (bestLens && bestLens.deviceId) {
+            chosenDeviceId = bestLens.deviceId;
+          }
+        }
 
         const result = await attemptStreamWithLadder(
           detected.constraintsLadder,
           0,
-          cameras,
+          cameraList,
           detected,
-          targetFacing
+          targetFacing,
+          chosenDeviceId
         );
 
         if (!result || !isMountedRef.current) return;
+
+        // Re-enumerate devices setelah getUserMedia agar label kamera terisi lengkap oleh browser
+        cameraList = await getAvailableCameras();
+        setAvailableCameras(cameraList.raw);
+        setAvailableLenses(cameraList.parsed);
+
+        // Update active lens setelah re-enumerate
+        const currentActiveLens =
+          cameraList.parsed.find((l) => l.deviceId === (result.track.getSettings().deviceId || chosenDeviceId)) ||
+          result.activeLens;
+
+        setActiveLens(currentActiveLens);
+        setSelectedCameraId(currentActiveLens?.deviceId || chosenDeviceId || null);
+        if (currentActiveLens) {
+          setFacingMode(currentActiveLens.facing);
+        }
 
         streamRef.current = result.stream;
         trackRef.current = result.track;
@@ -216,7 +327,7 @@ export function useCameraStream(options: UseCameraStreamOptions = {}) {
         }
       }
     },
-    [attemptStreamWithLadder, facingMode, getAvailableCameras]
+    [attemptStreamWithLadder, facingMode, getAvailableCameras, selectedCameraId]
   );
 
   const stopCamera = useCallback(() => {
@@ -227,11 +338,47 @@ export function useCameraStream(options: UseCameraStreamOptions = {}) {
     setStream(null);
   }, []);
 
+  // Ganti ke kamera tertentu via deviceId
+  const selectCamera = useCallback(
+    async (deviceId: string) => {
+      setSelectedCameraId(deviceId);
+      const targetLens = availableLenses.find((l) => l.deviceId === deviceId);
+      const nextFacing = targetLens ? targetLens.facing : facingMode;
+      setFacingMode(nextFacing);
+      await initCamera(nextFacing, deviceId);
+    },
+    [availableLenses, facingMode, initCamera]
+  );
+
+  // Ganti tipe lensa (misal 'main' 1x, 'ultra-wide' 0.5x, 'front' selfie)
+  const selectLensType = useCallback(
+    async (targetType: LensType) => {
+      const matchedLens = availableLenses.find((l) => l.lensType === targetType);
+      if (matchedLens && matchedLens.deviceId) {
+        await selectCamera(matchedLens.deviceId);
+      } else if (targetType === "front") {
+        setFacingMode("user");
+        await initCamera("user", null);
+      } else {
+        setFacingMode("environment");
+        await initCamera("environment", null);
+      }
+    },
+    [availableLenses, initCamera, selectCamera]
+  );
+
+  // Switch Facing Mode Depan <-> Belakang (Otomatis memilih lensa utama untuk belakang)
   const switchFacingMode = useCallback(() => {
     const nextFacing = facingMode === "environment" ? "user" : "environment";
     setFacingMode(nextFacing);
-    initCamera(nextFacing);
-  }, [facingMode, initCamera]);
+
+    // Cari lensa terbaik untuk facing berikutnya
+    const bestLens = findBestLensForFacing(availableLenses, nextFacing);
+    const nextDeviceId = bestLens?.deviceId || null;
+    setSelectedCameraId(nextDeviceId);
+
+    initCamera(nextFacing, nextDeviceId);
+  }, [availableLenses, facingMode, initCamera]);
 
   const toggleTorch = useCallback(async () => {
     if (!trackRef.current) return false;
@@ -283,7 +430,7 @@ export function useCameraStream(options: UseCameraStreamOptions = {}) {
       const start = async () => {
         await Promise.resolve();
         if (!isCancelled) {
-          await initCamera(facingMode);
+          await initCamera(facingMode, selectedCameraId);
         }
       };
       start();
@@ -297,7 +444,7 @@ export function useCameraStream(options: UseCameraStreamOptions = {}) {
         streamRef.current = null;
       }
     };
-  }, [autoStart, facingMode, initCamera]);
+  }, [autoStart, facingMode, initCamera, selectedCameraId]);
 
   const takePhoto = useCallback(
     async (captureOpts: {
@@ -337,19 +484,26 @@ export function useCameraStream(options: UseCameraStreamOptions = {}) {
     stream,
     deviceProfile,
     facingMode,
+    selectedCameraId,
+    availableCameras,
+    availableLenses,
+    activeLens,
     isLoading,
     error,
     diagnostics,
     currentLadderIndex,
     isTorchOn,
     currentZoom,
+    zoomRange,
     isImageCaptureSupported: isImageCaptureSupported(),
     takePhoto,
     switchFacingMode,
+    selectCamera,
+    selectLensType,
     toggleTorch,
     setZoom,
     stopCamera,
     startCamera: initCamera,
-    reinitialize: () => initCamera(facingMode),
+    reinitialize: () => initCamera(facingMode, selectedCameraId),
   };
 }

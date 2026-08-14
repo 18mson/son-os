@@ -19,19 +19,28 @@ import {
 import { CameraViewport } from "./camera/CameraViewport";
 import { CameraControls } from "./camera/CameraControls";
 import { CameraDebugPanel } from "./camera/CameraDebugPanel";
+import { LensSelector } from "./camera/LensSelector";
 
 export const CameraApp: React.FC = () => {
   const {
     stream,
     deviceProfile,
     facingMode,
+    selectedCameraId,
+    availableLenses,
+    activeLens,
     isLoading,
     error,
     diagnostics,
     isTorchOn,
+    currentZoom,
+    zoomRange,
     takePhoto,
     switchFacingMode,
+    selectCamera,
+    selectLensType,
     toggleTorch,
+    setZoom,
     reinitialize,
   } = useCameraStream();
 
@@ -198,10 +207,28 @@ export const CameraApp: React.FC = () => {
                 videoRef={videoRef}
                 facingMode={facingMode}
                 deviceProfile={deviceProfile}
+                activeLens={activeLens}
                 isLoading={isLoading}
                 showGrid={showGrid}
                 onLowLightChange={setIsLowLight}
               />
+
+              {/* Floating Lens Switcher Pill (Above Controls) */}
+              {!isLoading && (
+                <div className="absolute bottom-3 left-0 right-0 z-20 flex justify-center pointer-events-auto">
+                  <LensSelector
+                    availableLenses={availableLenses}
+                    activeLens={activeLens}
+                    selectedCameraId={selectedCameraId}
+                    facingMode={facingMode}
+                    currentZoom={currentZoom}
+                    zoomRange={zoomRange}
+                    onSelectLensType={selectLensType}
+                    onSelectCamera={selectCamera}
+                    onSetZoom={setZoom}
+                  />
+                </div>
+              )}
             </div>
 
             <CameraControls

@@ -11,6 +11,7 @@ import {
 import { usePhotoboothStore } from "@/store/photoboothStore";
 import { CountdownOverlay } from "./CountdownOverlay";
 import { composePhotoboothImage } from "../lib/compositor";
+import { LensSelector } from "@/components/apps/camera/LensSelector";
 
 export const CaptureSequence: React.FC = () => {
   const {
@@ -44,10 +45,18 @@ export const CaptureSequence: React.FC = () => {
     stream,
     deviceProfile,
     facingMode,
+    selectedCameraId,
+    availableLenses,
+    activeLens,
     isLoading: isStreamLoading,
     error: streamError,
+    currentZoom,
+    zoomRange,
     takePhoto,
     switchFacingMode,
+    selectCamera,
+    selectLensType,
+    setZoom,
     reinitialize,
   } = useCameraStream({
     preferredFacingMode: "user",
@@ -318,6 +327,23 @@ export const CaptureSequence: React.FC = () => {
               >
                 <SwitchCamera size={18} />
               </button>
+            )}
+
+            {/* Quick Floating Lens Selector (bottom center of viewfinder) */}
+            {currentStep === "ready" && !isStreamLoading && (
+              <div className="absolute bottom-3 left-0 right-0 z-20 flex justify-center pointer-events-auto">
+                <LensSelector
+                  availableLenses={availableLenses}
+                  activeLens={activeLens}
+                  selectedCameraId={selectedCameraId}
+                  facingMode={facingMode}
+                  currentZoom={currentZoom}
+                  zoomRange={zoomRange}
+                  onSelectLensType={selectLensType}
+                  onSelectCamera={selectCamera}
+                  onSetZoom={setZoom}
+                />
+              </div>
             )}
 
             {/* Flash Effect on capture */}

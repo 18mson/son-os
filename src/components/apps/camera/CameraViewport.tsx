@@ -3,12 +3,13 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import { Moon, ShieldAlert, Sparkles } from "lucide-react";
-import { DeviceProfile } from "@/lib/camera";
+import { DeviceProfile, ParsedCameraDevice } from "@/lib/camera";
 
 interface CameraViewportProps {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   facingMode: "user" | "environment";
   deviceProfile: DeviceProfile;
+  activeLens?: ParsedCameraDevice | null;
   isLoading: boolean;
   showGrid: boolean;
   onLowLightChange?: (isLowLight: boolean) => void;
@@ -18,6 +19,7 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
   videoRef,
   facingMode,
   deviceProfile,
+  activeLens,
   isLoading,
   showGrid,
   onLowLightChange,
@@ -113,7 +115,15 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
             <span>Software EIS</span>
           </div>
         )}
+
+        {/* Active Lens Indicator */}
+        {activeLens && (
+          <div className="flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-white/10 border border-white/20 text-zinc-200 text-[9px] sm:text-[10px] font-mono backdrop-blur-md">
+            <span>{activeLens.displayName}</span>
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
