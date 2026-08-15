@@ -249,60 +249,73 @@ export async function POST(req: NextRequest) {
           .replace(/[^a-zA-Z0-9_-]/g, "_")
           .slice(0, 60)}_${youtubeId}.m4a`;
 
-        const video720ProxyUrl = `/api/video-downloader/stream?youtubeUrl=${encodeURIComponent(
-          directYoutubeUrl
-        )}&format=video&quality=720&filename=${encodeURIComponent(safeVideoFilename)}`;
+        // Hitung estimasi ukuran berbasis durasi atau standar rata-rata
+        const dur = durationSeconds || 180; // default 3 menit jika tidak ada durasi
+        const estSize = (kbps: number) => {
+          const bytes = Math.round((kbps * 1024 * dur) / 8);
+          return formatByteSize(bytes);
+        };
 
-        const video360ProxyUrl = `/api/video-downloader/stream?youtubeUrl=${encodeURIComponent(
-          directYoutubeUrl
-        )}&format=video&quality=360&filename=${encodeURIComponent(safeVideoFilename)}`;
+        const resolutions = [
+          { height: 2160, quality: "4K UHD", label: "Video MP4 (4K Ultra HD)", kbps: 15000 },
+          { height: 1440, quality: "1440p QHD", label: "Video MP4 (1440p 2K)", kbps: 8000 },
+          { height: 1080, quality: "1080p FHD", label: "Video MP4 (1080p Full HD)", kbps: 4500 },
+          { height: 720, quality: "720p HD", label: "Video MP4 (720p HD)", kbps: 2200 },
+          { height: 480, quality: "480p SD", label: "Video MP4 (480p Standard)", kbps: 1200 },
+          { height: 360, quality: "360p SD", label: "Video MP4 (360p Standard)", kbps: 650 },
+        ];
 
+        resolutions.forEach((r) => {
+          const videoProxyUrl = `/api/video-downloader/stream?youtubeUrl=${encodeURIComponent(
+            directYoutubeUrl
+          )}&format=video&quality=${r.height}&filename=${encodeURIComponent(safeVideoFilename)}`;
+
+          const estimatedBytes = Math.round((r.kbps * 1024 * dur) / 8);
+
+          streamOptions.push({
+            quality: r.quality,
+            label: r.label,
+            ext: "mp4",
+            url: directYoutubeUrl,
+            proxyUrl: videoProxyUrl,
+            isAudioOnly: false,
+            sizeEstimate: estSize(r.kbps),
+            sizeBytes: estimatedBytes,
+          });
+        });
+
+        // Opsi Audio M4A / MP3
         const audioProxyUrl = `/api/video-downloader/stream?youtubeUrl=${encodeURIComponent(
           directYoutubeUrl
         )}&format=audio&filename=${encodeURIComponent(safeAudioFilename)}`;
 
+        const audioEstBytes = Math.round((160 * 1024 * dur) / 8);
+
+        streamOptions.push({
+          quality: "HQ Audio",
+          label: "Audio M4A / MP3 (High Quality)",
+          ext: "m4a",
+          url: directYoutubeUrl,
+          proxyUrl: audioProxyUrl,
+          isAudioOnly: true,
+          sizeEstimate: estSize(160),
+          sizeBytes: audioEstBytes,
+        });
+
+        // Opsi Poster HD
         const posterProxyUrl = `/api/video-downloader/stream?url=${encodeURIComponent(
           thumbnailUrl
         )}&filename=thumbnail_${youtubeId}.jpg`;
 
-        streamOptions.push(
-          {
-            quality: "720p HD",
-            label: "Video MP4 (720p HD)",
-            ext: "mp4",
-            url: directYoutubeUrl,
-            proxyUrl: video720ProxyUrl,
-            isAudioOnly: false,
-            sizeEstimate: "~25 MB",
-          },
-          {
-            quality: "360p SD",
-            label: "Video MP4 (360p Standard)",
-            ext: "mp4",
-            url: directYoutubeUrl,
-            proxyUrl: video360ProxyUrl,
-            isAudioOnly: false,
-            sizeEstimate: "~7 MB",
-          },
-          {
-            quality: "HQ Audio",
-            label: "Audio M4A / MP3",
-            ext: "m4a",
-            url: directYoutubeUrl,
-            proxyUrl: audioProxyUrl,
-            isAudioOnly: true,
-            sizeEstimate: "~3 MB",
-          },
-          {
-            quality: "HD Poster",
-            label: "Gambar Sampul Thumbnail HD",
-            ext: "image",
-            url: thumbnailUrl,
-            proxyUrl: posterProxyUrl,
-            isAudioOnly: false,
-            sizeEstimate: "< 1 MB",
-          }
-        );
+        streamOptions.push({
+          quality: "HD Poster",
+          label: "Gambar Sampul Thumbnail HD",
+          ext: "image",
+          url: thumbnailUrl,
+          proxyUrl: posterProxyUrl,
+          isAudioOnly: false,
+          sizeEstimate: "< 1 MB",
+        });
       }
 
       const defaultProxyUrl = streamOptions[0]?.proxyUrl || "";
