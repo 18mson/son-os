@@ -277,4 +277,18 @@ export const APPS: AppDefinition[] = [
     isPreinstalled: false,
     version: "v1.0.0",
   },
+  {
+    id: "video-downloader",
+    title: "Video Downloader",
+    icon: "DownloadCloud",
+    accentColor: "bg-linear-to-br from-cyan-500 via-blue-600 to-indigo-600",
+    description: "Unduh video langsung dari URL, preview pemutar, batch queue, & konversi audio MP3",
+    type: "static",
+    category: ["utility", "entertainment"],
+    isSystemApp: false,
+    isPreinstalled: true,
+    version: "v1.0.0",
+    defaultSize: { w: 820, h: 620 },
+  },
 ];
+

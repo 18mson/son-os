@@ -193,6 +193,15 @@ const SnakeGameApp = dynamic(() => import("./apps/SnakeGameApp").then((mod) => m
   ),
 });
 
+const VideoDownloaderApp = dynamic(() => import("./apps/VideoDownloaderApp").then((mod) => mod.VideoDownloaderApp), {
+  loading: () => (
+    <div className="flex flex-col items-center justify-center h-full p-8 text-zinc-400 gap-3">
+      <Loader2 className="animate-spin text-cyan-400" size={28} />
+      <span className="text-xs font-medium">Memuat Video Downloader...</span>
+    </div>
+  ),
+});
+
 interface AppContentProps {
   appId: string;
 }
@@ -205,6 +214,8 @@ export const AppContent: React.FC<AppContentProps> = ({ appId }) => {
       return <CameraApp />;
     case "photobooth":
       return <PhotoboothApp />;
+    case "video-downloader":
+      return <VideoDownloaderApp />;
     case "pdf":
       return <PdfApp />;
     case "file-manager":
@@ -250,3 +261,4 @@ export const AppContent: React.FC<AppContentProps> = ({ appId }) => {
       );
   }
 };
+

@@ -11,7 +11,7 @@ interface LensSelectorProps {
   facingMode: "user" | "environment";
   currentZoom: number;
   zoomRange: { min: number; max: number; step?: number } | null;
-  onSelectLensType: (lensType: LensType) => void;
+  onSelectLensType?: (lensType: LensType) => void;
   onSelectCamera: (deviceId: string) => void;
   onSetZoom: (zoom: number) => void;
 }
