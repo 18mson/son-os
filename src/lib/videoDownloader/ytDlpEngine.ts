@@ -9,39 +9,36 @@ import ffmpegStatic from "ffmpeg-static";
  * Mendapatkan lokasi executable binary yt-dlp (Mendukung Vercel Serverless /tmp execution)
  */
 export function getYtDlpPath(): string {
-  // 1. Cek di /tmp jika sudah disalin (Serverless Vercel)
-  const tmpBin = path.join(os.tmpdir(), "yt-dlp");
-  if (fs.existsSync(tmpBin)) {
-    try {
-      fs.chmodSync(tmpBin, 0o755);
-    } catch {
-      // ignore
-    }
-    return tmpBin;
-  }
+  const isLinux = process.platform === "linux";
 
-  // 2. Cek di folder bin/yt-dlp project
-  const bundledBin = path.join(process.cwd(), "bin/yt-dlp");
-  if (fs.existsSync(bundledBin)) {
-    try {
-      fs.copyFileSync(bundledBin, tmpBin);
-      fs.chmodSync(tmpBin, 0o755);
+  // Pada Linux / Vercel Serverless: gunakan binary standalone ELF yang telah dibundle
+  if (isLinux) {
+    const tmpBin = path.join(os.tmpdir(), "yt-dlp");
+    if (fs.existsSync(tmpBin)) {
+      try {
+        fs.chmodSync(tmpBin, 0o755);
+      } catch {
+        // ignore
+      }
       return tmpBin;
-    } catch {
-      return bundledBin;
+    }
+
+    const bundledBin = path.join(process.cwd(), "bin/yt-dlp");
+    if (fs.existsSync(bundledBin)) {
+      try {
+        fs.copyFileSync(bundledBin, tmpBin);
+        fs.chmodSync(tmpBin, 0o755);
+        return tmpBin;
+      } catch {
+        return bundledBin;
+      }
     }
   }
 
-  // 3. Cek di node_modules/youtube-dl-exec/bin/yt-dlp
+  // Pada Local Environment (macOS / Windows): gunakan binary local dari node_modules / sistem
   const localBin = path.join(process.cwd(), "node_modules/youtube-dl-exec/bin/yt-dlp");
   if (fs.existsSync(localBin)) {
-    try {
-      fs.copyFileSync(localBin, tmpBin);
-      fs.chmodSync(tmpBin, 0o755);
-      return tmpBin;
-    } catch {
-      return localBin;
-    }
+    return localBin;
   }
 
   return "yt-dlp";
