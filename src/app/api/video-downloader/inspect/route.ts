@@ -1,7 +1,7 @@
 // src/app/api/video-downloader/inspect/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { VideoStreamOption } from "@/components/apps/videoDownloader/types";
-import { getYtDlpMetadata, formatByteSize } from "@/lib/videoDownloader/ytDlpEngine";
+import { getYtDlpMetadata, formatByteSize, YtDlpVideoInfo } from "@/lib/videoDownloader/ytDlpEngine";
 
 export async function POST(req: NextRequest) {
   try {
@@ -77,7 +77,34 @@ export async function POST(req: NextRequest) {
       let thumbnailUrl = `https://i.ytimg.com/vi/${youtubeId}/maxresdefault.jpg`;
       let durationSeconds: number | undefined = undefined;
 
-      const ytdlpData = await getYtDlpMetadata(directYoutubeUrl);
+      let ytdlpData: YtDlpVideoInfo | null = null;
+
+      // Cek apakah ada dedicated external microservice (Render / VPS)
+      const externalServiceUrl =
+        process.env.DOWNLOADER_API_URL || process.env.NEXT_PUBLIC_DOWNLOADER_API_URL;
+
+      if (externalServiceUrl) {
+        try {
+          const extRes = await fetch(`${externalServiceUrl.replace(/\/$/, "")}/inspect`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: directYoutubeUrl }),
+            signal: AbortSignal.timeout(12000),
+          });
+          if (extRes.ok) {
+            const extJson = await extRes.json();
+            if (extJson.success && extJson.data) {
+              ytdlpData = extJson.data;
+            }
+          }
+        } catch (err) {
+          console.warn("[External Downloader Microservice Error]:", err);
+        }
+      }
+
+      if (!ytdlpData) {
+        ytdlpData = await getYtDlpMetadata(directYoutubeUrl);
+      }
 
       const streamOptions: VideoStreamOption[] = [];
 

@@ -22,7 +22,18 @@ export async function GET(req: NextRequest) {
     searchParams.get("filename") || `video_${Date.now()}.${format === "audio" ? "m4a" : "mp4"}`;
 
   // =========================================================================
-  // 1. ENGINE YT-DLP UNTUK YOUTUBE / STREAM KHUSUS (PURE YT-DLP)
+  // 0. DEDICATED MICROSERVICE REDIRECT (Jika DOWNLOADER_API_URL diatur di Vercel)
+  // =========================================================================
+  const externalServiceUrl =
+    process.env.DOWNLOADER_API_URL || process.env.NEXT_PUBLIC_DOWNLOADER_API_URL;
+
+  if (externalServiceUrl && (youtubeUrl || (targetUrl && (targetUrl.includes("youtube.com") || targetUrl.includes("youtu.be"))))) {
+    const extStreamUrl = `${externalServiceUrl.replace(/\/$/, "")}/stream?${searchParams.toString()}`;
+    return NextResponse.redirect(extStreamUrl, 307);
+  }
+
+  // =========================================================================
+  // 1. ENGINE YT-DLP LOKAL / SERVERLESS
   // =========================================================================
   if (
     youtubeUrl ||
