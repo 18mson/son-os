@@ -7,14 +7,17 @@ export interface ResolvedYouTubeStream {
   source: string;
 }
 
-// Fallback pool of known active Cobalt API instances
+// Fallback pool of known active Cobalt API instances (prioritizing open instances)
 const DEFAULT_COBALT_APIS = [
   "https://rue-cobalt.xenon.zone",
-  "https://kitty.tame.gg",
-  "https://cobalt-alpha.wolfy.love",
-  "https://bergung-api.hoffnungfuerdiezukunft.net",
+  "https://dog.kittycat.boo",
   "https://cobalt-api.kwiatekm.pl",
+  "https://cobalt.tools",
   "https://api.cobalt.tools",
+  "https://cobalt-alpha.wolfy.love",
+  "https://subito-c.meowing.de",
+  "https://bergung-api.hoffnungfuerdiezukunft.net",
+  "https://kitty.tame.gg",
 ];
 
 /**
@@ -28,7 +31,14 @@ async function getActiveCobaltApis(): Promise<string[]> {
     if (res.ok) {
       const json = await res.json();
       if (Array.isArray(json?.data?.youtube) && json.data.youtube.length > 0) {
-        return [...json.data.youtube, ...DEFAULT_COBALT_APIS];
+        // Prioritaskan instance yang diketahui bekerja tanpa otentikasi JWT
+        const workingList = [
+          "https://rue-cobalt.xenon.zone",
+          "https://dog.kittycat.boo",
+          ...json.data.youtube,
+          ...DEFAULT_COBALT_APIS,
+        ];
+        return Array.from(new Set(workingList));
       }
     }
   } catch {
@@ -45,7 +55,7 @@ export async function resolveYouTubeStream(
   youtubeUrlOrId: string,
   options: {
     format?: "mp4" | "mp3";
-    quality?: "720" | "1080" | "360" | "480" | "max";
+    quality?: "720" | "1080" | "360" | "480" | "1440" | "2160" | "max";
   } = {}
 ): Promise<ResolvedYouTubeStream | null> {
   const isAudio = options.format === "mp3";
@@ -61,7 +71,7 @@ export async function resolveYouTubeStream(
   for (const api of apis) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 7000);
+      const timeoutId = setTimeout(() => controller.abort(), 4500);
 
       const endpoint = api.endsWith("/") ? api : `${api}/`;
 
@@ -99,6 +109,19 @@ export async function resolveYouTubeStream(
             source: api,
           };
         }
+
+        // Support status picker format (array of streams)
+        if (data.status === "picker" && Array.isArray(data.picker) && data.picker.length > 0) {
+          const firstItem = data.picker[0];
+          if (firstItem?.url) {
+            return {
+              downloadUrl: firstItem.url,
+              filename: `youtube_${Date.now()}.${isAudio ? "mp3" : "mp4"}`,
+              quality: videoQuality,
+              source: api,
+            };
+          }
+        }
       }
     } catch {
       continue;
@@ -107,3 +130,4 @@ export async function resolveYouTubeStream(
 
   return null;
 }
+
