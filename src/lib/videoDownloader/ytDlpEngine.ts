@@ -2,6 +2,7 @@
 import { spawn, ChildProcess } from "child_process";
 import path from "path";
 import fs from "fs";
+import os from "os";
 
 /**
  * Mendapatkan lokasi executable binary yt-dlp
@@ -15,7 +16,25 @@ export function getYtDlpPath(): string {
 }
 
 /**
- * Helper untuk mendapatkan environment path yang menyertakan lokasi FFmpeg
+ * Mendeteksi direktori FFmpeg yang tersedia secara otomatis di berbagai OS (Linux, Mac, Windows)
+ */
+export function findFfmpegDir(): string | null {
+  const possibleDirs = [
+    "/opt/homebrew/bin",
+    "/usr/local/bin",
+    "/usr/bin",
+    "/bin",
+  ];
+  for (const dir of possibleDirs) {
+    if (fs.existsSync(path.join(dir, "ffmpeg"))) {
+      return dir;
+    }
+  }
+  return null;
+}
+
+/**
+ * Helper untuk mendapatkan environment path yang menyertakan lokasi FFmpeg & Python
  */
 function getEnhancedEnv(): NodeJS.ProcessEnv {
   const defaultPath = process.env.PATH || "";
@@ -25,6 +44,22 @@ function getEnhancedEnv(): NodeJS.ProcessEnv {
     ...process.env,
     PATH: combinedPath,
   };
+}
+
+/**
+ * Mendapatkan folder temporary yang aman untuk Serverless (Vercel / Lambda) maupun Local
+ */
+function getTempDownloadsDir(): string {
+  const tmpDir = path.join(os.tmpdir(), "son_downloads");
+  if (!fs.existsSync(tmpDir)) {
+    try {
+      fs.mkdirSync(tmpDir, { recursive: true });
+    } catch {
+      // fallback ke os.tmpdir() langsung
+      return os.tmpdir();
+    }
+  }
+  return tmpDir;
 }
 
 export interface YtDlpFormat {
@@ -66,6 +101,8 @@ export async function getYtDlpMetadata(url: string): Promise<YtDlpVideoInfo | nu
         "--no-check-certificates",
         "--dump-single-json",
         "--no-playlist",
+        "--extractor-args",
+        "youtube:player_client=android_vr,web,mweb",
         url,
       ],
       { env: getEnhancedEnv() }
@@ -175,6 +212,8 @@ export function spawnYtDlpStream(
     [
       "--no-check-certificates",
       "--no-playlist",
+      "--extractor-args",
+      "youtube:player_client=android_vr,web,mweb",
       "-f",
       formatArg,
       "-o",
@@ -205,11 +244,7 @@ export async function downloadYtDlpToTempFile(
   const isAudio = options.format === "audio";
   const quality = options.quality || "720";
 
-  const tmpDir = path.join(process.cwd(), "tmp_downloads");
-  if (!fs.existsSync(tmpDir)) {
-    fs.mkdirSync(tmpDir, { recursive: true });
-  }
-
+  const tmpDir = getTempDownloadsDir();
   const uniqueId = `son_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const ext = isAudio ? "m4a" : "mp4";
   const outputTemplate = path.join(tmpDir, `${uniqueId}.%(ext)s`);
@@ -229,15 +264,21 @@ export async function downloadYtDlpToTempFile(
     formatArg = "bestvideo[height<=1080][vcodec^=avc1]+140/bestvideo[height<=1080]+bestaudio/best";
   }
 
+  const ffmpegDir = findFfmpegDir();
+
   return new Promise((resolve) => {
-    const args = [
+    const args: string[] = [
       "--no-check-certificates",
       "--no-playlist",
-      "--ffmpeg-location",
-      "/opt/homebrew/bin",
+      "--extractor-args",
+      "youtube:player_client=android_vr,web,mweb",
       "-f",
       formatArg,
     ];
+
+    if (ffmpegDir) {
+      args.push("--ffmpeg-location", ffmpegDir);
+    }
 
     if (!isAudio && quality !== "360") {
       args.push("--merge-output-format", "mp4");
@@ -253,7 +294,15 @@ export async function downloadYtDlpToTempFile(
     });
 
     child.on("close", (code) => {
-      const files = fs.readdirSync(tmpDir).filter((f) => f.startsWith(uniqueId));
+      let files: string[] = [];
+      try {
+        files = fs.readdirSync(tmpDir).filter((f: string) =>
+          f.startsWith(uniqueId)
+        );
+      } catch {
+        files = [];
+      }
+
       const finalFile =
         files.find(
           (f) =>
@@ -279,7 +328,8 @@ export async function downloadYtDlpToTempFile(
       }
     });
 
-    child.on("error", () => {
+    child.on("error", (err) => {
+      console.warn("[yt-dlp error]:", err.message);
       resolve(null);
     });
   });
