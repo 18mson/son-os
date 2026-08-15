@@ -12,12 +12,11 @@ const DEFAULT_COBALT_APIS = [
   "https://rue-cobalt.xenon.zone",
   "https://dog.kittycat.boo",
   "https://cobalt-api.kwiatekm.pl",
+  "https://co.wuk.sh",
   "https://cobalt.tools",
   "https://api.cobalt.tools",
   "https://cobalt-alpha.wolfy.love",
   "https://subito-c.meowing.de",
-  "https://bergung-api.hoffnungfuerdiezukunft.net",
-  "https://kitty.tame.gg",
 ];
 
 /**
@@ -26,19 +25,19 @@ const DEFAULT_COBALT_APIS = [
 async function getActiveCobaltApis(): Promise<string[]> {
   try {
     const res = await fetch("https://cobalt.directory/api/working?type=api", {
-      signal: AbortSignal.timeout(3000),
+      signal: AbortSignal.timeout(2500),
     });
     if (res.ok) {
       const json = await res.json();
       if (Array.isArray(json?.data?.youtube) && json.data.youtube.length > 0) {
-        // Prioritaskan instance yang diketahui bekerja tanpa otentikasi JWT
-        const workingList = [
+        // Gabungkan dengan prioritas instance terbuka
+        const combined = [
           "https://rue-cobalt.xenon.zone",
           "https://dog.kittycat.boo",
           ...json.data.youtube,
           ...DEFAULT_COBALT_APIS,
         ];
-        return Array.from(new Set(workingList));
+        return Array.from(new Set(combined));
       }
     }
   } catch {
@@ -48,8 +47,67 @@ async function getActiveCobaltApis(): Promise<string[]> {
 }
 
 /**
+ * Helper untuk query 1 instance API secara independen
+ */
+async function querySingleApi(
+  api: string,
+  payload: Record<string, unknown>,
+  timeoutMs = 5000
+): Promise<ResolvedYouTubeStream> {
+  const endpoint = api.endsWith("/") ? api : `${api}/`;
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "User-Agent": "SonOS/2.0",
+    },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  if (data.status === "error" || data.error) {
+    throw new Error(data.error?.code || "API error");
+  }
+
+  if (
+    data.url &&
+    (data.status === "tunnel" || data.status === "redirect" || data.status === "stream" || !data.status)
+  ) {
+    return {
+      downloadUrl: data.url,
+      filename:
+        data.filename ||
+        `youtube_${Date.now()}.${payload.downloadMode === "audio" ? "mp3" : "mp4"}`,
+      quality: String(payload.videoQuality || "720"),
+      source: api,
+    };
+  }
+
+  // Support format picker jika mengembalikan opsi array
+  if (data.status === "picker" && Array.isArray(data.picker) && data.picker.length > 0) {
+    const firstItem = data.picker[0];
+    if (firstItem?.url) {
+      return {
+        downloadUrl: firstItem.url,
+        filename: `youtube_${Date.now()}.${payload.downloadMode === "audio" ? "mp3" : "mp4"}`,
+        quality: String(payload.videoQuality || "720"),
+        source: api,
+      };
+    }
+  }
+
+  throw new Error("No usable stream URL in response");
+}
+
+/**
  * Mengekstrak direct download URL untuk video YouTube (MP4 atau MP3)
- * Menghasilkan direct file stream tanpa perlu dialihkan ke situs pihak ketiga
+ * Menggunakan Concurrent Racing (Promise.any) agar respon instan dalam < 1.5 detik
  */
 export async function resolveYouTubeStream(
   youtubeUrlOrId: string,
@@ -68,66 +126,26 @@ export async function resolveYouTubeStream(
 
   const apis = await getActiveCobaltApis();
 
-  for (const api of apis) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4500);
+  const payload = {
+    url: fullUrl,
+    videoQuality: isAudio ? "720" : videoQuality,
+    downloadMode: isAudio ? "audio" : "auto",
+    audioFormat: isAudio ? "mp3" : undefined,
+    youtubeVideoCodec: "h264",
+  };
 
-      const endpoint = api.endsWith("/") ? api : `${api}/`;
+  try {
+    // Jalankan query ke semua instance sekaligus secara paralel (Promise.any)
+    // Respon tercepat yang berhasil akan langsung menang & dikembalikan seketika
+    const fastestResult = await Promise.any(
+      apis.map((api) => querySingleApi(api, payload, 5500))
+    );
 
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          "User-Agent": "SonOS/1.0",
-        },
-        body: JSON.stringify({
-          url: fullUrl,
-          videoQuality: isAudio ? "720" : videoQuality,
-          downloadMode: isAudio ? "audio" : "auto",
-          audioFormat: isAudio ? "mp3" : undefined,
-          youtubeVideoCodec: "h264",
-        }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (res.ok) {
-        const data = await res.json();
-
-        if (data.url && (data.status === "tunnel" || data.status === "redirect" || data.status === "stream" || !data.status)) {
-          const filename =
-            data.filename ||
-            `youtube_${Date.now()}.${isAudio ? "mp3" : "mp4"}`;
-
-          return {
-            downloadUrl: data.url,
-            filename,
-            quality: videoQuality,
-            source: api,
-          };
-        }
-
-        // Support status picker format (array of streams)
-        if (data.status === "picker" && Array.isArray(data.picker) && data.picker.length > 0) {
-          const firstItem = data.picker[0];
-          if (firstItem?.url) {
-            return {
-              downloadUrl: firstItem.url,
-              filename: `youtube_${Date.now()}.${isAudio ? "mp3" : "mp4"}`,
-              quality: videoQuality,
-              source: api,
-            };
-          }
-        }
-      }
-    } catch {
-      continue;
-    }
+    return fastestResult;
+  } catch (err) {
+    console.warn("[resolveYouTubeStream] All concurrent instances failed:", err);
+    return null;
   }
-
-  return null;
 }
+
 
