@@ -11,7 +11,7 @@ export const APPS: AppDefinition[] = [
     category: ["system"],
     isSystemApp: true,
     isPreinstalled: true,
-    version: "v2.2.0",
+    version: "v2.3.0",
     defaultSize: { w: 840, h: 600 },
   },
   {
@@ -27,7 +27,7 @@ export const APPS: AppDefinition[] = [
     category: ["portfolio", "entertainment"],
     isSystemApp: false,
     isPreinstalled: true,
-    version: "v2.1.0",
+    version: "v2.2.0",
   },
   {
     id: "lovely-ever",
@@ -41,7 +41,7 @@ export const APPS: AppDefinition[] = [
     category: ["portfolio", "utility"],
     isSystemApp: false,
     isPreinstalled: true,
-    version: "v1.8.4",
+    version: "v1.9.0",
   },
   {
     id: "about",
@@ -54,7 +54,7 @@ export const APPS: AppDefinition[] = [
     category: ["system", "portfolio"],
     isSystemApp: true,
     isPreinstalled: true,
-    version: "v1.0.0",
+    version: "v1.2.0",
   },
   {
     id: "contact",
@@ -67,7 +67,7 @@ export const APPS: AppDefinition[] = [
     category: ["system", "portfolio"],
     isSystemApp: true,
     isPreinstalled: true,
-    version: "v1.0.0",
+    version: "v1.1.0",
   },
   {
     id: "clock",
@@ -80,7 +80,7 @@ export const APPS: AppDefinition[] = [
     category: ["utility"],
     isSystemApp: false,
     isPreinstalled: true,
-    version: "v1.2.0",
+    version: "v1.3.0",
   },
   {
     id: "calculator",
@@ -93,7 +93,7 @@ export const APPS: AppDefinition[] = [
     category: ["utility"],
     isSystemApp: false,
     isPreinstalled: true,
-    version: "v1.1.0",
+    version: "v1.2.0",
   },
   {
     id: "notes",
@@ -106,7 +106,7 @@ export const APPS: AppDefinition[] = [
     category: ["utility"],
     isSystemApp: false,
     isPreinstalled: false,
-    version: "v1.5.0",
+    version: "v1.6.0",
   },
   {
     id: "calendar",
@@ -119,7 +119,7 @@ export const APPS: AppDefinition[] = [
     category: ["utility"],
     isSystemApp: false,
     isPreinstalled: false,
-    version: "v1.0.0",
+    version: "v1.2.0",
   },
   {
     id: "music",
@@ -132,7 +132,7 @@ export const APPS: AppDefinition[] = [
     category: ["entertainment", "utility"],
     isSystemApp: false,
     isPreinstalled: false,
-    version: "v2.0.0",
+    version: "v2.2.0",
   },
   {
     id: "weather",
@@ -145,7 +145,7 @@ export const APPS: AppDefinition[] = [
     category: ["utility"],
     isSystemApp: false,
     isPreinstalled: false,
-    version: "v1.4.0",
+    version: "v1.5.0",
   },
   {
     id: "gallery",
@@ -158,7 +158,7 @@ export const APPS: AppDefinition[] = [
     category: ["portfolio", "entertainment"],
     isSystemApp: false,
     isPreinstalled: false,
-    version: "v1.0.0",
+    version: "v1.2.0",
   },
   {
     id: "terminal",
@@ -171,7 +171,7 @@ export const APPS: AppDefinition[] = [
     category: ["system", "utility"],
     isSystemApp: false,
     isPreinstalled: false,
-    version: "v1.3.0",
+    version: "v1.4.0",
   },
   {
     id: "paint",
@@ -184,7 +184,7 @@ export const APPS: AppDefinition[] = [
     category: ["utility", "entertainment"],
     isSystemApp: false,
     isPreinstalled: false,
-    version: "v1.2.0",
+    version: "v1.3.0",
   },
   {
     id: "settings",
@@ -197,19 +197,19 @@ export const APPS: AppDefinition[] = [
     category: ["system"],
     isSystemApp: true,
     isPreinstalled: true,
-    version: "v2.5.0",
+    version: "v2.6.0",
   },
   {
     id: "camera",
     title: "Camera",
     icon: "Camera",
     accentColor: "bg-linear-to-br from-purple-600 to-pink-600",
-    description: "Webcam live camera preview, photo capture, and instant image download",
+    description: "Webcam live camera preview, multi-lens zoom (Ultra-wide 0.5x, 1x, 2x), & HD photo capture",
     type: "static",
     category: ["utility", "entertainment"],
     isSystemApp: false,
     isPreinstalled: false,
-    version: "v1.0.0",
+    version: "v2.0.0",
     defaultSize: { w: 680, h: 520 },
   },
   {
@@ -222,7 +222,7 @@ export const APPS: AppDefinition[] = [
     category: ["entertainment", "utility"],
     isSystemApp: false,
     isPreinstalled: true,
-    version: "v1.0.0",
+    version: "v1.3.0",
     defaultSize: { w: 740, h: 580 },
   },
   {
@@ -235,7 +235,7 @@ export const APPS: AppDefinition[] = [
     category: ["utility"],
     isSystemApp: false,
     isPreinstalled: false,
-    version: "v1.2.0",
+    version: "v1.4.0",
     defaultSize: { w: 840, h: 620 },
   },
   {
@@ -248,7 +248,7 @@ export const APPS: AppDefinition[] = [
     category: ["utility"],
     isSystemApp: false,
     isPreinstalled: false,
-    version: "v1.1.0",
+    version: "v1.3.0",
     defaultSize: { w: 780, h: 560 },
   },
   {
@@ -261,7 +261,7 @@ export const APPS: AppDefinition[] = [
     category: ["utility"],
     isSystemApp: false,
     isPreinstalled: false,
-    version: "v1.0.0",
+    version: "v1.2.0",
     defaultSize: { w: 780, h: 580 },
   },
   {
@@ -275,19 +275,19 @@ export const APPS: AppDefinition[] = [
     category: ["entertainment", "utility"],
     isSystemApp: false,
     isPreinstalled: false,
-    version: "v1.0.0",
+    version: "v1.1.0",
   },
   {
     id: "video-downloader",
     title: "Video Downloader",
     icon: "DownloadCloud",
     accentColor: "bg-linear-to-br from-cyan-500 via-blue-600 to-indigo-600",
-    description: "Unduh video langsung dari URL, preview pemutar, batch queue, & konversi audio MP3",
+    description: "Unduh video langsung dari URL/YouTube, dual-engine stream, preview pemutar, batch queue, & ekstraktor audio",
     type: "static",
     category: ["utility", "entertainment"],
     isSystemApp: false,
     isPreinstalled: true,
-    version: "v1.0.0",
+    version: "v2.0.0",
     defaultSize: { w: 820, h: 620 },
   },
 ];

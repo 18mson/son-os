@@ -3,22 +3,60 @@ import { spawn, ChildProcess } from "child_process";
 import path from "path";
 import fs from "fs";
 import os from "os";
+import ffmpegStatic from "ffmpeg-static";
 
 /**
- * Mendapatkan lokasi executable binary yt-dlp
+ * Mendapatkan lokasi executable binary yt-dlp (Mendukung Vercel Serverless /tmp execution)
  */
 export function getYtDlpPath(): string {
+  // 1. Cek di /tmp jika sudah disalin (Serverless Vercel)
+  const tmpBin = path.join(os.tmpdir(), "yt-dlp");
+  if (fs.existsSync(tmpBin)) {
+    try {
+      fs.chmodSync(tmpBin, 0o755);
+    } catch {
+      // ignore
+    }
+    return tmpBin;
+  }
+
+  // 2. Cek di folder bin/yt-dlp project
+  const bundledBin = path.join(process.cwd(), "bin/yt-dlp");
+  if (fs.existsSync(bundledBin)) {
+    try {
+      fs.copyFileSync(bundledBin, tmpBin);
+      fs.chmodSync(tmpBin, 0o755);
+      return tmpBin;
+    } catch {
+      return bundledBin;
+    }
+  }
+
+  // 3. Cek di node_modules/youtube-dl-exec/bin/yt-dlp
   const localBin = path.join(process.cwd(), "node_modules/youtube-dl-exec/bin/yt-dlp");
   if (fs.existsSync(localBin)) {
-    return localBin;
+    try {
+      fs.copyFileSync(localBin, tmpBin);
+      fs.chmodSync(tmpBin, 0o755);
+      return tmpBin;
+    } catch {
+      return localBin;
+    }
   }
+
   return "yt-dlp";
 }
 
 /**
- * Mendeteksi direktori FFmpeg yang tersedia secara otomatis di berbagai OS (Linux, Mac, Windows)
+ * Mendeteksi direktori FFmpeg (Mendukung ffmpeg-static & sistem OS)
  */
 export function findFfmpegDir(): string | null {
+  // 1. Cek ffmpeg-static package
+  if (ffmpegStatic && typeof ffmpegStatic === "string" && fs.existsSync(ffmpegStatic)) {
+    return path.dirname(ffmpegStatic);
+  }
+
+  // 2. Cek direktori sistem OS
   const possibleDirs = [
     "/opt/homebrew/bin",
     "/usr/local/bin",
@@ -38,7 +76,11 @@ export function findFfmpegDir(): string | null {
  */
 function getEnhancedEnv(): NodeJS.ProcessEnv {
   const defaultPath = process.env.PATH || "";
-  const extraPaths = ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/bin"];
+  const ffmpegDir = findFfmpegDir();
+  const extraPaths = ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/bin", os.tmpdir()];
+  if (ffmpegDir && !extraPaths.includes(ffmpegDir)) {
+    extraPaths.unshift(ffmpegDir);
+  }
   const combinedPath = `${defaultPath}:${extraPaths.join(":")}`;
   return {
     ...process.env,
@@ -296,7 +338,7 @@ export async function downloadYtDlpToTempFile(
     child.on("close", (code) => {
       let files: string[] = [];
       try {
-        files = fs.readdirSync(tmpDir).filter((f: string) =>
+        files = fs.readdirSync(/*turbopackIgnore: true*/ tmpDir).filter((f: string) =>
           f.startsWith(uniqueId)
         );
       } catch {

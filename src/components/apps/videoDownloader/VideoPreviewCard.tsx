@@ -91,17 +91,30 @@ export const VideoPreviewCard: React.FC<VideoPreviewCardProps> = ({
       streamInfo.streamOptions?.[0];
 
     setIsDownloading(true);
-    setDownloadProgress(0);
-    setDownloadSpeed("Memulai...");
-    setDownloadStage("Menghubungkan ke server...");
+    setDownloadProgress(5);
+    setDownloadSpeed("Menyiapkan...");
+    setDownloadStage("Menghubungkan ke server stream...");
     setErrorMessage(null);
     onDownloadStarted?.(streamInfo);
 
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
 
+    // Timer simulasi progres saat server sedang memproses handshake & muxing
+    let currentSimProgress = 5;
+    const progressTimer = setInterval(() => {
+      if (currentSimProgress < 40) {
+        currentSimProgress += Math.floor(Math.random() * 6) + 3;
+        setDownloadProgress(currentSimProgress);
+        if (currentSimProgress > 20 && currentSimProgress <= 35) {
+          setDownloadStage("Mempersiapkan encoding & stream...");
+        }
+      }
+    }, 300);
+
     // Khusus thumbnail gambar: simpan langsung HD image
     if (opt?.ext === "image") {
+      clearInterval(progressTimer);
       try {
         const thumbUrl = opt.proxyUrl || streamInfo.thumbnailUrl;
         if (thumbUrl) {
@@ -137,12 +150,19 @@ export const VideoPreviewCard: React.FC<VideoPreviewCardProps> = ({
 
     const startTime = Date.now();
     let receivedBytes = 0;
-    const targetExpectedBytes = opt?.sizeBytes || streamInfo.sizeBytes || 0;
+    // Estimasi total bytes jika content-length tidak dikirim
+    const defaultEstimate = streamInfo.durationSeconds
+      ? streamInfo.durationSeconds * (ext === "mp3" || ext === "m4a" ? 16000 : 250000)
+      : 20 * 1024 * 1024;
+    const targetExpectedBytes = opt?.sizeBytes || streamInfo.sizeBytes || defaultEstimate;
 
     try {
-      setDownloadStage("Menerima data stream...");
       const response = await fetch(targetUrl, { signal: abortController.signal });
+      clearInterval(progressTimer);
+
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      setDownloadStage("Mengunduh data video stream...");
 
       const headerContentLength = response.headers.get("content-length");
       const totalBytes = headerContentLength
@@ -163,21 +183,24 @@ export const VideoPreviewCard: React.FC<VideoPreviewCardProps> = ({
           receivedBytes += value.length;
 
           if (totalBytes > 0) {
-            const percent = Math.min(99, Math.round((receivedBytes / totalBytes) * 100));
+            const calculatedPercent = Math.round((receivedBytes / totalBytes) * 100);
+            const percent = Math.max(40, Math.min(99, calculatedPercent));
             setDownloadProgress(percent);
           } else {
-            // Animasi simulated progress bertahap jika total size tidak terkirim
-            setDownloadProgress((prev) => (prev < 90 ? prev + 3 : prev));
+            // Animasi simulated progress bertahap
+            setDownloadProgress((prev) => (prev < 95 ? prev + 2 : prev));
           }
 
-          // Hitung kecepatan download & perkiraan ukuran
+          // Hitung kecepatan download & ukuran real-time
           const elapsedSec = (Date.now() - startTime) / 1000;
-          if (elapsedSec > 0.3) {
+          if (elapsedSec > 0.2) {
             const speedMbps = (receivedBytes / (1024 * 1024) / elapsedSec).toFixed(1);
             setDownloadSpeed(`${speedMbps} MB/s`);
             const currentMb = (receivedBytes / (1024 * 1024)).toFixed(1);
             const totalMb =
-              totalBytes > 0 ? `${(totalBytes / (1024 * 1024)).toFixed(1)} MB` : "Stream...";
+              totalBytes > 0
+                ? `${(totalBytes / (1024 * 1024)).toFixed(1)} MB`
+                : `${(receivedBytes / (1024 * 1024)).toFixed(1)} MB`;
             setDownloadedBytesStr(`${currentMb} MB / ${totalMb}`);
           }
         }
@@ -188,7 +211,7 @@ export const VideoPreviewCard: React.FC<VideoPreviewCardProps> = ({
       }
 
       setDownloadProgress(100);
-      setDownloadStage("Menyimpan ke folder Download...");
+      setDownloadStage("Selesai! Menyimpan file...");
 
       // Buat Blob dan trigger download langsung ke penyimpanan lokal
       const mime =
@@ -214,8 +237,9 @@ export const VideoPreviewCard: React.FC<VideoPreviewCardProps> = ({
         setDownloadSpeed("");
         setDownloadedBytesStr("");
         setDownloadStage("");
-      }, 1200);
+      }, 1500);
     } catch (err: unknown) {
+      clearInterval(progressTimer);
       if (err instanceof Error && err.name === "AbortError") {
         return;
       }

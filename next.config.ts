@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
     "localhost",
     "127.0.0.1",
   ],
+  serverExternalPackages: ["ffmpeg-static", "youtube-dl-exec"],
+  outputFileTracingIncludes: {
+    "/api/video-downloader/**": [
+      "./bin/**/*",
+      "./node_modules/ffmpeg-static/**/*",
+      "./node_modules/youtube-dl-exec/bin/**/*",
+    ],
+  },
 };
 
 export default nextConfig;
