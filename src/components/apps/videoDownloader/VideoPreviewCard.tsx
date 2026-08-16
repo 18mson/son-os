@@ -242,39 +242,6 @@ export const VideoPreviewCard: React.FC<VideoPreviewCardProps> = ({
         setDownloadStage("");
       }, 1500);
     } catch (err: unknown) {
-      clearInterval(progressTimer);
-      if (err instanceof Error && err.name === "AbortError") {
-        return;
-      }
-
-      // Fallback: Langsung picu unduhan native browser jika streaming fetch terkendala
-      try {
-        setDownloadStage("Mengalihkan ke download browser langsung...");
-        const a = document.createElement("a");
-        a.href = targetUrl;
-        a.download = downloadFilename;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
-        setTimeout(() => {
-          setIsDownloading(false);
-          setDownloadProgress(100);
-          setDownloadStage("Unduhan berhasil dialihkan ke browser!");
-          setTimeout(() => {
-            setDownloadProgress(0);
-            setDownloadStage("");
-            setDownloadedBytesStr("");
-            setDownloadSpeed("");
-          }, 2500);
-        }, 1000);
-        return;
-      } catch {
-        // Continue to error alert
-      }
-
       setIsDownloading(false);
       setDownloadProgress(0);
       setDownloadSpeed("");
@@ -284,7 +251,7 @@ export const VideoPreviewCard: React.FC<VideoPreviewCardProps> = ({
 
       if (streamInfo.isYouTube) {
         setErrorMessage(
-          `Gagal mengunduh stream (${msg}). Anda dapat memutar video langsung di player atas atau mencoba kualitas lain (misal: 720p/360p).`
+          `Layanan stream Vercel sedang dibatasi (${msg}). Anda dapat memutar video di atas atau gunakan opsi download instan di bawah.`
         );
       } else {
         setErrorMessage(`Gagal mengunduh: ${msg}`);
@@ -404,13 +371,57 @@ export const VideoPreviewCard: React.FC<VideoPreviewCardProps> = ({
           </div>
         )}
 
-        {/* In-App Error / Status Alert */}
+        {/* In-App Error / Status Alert dengan 1-Click Web Helper */}
         {errorMessage && (
-          <div className="flex items-start gap-2 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs animate-in fade-in">
-            <ShieldAlert size={16} className="text-amber-400 shrink-0 mt-0.5" />
-            <div className="flex flex-col gap-1">
-              <span className="font-semibold">{errorMessage}</span>
+          <div className="flex flex-col gap-2.5 p-3.5 rounded-2xl bg-amber-950/30 border border-amber-500/30 text-amber-200 text-xs animate-in fade-in">
+            <div className="flex items-start gap-2">
+              <ShieldAlert size={16} className="text-amber-400 shrink-0 mt-0.5" />
+              <div className="flex flex-col gap-0.5">
+                <span className="font-bold text-amber-300">Download Stream Terkendala</span>
+                <p className="text-[11px] text-amber-200/90 leading-relaxed">{errorMessage}</p>
+              </div>
             </div>
+
+            {streamInfo.isYouTube && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-amber-500/20">
+                <a
+                  href={`https://cobalt.tools/?url=${encodeURIComponent(streamInfo.url)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-200 text-[11px] font-semibold flex items-center gap-1 transition-all cursor-pointer"
+                  title="Unduh langsung di Cobalt Tools (Bebas Iklan)"
+                >
+                  <Zap size={12} className="text-cyan-400" />
+                  <span>Cobalt Web (Bebas Iklan)</span>
+                </a>
+
+                {streamInfo.youtubeId && (
+                  <a
+                    href={`https://www.y2mate.com/youtube/${streamInfo.youtubeId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2.5 py-1 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-400/40 text-red-200 text-[11px] font-semibold flex items-center gap-1 transition-all cursor-pointer"
+                    title="Unduh melalui Y2Mate"
+                  >
+                    <Download size={12} className="text-red-400" />
+                    <span>Y2Mate</span>
+                  </a>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const posterOpt = streamInfo.streamOptions?.find((o) => o.ext === "image");
+                    handleProgressDownload(posterOpt);
+                  }}
+                  className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-[11px] font-medium flex items-center gap-1 transition-all cursor-pointer"
+                  title="Simpan thumbnail resolusi tinggi"
+                >
+                  <ImageIcon size={12} />
+                  <span>Poster HD</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
