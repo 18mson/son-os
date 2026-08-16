@@ -17,7 +17,7 @@ export const TerminalApp: React.FC = () => {
       command: "",
       output: (
         <div className="space-y-1 text-zinc-300">
-          <p className="text-emerald-400 font-bold">Son-OS Terminal v1.2.0 (x86_64-crosh-linux)</p>
+          <p className="text-emerald-400 font-bold">Son-OS Terminal (x86_64-crosh-linux)</p>
           <p>Ketik <span className="text-amber-300 font-semibold">&apos;help&apos;</span> untuk melihat daftar perintah yang tersedia.</p>
         </div>
       ),

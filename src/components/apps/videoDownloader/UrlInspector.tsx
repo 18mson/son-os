@@ -16,15 +16,19 @@ import { PRESET_SAMPLES, PresetSample } from "./presetSamples";
 interface UrlInspectorProps {
   url: string;
   isLoading: boolean;
+  hasResult?: boolean;
   onUrlChange: (url: string) => void;
   onInspect: (targetUrl?: string) => void;
+  onClear?: () => void;
 }
 
 export const UrlInspector: React.FC<UrlInspectorProps> = ({
   url,
   isLoading,
+  hasResult = false,
   onUrlChange,
   onInspect,
+  onClear,
 }) => {
   const [copiedPresetId, setCopiedPresetId] = useState<string | null>(null);
 
@@ -79,7 +83,10 @@ export const UrlInspector: React.FC<UrlInspectorProps> = ({
             {url && (
               <button
                 type="button"
-                onClick={() => onUrlChange("")}
+                onClick={() => {
+                  onUrlChange("");
+                  onClear?.();
+                }}
                 className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                 title="Hapus URL"
               >
@@ -119,38 +126,40 @@ export const UrlInspector: React.FC<UrlInspectorProps> = ({
         </button>
       </form>
 
-      {/* Preset Test Samples Section */}
-      <div className="flex flex-col gap-1.5 pt-1">
-        <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-medium">
-          <Sparkles size={13} className="text-amber-400" />
-          <span>Coba contoh video instan:</span>
-        </div>
+      {/* Preset Test Samples Section - Hanya tampil jika belum ada link / hasil inspeksi */}
+      {!hasResult && !url.trim() && (
+        <div className="flex flex-col gap-1.5 pt-1 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-medium">
+            <Sparkles size={13} className="text-amber-400" />
+            <span>Coba contoh video instan:</span>
+          </div>
 
-        <div className="flex flex-wrap gap-1.5">
-          {PRESET_SAMPLES.map((sample) => {
-            const isSelected = url === sample.url;
-            return (
-              <button
-                key={sample.id}
-                type="button"
-                onClick={() => handleSelectPreset(sample)}
-                className={`px-2.5 py-1 rounded-xl text-[11px] font-medium border transition-all cursor-pointer flex items-center gap-1.5 ${
-                  isSelected || copiedPresetId === sample.id
-                    ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-200 shadow-sm"
-                    : "bg-white/5 hover:bg-white/10 border-white/10 text-zinc-300 active:scale-95"
-                }`}
-                title={`${sample.description} (${sample.approxSize})`}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                <span>{sample.name}</span>
-                <span className="text-[9px] font-mono px-1 rounded bg-black/40 text-zinc-400">
-                  {sample.approxSize}
-                </span>
-              </button>
-            );
-          })}
+          <div className="flex flex-wrap gap-1.5">
+            {PRESET_SAMPLES.map((sample) => {
+              const isSelected = url === sample.url;
+              return (
+                <button
+                  key={sample.id}
+                  type="button"
+                  onClick={() => handleSelectPreset(sample)}
+                  className={`px-2.5 py-1 rounded-xl text-[11px] font-medium border transition-all cursor-pointer flex items-center gap-1.5 ${
+                    isSelected || copiedPresetId === sample.id
+                      ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-200 shadow-sm"
+                      : "bg-white/5 hover:bg-white/10 border-white/10 text-zinc-300 active:scale-95"
+                  }`}
+                  title={`${sample.description} (${sample.approxSize})`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                  <span>{sample.name}</span>
+                  <span className="text-[9px] font-mono px-1 rounded bg-black/40 text-zinc-400">
+                    {sample.approxSize}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

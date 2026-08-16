@@ -113,14 +113,9 @@ export const VideoDownloaderApp: React.FC = () => {
             <DownloadCloud size={17} className="sm:w-5 sm:h-5" />
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <h1 className="text-xs sm:text-sm font-bold text-white tracking-wide truncate">
-                Video Downloader
-              </h1>
-              <span className="text-[9px] sm:text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
-                v1.0.0
-              </span>
-            </div>
+            <h1 className="text-xs sm:text-sm font-bold text-white tracking-wide truncate">
+              Video Downloader
+            </h1>
             <p className="text-[9px] sm:text-[10px] text-zinc-400 truncate">
               Unduh video langsung dari URL, proxy stream, & ekstrak audio MP3
             </p>
@@ -192,8 +187,13 @@ export const VideoDownloaderApp: React.FC = () => {
             <UrlInspector
               url={url}
               isLoading={isLoading}
+              hasResult={!!currentStream || !!error}
               onUrlChange={setUrl}
               onInspect={handleInspect}
+              onClear={() => {
+                setCurrentStream(null);
+                setError(null);
+              }}
             />
 
             {error && (
