@@ -253,20 +253,63 @@ export async function POST(req: NextRequest) {
           sizeEstimate: "< 1 MB",
         });
       } else {
-        // Fallback ke oEmbed API resmi jika yt-dlp metadata gagal total
+        // Fallback: Ambil metadata & durasi presisi langsung dari YouTube Innertube Web API
         try {
-          const oembedRes = await fetch(
-            `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${youtubeId}&format=json`,
-            { headers: { "User-Agent": "Mozilla/5.0" } }
-          );
-          if (oembedRes.ok) {
-            const oembedData = await oembedRes.json();
-            if (oembedData.title) videoTitle = oembedData.title;
-            if (oembedData.author_name) authorName = oembedData.author_name;
-            if (oembedData.thumbnail_url) thumbnailUrl = oembedData.thumbnail_url;
+          const ytPlayerRes = await fetch("https://www.youtube.com/youtubei/v1/player", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            },
+            body: JSON.stringify({
+              videoId: youtubeId,
+              context: {
+                client: {
+                  clientName: "WEB",
+                  clientVersion: "2.20240101.00.00",
+                  hl: "en",
+                  gl: "US",
+                },
+              },
+            }),
+            signal: AbortSignal.timeout(5000),
+          });
+
+          if (ytPlayerRes.ok) {
+            const ytPlayerData = await ytPlayerRes.json();
+            if (ytPlayerData.videoDetails) {
+              if (ytPlayerData.videoDetails.title) videoTitle = ytPlayerData.videoDetails.title;
+              if (ytPlayerData.videoDetails.author) authorName = ytPlayerData.videoDetails.author;
+              if (ytPlayerData.videoDetails.lengthSeconds) {
+                durationSeconds = parseInt(ytPlayerData.videoDetails.lengthSeconds, 10);
+              }
+              const thumbs = ytPlayerData.videoDetails.thumbnail?.thumbnails;
+              if (Array.isArray(thumbs) && thumbs.length > 0) {
+                thumbnailUrl = thumbs[thumbs.length - 1].url;
+              }
+            }
           }
         } catch {
           // ignore
+        }
+
+        // Fallback oEmbed jika innertube gagal
+        if (!durationSeconds || videoTitle.startsWith("YouTube Video")) {
+          try {
+            const oembedRes = await fetch(
+              `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${youtubeId}&format=json`,
+              { headers: { "User-Agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(4000) }
+            );
+            if (oembedRes.ok) {
+              const oembedData = await oembedRes.json();
+              if (oembedData.title) videoTitle = oembedData.title;
+              if (oembedData.author_name) authorName = oembedData.author_name;
+              if (oembedData.thumbnail_url) thumbnailUrl = oembedData.thumbnail_url;
+            }
+          } catch {
+            // ignore
+          }
         }
 
         const safeVideoFilename = `${videoTitle
@@ -276,20 +319,20 @@ export async function POST(req: NextRequest) {
           .replace(/[^a-zA-Z0-9_-]/g, "_")
           .slice(0, 60)}_${youtubeId}.m4a`;
 
-        // Hitung estimasi ukuran berbasis durasi atau standar rata-rata
-        const dur = durationSeconds || 180; // default 3 menit jika tidak ada durasi
+        // Hitung estimasi ukuran presisi berbasis durasi asli video
+        const dur = durationSeconds || 130;
         const estSize = (kbps: number) => {
           const bytes = Math.round((kbps * 1024 * dur) / 8);
           return formatByteSize(bytes);
         };
 
         const resolutions = [
-          { height: 2160, quality: "4K UHD", label: "Video MP4 (4K Ultra HD)", kbps: 15000 },
-          { height: 1440, quality: "1440p QHD", label: "Video MP4 (1440p 2K)", kbps: 8000 },
-          { height: 1080, quality: "1080p FHD", label: "Video MP4 (1080p Full HD)", kbps: 4500 },
-          { height: 720, quality: "720p HD", label: "Video MP4 (720p HD)", kbps: 2200 },
-          { height: 480, quality: "480p SD", label: "Video MP4 (480p Standard)", kbps: 1200 },
-          { height: 360, quality: "360p SD", label: "Video MP4 (360p Standard)", kbps: 650 },
+          { height: 2160, quality: "4K UHD", label: "Video MP4 (4K Ultra HD)", kbps: 14500 },
+          { height: 1440, quality: "1440p QHD", label: "Video MP4 (1440p 2K)", kbps: 7200 },
+          { height: 1080, quality: "1080p FHD", label: "Video MP4 (1080p Full HD)", kbps: 3600 },
+          { height: 720, quality: "720p HD", label: "Video MP4 (720p HD)", kbps: 1600 },
+          { height: 480, quality: "480p SD", label: "Video MP4 (480p Standard)", kbps: 800 },
+          { height: 360, quality: "360p SD", label: "Video MP4 (360p Standard)", kbps: 450 },
         ];
 
         resolutions.forEach((r) => {
