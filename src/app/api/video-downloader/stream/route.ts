@@ -1,6 +1,7 @@
 // src/app/api/video-downloader/stream/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { spawnYtDlpStream, downloadYtDlpToTempFile } from "@/lib/videoDownloader/ytDlpEngine";
+import { spawnYtDlpStream, downloadYtDlpToTempFile, getYtDlpPath } from "@/lib/videoDownloader/ytDlpEngine";
+import { resolveStreamFast } from "@/lib/videoDownloader/cobaltEngine";
 import { Readable } from "stream";
 import fs from "fs";
 
@@ -22,18 +23,21 @@ export async function GET(req: NextRequest) {
     searchParams.get("filename") || `video_${Date.now()}.${format === "audio" ? "m4a" : "mp4"}`;
 
   // =========================================================================
-  // 0. DEDICATED MICROSERVICE REDIRECT (Jika DOWNLOADER_API_URL diatur di Vercel)
+  // 0. DEDICATED MICROSERVICE REDIRECT (Jika DOWNLOADER_API_URL diatur)
   // =========================================================================
   const externalServiceUrl =
     process.env.DOWNLOADER_API_URL || process.env.NEXT_PUBLIC_DOWNLOADER_API_URL;
 
-  if (externalServiceUrl && (youtubeUrl || (targetUrl && (targetUrl.includes("youtube.com") || targetUrl.includes("youtu.be"))))) {
+  if (
+    externalServiceUrl &&
+    (youtubeUrl || (targetUrl && (targetUrl.includes("youtube.com") || targetUrl.includes("youtu.be"))))
+  ) {
     const extStreamUrl = `${externalServiceUrl.replace(/\/$/, "")}/stream?${searchParams.toString()}`;
     return NextResponse.redirect(extStreamUrl, 307);
   }
 
   // =========================================================================
-  // 1. ENGINE YT-DLP LOKAL / SERVERLESS
+  // 1. ENGINE YT-DLP (LOKAL) DENGAN CLOUD STREAM RESOLVER (VERCEL)
   // =========================================================================
   if (
     youtubeUrl ||
@@ -41,92 +45,118 @@ export async function GET(req: NextRequest) {
   ) {
     const streamTarget = youtubeUrl || targetUrl!;
 
-    // Video MP4: Unduh dan muxing menggunakan native yt-dlp + ffmpeg
+    // 1A. Coba yt-dlp lokal jika binary tersedia (di komputer lokal macOS/Linux/Windows)
     if (format === "video") {
       try {
-        const tempResult = await downloadYtDlpToTempFile(streamTarget, { format, quality });
-        if (tempResult && fs.existsSync(tempResult.filePath)) {
-          const stats = fs.statSync(tempResult.filePath);
-          const nodeStream = fs.createReadStream(tempResult.filePath);
+        const bin = getYtDlpPath();
+        if (fs.existsSync(bin) || bin !== "yt-dlp") {
+          const tempResult = await downloadYtDlpToTempFile(streamTarget, { format, quality });
+          if (tempResult && fs.existsSync(tempResult.filePath)) {
+            const stats = fs.statSync(tempResult.filePath);
+            const nodeStream = fs.createReadStream(tempResult.filePath);
 
-          if (!filename.endsWith(`.${tempResult.extension}`)) {
-            filename = `${filename.replace(/\.[^/.]+$/, "")}.${tempResult.extension}`;
-          }
-
-          // Hapus file sementara setelah stream selesai ditransmisikan
-          nodeStream.on("close", () => {
-            try {
-              if (fs.existsSync(tempResult.filePath)) {
-                fs.unlinkSync(tempResult.filePath);
-              }
-            } catch {
-              // ignore
+            if (!filename.endsWith(`.${tempResult.extension}`)) {
+              filename = `${filename.replace(/\.[^/.]+$/, "")}.${tempResult.extension}`;
             }
-          });
 
-          const webStream = Readable.toWeb(nodeStream) as unknown as ReadableStream;
+            nodeStream.on("close", () => {
+              try {
+                if (fs.existsSync(tempResult.filePath)) {
+                  fs.unlinkSync(tempResult.filePath);
+                }
+              } catch {
+                // ignore
+              }
+            });
 
-          const responseHeaders = new Headers();
-          responseHeaders.set("Content-Type", tempResult.mimeType);
-          responseHeaders.set("Content-Length", stats.size.toString());
-          responseHeaders.set(
-            "Content-Disposition",
-            `attachment; filename="${encodeURIComponent(filename)}"`
-          );
-          responseHeaders.set("Access-Control-Allow-Origin", "*");
-          responseHeaders.set("Cache-Control", "no-cache, no-store, must-revalidate");
+            const webStream = Readable.toWeb(nodeStream) as unknown as ReadableStream;
+            const responseHeaders = new Headers();
+            responseHeaders.set("Content-Type", tempResult.mimeType);
+            responseHeaders.set("Content-Length", stats.size.toString());
+            responseHeaders.set(
+              "Content-Disposition",
+              `attachment; filename="${encodeURIComponent(filename)}"`
+            );
+            responseHeaders.set("Access-Control-Allow-Origin", "*");
+            responseHeaders.set("Cache-Control", "no-cache, no-store, must-revalidate");
 
-          return new NextResponse(webStream, {
-            status: 200,
-            headers: responseHeaders,
-          });
-        } else {
-          return new NextResponse("Gagal memproses download video yt-dlp. Silakan coba kembali.", {
-            status: 500,
-          });
+            return new NextResponse(webStream, {
+              status: 200,
+              headers: responseHeaders,
+            });
+          }
         }
       } catch (e) {
-        console.error("[yt-dlp download error]:", e);
-        return new NextResponse(`Terjadi kesalahan saat memproses video dengan yt-dlp: ${e}`, {
-          status: 500,
-        });
+        console.warn("[yt-dlp local bypassed, switching to fast stream resolver]:", e);
+      }
+    } else {
+      // Audio stream via local yt-dlp jika binary tersedia
+      try {
+        const bin = getYtDlpPath();
+        if (fs.existsSync(bin) || bin !== "yt-dlp") {
+          const { process: child, mimeType, extension } = spawnYtDlpStream(streamTarget, {
+            format,
+            quality,
+          });
+
+          if (child.stdout) {
+            if (!filename.endsWith(`.${extension}`)) {
+              filename = `${filename.replace(/\.[^/.]+$/, "")}.${extension}`;
+            }
+
+            const webStream = Readable.toWeb(child.stdout) as unknown as ReadableStream;
+            const responseHeaders = new Headers();
+            responseHeaders.set("Content-Type", mimeType);
+            responseHeaders.set(
+              "Content-Disposition",
+              `attachment; filename="${encodeURIComponent(filename)}"`
+            );
+            responseHeaders.set("Access-Control-Allow-Origin", "*");
+            responseHeaders.set("Cache-Control", "no-cache, no-store, must-revalidate");
+
+            return new NextResponse(webStream, {
+              status: 200,
+              headers: responseHeaders,
+            });
+          }
+        }
+      } catch {
+        // fallback
       }
     }
 
-    // Audio stream langsung melalui stdout yt-dlp
+    // 1B. Fast Cloud Stream Resolver (Untuk Vercel Deployment)
     try {
-      const { process: child, mimeType, extension } = spawnYtDlpStream(streamTarget, {
-        format,
-        quality,
+      const q =
+        quality === "360"
+          ? "360"
+          : quality === "480"
+          ? "480"
+          : quality === "1080"
+          ? "1080"
+          : quality === "1440"
+          ? "1440"
+          : quality === "2160"
+          ? "2160"
+          : "720";
+
+      const resolved = await resolveStreamFast(streamTarget, {
+        format: format === "audio" ? "mp3" : "mp4",
+        quality: q,
       });
 
-      if (!filename.endsWith(`.${extension}`)) {
-        filename = `${filename.replace(/\.[^/.]+$/, "")}.${extension}`;
+      if (resolved && resolved.downloadUrl) {
+        // Stream / redirect langsung ke file CDN
+        return NextResponse.redirect(resolved.downloadUrl, 307);
       }
-
-      if (!child.stdout) {
-        return new NextResponse("Gagal menginisialisasi streaming process", { status: 500 });
-      }
-
-      const webStream = Readable.toWeb(child.stdout) as unknown as ReadableStream;
-
-      const responseHeaders = new Headers();
-      responseHeaders.set("Content-Type", mimeType);
-      responseHeaders.set(
-        "Content-Disposition",
-        `attachment; filename="${encodeURIComponent(filename)}"`
-      );
-      responseHeaders.set("Access-Control-Allow-Origin", "*");
-      responseHeaders.set("Cache-Control", "no-cache, no-store, must-revalidate");
-
-      return new NextResponse(webStream, {
-        status: 200,
-        headers: responseHeaders,
-      });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      return new NextResponse(`yt-dlp stream error: ${msg}`, { status: 502 });
+    } catch (resolverErr) {
+      console.warn("[Fast Stream Resolver Error]:", resolverErr);
     }
+
+    return new NextResponse(
+      "Gagal mengunduh stream video YouTube. Silakan coba kualitas lain (misal: 720p atau 360p).",
+      { status: 502 }
+    );
   }
 
   // =========================================================================
