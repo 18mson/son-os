@@ -197,11 +197,12 @@ export const VideoPreviewCard: React.FC<VideoPreviewCardProps> = ({
             const speedMbps = (receivedBytes / (1024 * 1024) / elapsedSec).toFixed(1);
             setDownloadSpeed(`${speedMbps} MB/s`);
             const currentMb = (receivedBytes / (1024 * 1024)).toFixed(1);
-            const totalMb =
-              totalBytes > 0
-                ? `${(totalBytes / (1024 * 1024)).toFixed(1)} MB`
-                : `${(receivedBytes / (1024 * 1024)).toFixed(1)} MB`;
-            setDownloadedBytesStr(`${currentMb} MB / ${totalMb}`);
+            if (headerContentLength && totalBytes > 0) {
+              const totalMb = (totalBytes / (1024 * 1024)).toFixed(1);
+              setDownloadedBytesStr(`${currentMb} MB / ${totalMb} MB`);
+            } else {
+              setDownloadedBytesStr(`${currentMb} MB diunduh`);
+            }
           }
         }
       }
@@ -210,8 +211,10 @@ export const VideoPreviewCard: React.FC<VideoPreviewCardProps> = ({
         throw new Error("Stream video tidak mengembalikan data (0 bytes).");
       }
 
+      const finalMb = (receivedBytes / (1024 * 1024)).toFixed(1);
+      setDownloadedBytesStr(`${finalMb} MB / ${finalMb} MB (100%)`);
       setDownloadProgress(100);
-      setDownloadStage("Selesai! Menyimpan file...");
+      setDownloadStage(`Selesai! ${finalMb} MB tersimpan.`);
 
       // Buat Blob dan trigger download langsung ke penyimpanan lokal
       const mime =

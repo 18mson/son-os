@@ -319,20 +319,21 @@ export async function POST(req: NextRequest) {
           .replace(/[^a-zA-Z0-9_-]/g, "_")
           .slice(0, 60)}_${youtubeId}.m4a`;
 
-        // Hitung estimasi ukuran presisi berbasis durasi asli video
+        // Hitung estimasi rentang ukuran berbasis durasi nyata video
         const dur = durationSeconds || 130;
-        const estSize = (kbps: number) => {
-          const bytes = Math.round((kbps * 1024 * dur) / 8);
-          return formatByteSize(bytes);
+        const estRange = (minKbps: number, maxKbps: number) => {
+          const minBytes = Math.round((minKbps * 1024 * dur) / 8);
+          const maxBytes = Math.round((maxKbps * 1024 * dur) / 8);
+          return `Est. ~${formatByteSize(minBytes)} - ${formatByteSize(maxBytes)}`;
         };
 
         const resolutions = [
-          { height: 2160, quality: "4K UHD", label: "Video MP4 (4K Ultra HD)", kbps: 14500 },
-          { height: 1440, quality: "1440p QHD", label: "Video MP4 (1440p 2K)", kbps: 7200 },
-          { height: 1080, quality: "1080p FHD", label: "Video MP4 (1080p Full HD)", kbps: 3600 },
-          { height: 720, quality: "720p HD", label: "Video MP4 (720p HD)", kbps: 1600 },
-          { height: 480, quality: "480p SD", label: "Video MP4 (480p Standard)", kbps: 800 },
-          { height: 360, quality: "360p SD", label: "Video MP4 (360p Standard)", kbps: 450 },
+          { height: 2160, quality: "4K UHD", label: "Video MP4 (4K Ultra HD)", minKbps: 8000, maxKbps: 18000, avgKbps: 13000 },
+          { height: 1440, quality: "1440p QHD", label: "Video MP4 (1440p 2K)", minKbps: 4500, maxKbps: 9000, avgKbps: 6500 },
+          { height: 1080, quality: "1080p FHD", label: "Video MP4 (1080p Full HD)", minKbps: 2000, maxKbps: 4500, avgKbps: 3000 },
+          { height: 720, quality: "720p HD", label: "Video MP4 (720p HD)", minKbps: 1000, maxKbps: 2200, avgKbps: 1500 },
+          { height: 480, quality: "480p SD", label: "Video MP4 (480p Standard)", minKbps: 500, maxKbps: 1100, avgKbps: 750 },
+          { height: 360, quality: "360p SD", label: "Video MP4 (360p Standard)", minKbps: 250, maxKbps: 550, avgKbps: 380 },
         ];
 
         resolutions.forEach((r) => {
@@ -340,7 +341,7 @@ export async function POST(req: NextRequest) {
             directYoutubeUrl
           )}&format=video&quality=${r.height}&filename=${encodeURIComponent(safeVideoFilename)}`;
 
-          const estimatedBytes = Math.round((r.kbps * 1024 * dur) / 8);
+          const estimatedBytes = Math.round((r.avgKbps * 1024 * dur) / 8);
 
           streamOptions.push({
             quality: r.quality,
@@ -349,7 +350,7 @@ export async function POST(req: NextRequest) {
             url: directYoutubeUrl,
             proxyUrl: videoProxyUrl,
             isAudioOnly: false,
-            sizeEstimate: estSize(r.kbps),
+            sizeEstimate: estRange(r.minKbps, r.maxKbps),
             sizeBytes: estimatedBytes,
           });
         });
@@ -359,7 +360,9 @@ export async function POST(req: NextRequest) {
           directYoutubeUrl
         )}&format=audio&filename=${encodeURIComponent(safeAudioFilename)}`;
 
-        const audioEstBytes = Math.round((160 * 1024 * dur) / 8);
+        const audioMinBytes = Math.round((96 * 1024 * dur) / 8);
+        const audioMaxBytes = Math.round((192 * 1024 * dur) / 8);
+        const audioAvgBytes = Math.round((140 * 1024 * dur) / 8);
 
         streamOptions.push({
           quality: "HQ Audio",
@@ -368,8 +371,8 @@ export async function POST(req: NextRequest) {
           url: directYoutubeUrl,
           proxyUrl: audioProxyUrl,
           isAudioOnly: true,
-          sizeEstimate: estSize(160),
-          sizeBytes: audioEstBytes,
+          sizeEstimate: `Est. ~${formatByteSize(audioMinBytes)} - ${formatByteSize(audioMaxBytes)}`,
+          sizeBytes: audioAvgBytes,
         });
 
         // Opsi Poster HD
