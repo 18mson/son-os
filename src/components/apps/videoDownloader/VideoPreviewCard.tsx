@@ -246,6 +246,35 @@ export const VideoPreviewCard: React.FC<VideoPreviewCardProps> = ({
       if (err instanceof Error && err.name === "AbortError") {
         return;
       }
+
+      // Fallback: Langsung picu unduhan native browser jika streaming fetch terkendala
+      try {
+        setDownloadStage("Mengalihkan ke download browser langsung...");
+        const a = document.createElement("a");
+        a.href = targetUrl;
+        a.download = downloadFilename;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        setTimeout(() => {
+          setIsDownloading(false);
+          setDownloadProgress(100);
+          setDownloadStage("Unduhan berhasil dialihkan ke browser!");
+          setTimeout(() => {
+            setDownloadProgress(0);
+            setDownloadStage("");
+            setDownloadedBytesStr("");
+            setDownloadSpeed("");
+          }, 2500);
+        }, 1000);
+        return;
+      } catch {
+        // Continue to error alert
+      }
+
       setIsDownloading(false);
       setDownloadProgress(0);
       setDownloadSpeed("");
@@ -255,7 +284,7 @@ export const VideoPreviewCard: React.FC<VideoPreviewCardProps> = ({
 
       if (streamInfo.isYouTube) {
         setErrorMessage(
-          `Gagal mengunduh stream: ${msg}. Anda dapat memutar video di atas atau menyimpan Poster HD.`
+          `Gagal mengunduh stream (${msg}). Anda dapat memutar video langsung di player atas atau mencoba kualitas lain (misal: 720p/360p).`
         );
       } else {
         setErrorMessage(`Gagal mengunduh: ${msg}`);

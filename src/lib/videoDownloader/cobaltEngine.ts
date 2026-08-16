@@ -12,9 +12,13 @@ interface StreamResult {
 const PUBLIC_INSTANCES = [
   "https://rue-cobalt.xenon.zone",
   "https://dog.kittycat.boo",
-  "https://cobalt.krawaller.se",
   "https://cobalt.synced.club",
   "https://cobalt-api.kwiatekm.pl",
+  "https://cobalt.krawaller.se",
+  "https://c.0x1.bz",
+  "https://cobalt.alpha.shadowrunners.xyz",
+  "https://api.cobalt.blackline.world",
+  "https://cobalt.canine.tools",
   "https://cobalt.tools",
 ];
 
