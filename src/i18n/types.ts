@@ -290,6 +290,18 @@ export interface TranslationSchema {
     personalDetails: string;
     fullNameLabel: string;
     fullNameValue: string;
+    birthPlaceDateLabel: string;
+    birthPlaceDateValue: string;
+    genderLabel: string;
+    genderValue: string;
+    religionLabel: string;
+    religionValue: string;
+    healthLabel: string;
+    healthValue: string;
+    languagesLabel: string;
+    languagesValue: string;
+    objectiveLabel: string;
+    objectiveValue: string;
     domicileLabel: string;
     domicileValue: string;
     educationLabel: string;

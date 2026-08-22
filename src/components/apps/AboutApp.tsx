@@ -149,7 +149,7 @@ export const AboutApp: React.FC = () => {
               </p>
               <div className={`flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
                 <span className="flex items-center gap-1">
-                  <MapPin size={13} className="text-rose-400" /> Tangerang / Bandung, Indonesia
+                  <MapPin size={13} className="text-rose-400" /> Bandung, Indonesia
                 </span>
                 <span className="flex items-center gap-1">
                   <Mail size={13} className="text-amber-400" /> 18mson@gmail.com
@@ -306,21 +306,21 @@ export const AboutApp: React.FC = () => {
                 </span>
               </div>
               <div className={`p-4 rounded-xl border text-center ${isLight ? "bg-white border-slate-200" : "bg-zinc-900/60 border-white/5"}`}>
-                <span className="text-2xl font-black text-emerald-500">8+</span>
+                <span className="text-2xl font-black text-emerald-500">6</span>
                 <span className={`block text-[11px] font-semibold mt-0.5 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
-                  {language === "en" ? "Enterprise Projects" : "Proyek Enterprise"}
+                  {language === "en" ? "Career Positions" : "Posisi Karier"}
                 </span>
               </div>
               <div className={`p-4 rounded-xl border text-center ${isLight ? "bg-white border-slate-200" : "bg-zinc-900/60 border-white/5"}`}>
-                <span className="text-2xl font-black text-purple-500">100%</span>
+                <span className="text-2xl font-black text-purple-500">4</span>
                 <span className={`block text-[11px] font-semibold mt-0.5 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
-                  Agile / Scrum
+                  {language === "en" ? "Trainings & Certs" : "Pelatihan & Kursus"}
                 </span>
               </div>
               <div className={`p-4 rounded-xl border text-center ${isLight ? "bg-white border-slate-200" : "bg-zinc-900/60 border-white/5"}`}>
                 <span className="text-2xl font-black text-amber-500">S1</span>
                 <span className={`block text-[11px] font-semibold mt-0.5 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
-                  {language === "en" ? "Computer Science" : "Teknik Informatika"}
+                  STTB (2014–2018)
                 </span>
               </div>
             </div>
@@ -336,31 +336,43 @@ export const AboutApp: React.FC = () => {
                 <h3 className="text-xs font-bold uppercase tracking-wider text-blue-500 flex items-center gap-2">
                   <User size={15} /> {t.aboutApp.personalDetails}
                 </h3>
-                <div className="space-y-2 text-xs divide-y divide-white/5">
+                <div className="space-y-1.5 text-xs divide-y divide-white/5">
                   <div className="flex justify-between py-1">
                     <span className={isLight ? "text-slate-500" : "text-zinc-400"}>{t.aboutApp.fullNameLabel}:</span>
                     <span className="font-semibold">{t.aboutApp.fullNameValue}</span>
                   </div>
                   <div className="flex justify-between py-1">
-                    <span className={isLight ? "text-slate-500" : "text-zinc-400"}>{t.aboutApp.domicileLabel}:</span>
-                    <span className="font-semibold">{t.aboutApp.domicileValue}</span>
+                    <span className={isLight ? "text-slate-500" : "text-zinc-400"}>{t.aboutApp.birthPlaceDateLabel}:</span>
+                    <span className="font-semibold">{t.aboutApp.birthPlaceDateValue}</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className={isLight ? "text-slate-500" : "text-zinc-400"}>{t.aboutApp.genderLabel}:</span>
+                    <span className="font-semibold">{t.aboutApp.genderValue}</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className={isLight ? "text-slate-500" : "text-zinc-400"}>{t.aboutApp.religionLabel}:</span>
+                    <span className="font-semibold">{t.aboutApp.religionValue}</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className={isLight ? "text-slate-500" : "text-zinc-400"}>{t.aboutApp.healthLabel}:</span>
+                    <span className="font-semibold text-emerald-400">{t.aboutApp.healthValue}</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className={isLight ? "text-slate-500" : "text-zinc-400"}>{t.aboutApp.languagesLabel}:</span>
+                    <span className="font-semibold">{t.aboutApp.languagesValue}</span>
                   </div>
                   <div className="flex justify-between py-1">
                     <span className={isLight ? "text-slate-500" : "text-zinc-400"}>{t.aboutApp.educationLabel}:</span>
                     <span className="font-semibold">{t.aboutApp.educationValue}</span>
                   </div>
                   <div className="flex justify-between py-1">
-                    <span className={isLight ? "text-slate-500" : "text-zinc-400"}>{t.aboutApp.specializationLabel}:</span>
-                    <span className="font-semibold">{t.aboutApp.specializationValue}</span>
-                  </div>
-                  <div className="flex justify-between py-1">
                     <span className={isLight ? "text-slate-500" : "text-zinc-400"}>{t.aboutApp.experienceTotalLabel}:</span>
-                    <span className="font-semibold text-emerald-400">{t.aboutApp.experienceTotalValue}</span>
+                    <span className="font-semibold text-blue-400">{t.aboutApp.experienceTotalValue}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Career Objective & Focus */}
+              {/* Career Objective & Profile Traits */}
               <div
                 className={`p-5 rounded-2xl border space-y-3 ${
                   isLight ? "bg-white border-slate-200" : "bg-zinc-900/60 border-white/10"
@@ -372,13 +384,11 @@ export const AboutApp: React.FC = () => {
                 <div className="space-y-3 text-xs leading-relaxed">
                   <div className={`p-3 rounded-xl ${isLight ? "bg-blue-50 text-blue-900" : "bg-blue-500/10 text-blue-200"}`}>
                     <strong className="block mb-1 font-semibold">
-                      {language === "en" ? "Career Objective:" : "Tujuan Karier:"}
+                      {t.aboutApp.objectiveLabel}:
                     </strong>
-                    {language === "en"
-                      ? "Dedicated Software Engineer & Frontend Specialist building resilient, scalable, and delightful web applications."
-                      : "Mendedikasikan keahlian teknik sebagai Software Engineer / Senior Frontend Engineer untuk membangun aplikasi web modern, teruji, dan scalable."}
+                    <span className="font-medium">{t.aboutApp.objectiveValue}</span>
                   </div>
-                  <ul className={`space-y-1.5 list-disc pl-4 ${isLight ? "text-slate-600" : "text-zinc-300"}`}>
+                  <ul className={`space-y-2 list-disc pl-4 ${isLight ? "text-slate-600" : "text-zinc-300"}`}>
                     <li>{t.aboutApp.careerFocus1}</li>
                     <li>{t.aboutApp.careerFocus2}</li>
                     <li>{t.aboutApp.careerFocus3}</li>

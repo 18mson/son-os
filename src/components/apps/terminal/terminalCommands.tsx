@@ -58,7 +58,7 @@ export const processTerminalCommand = (
               ? "6.5+ years of software engineering experience building scalable enterprise web applications (BRI, Telkom Indonesia) with React.js, Next.js, TypeScript, & Tailwind CSS."
               : "6.5+ tahun pengalaman membangun web aplikasi enterprise berskala besar (BRI, Telkom Indonesia) menggunakan React.js, Next.js, TypeScript, & Tailwind CSS."}
           </p>
-          <p className="text-zinc-400">Location: Tangerang / Bandung, Indonesia | Email: 18mson@gmail.com | WA: +62 822 1626 7796</p>
+          <p className="text-zinc-400">Location: Bandung, Indonesia | Email: 18mson@gmail.com | WA: +62 822 1626 7796</p>
         </div>
       );
 
