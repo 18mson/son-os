@@ -4,8 +4,10 @@ import { persist } from "zustand/middleware";
 export type ThemeMode = "dark" | "light";
 export type ClockFormat = "12h" | "24h";
 export type TextScale = "small" | "normal" | "large";
+export type Language = "en" | "id" | string;
 
 export interface SettingsState {
+  language: Language;
   theme: ThemeMode;
   soundEnabled: boolean;
   volume: number; // 0-100
@@ -15,6 +17,7 @@ export interface SettingsState {
   brightness: number; // 0-100 (100 = full brightness)
 
   // Actions
+  setLanguage: (language: Language) => void;
   setTheme: (theme: ThemeMode) => void;
   toggleTheme: () => void;
   setSoundEnabled: (enabled: boolean) => void;
@@ -29,6 +32,7 @@ export interface SettingsState {
 }
 
 const DEFAULT_SETTINGS = {
+  language: "en" as Language,
   theme: "dark" as ThemeMode,
   soundEnabled: true,
   volume: 70,
@@ -68,6 +72,8 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
       ...DEFAULT_SETTINGS,
+
+      setLanguage: (language) => set({ language }),
 
       setTheme: (theme) => {
         // Only apply theme DOM — never touch text scale here

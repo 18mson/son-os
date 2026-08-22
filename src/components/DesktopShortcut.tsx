@@ -7,6 +7,7 @@ import { useWindowStore, DesktopShortcutItem } from "@/store/windowStore";
 import { APPS } from "@/config/appsConfig";
 import { AppIcon } from "./AppIcon";
 import { useContextMenuClose, closeAllContextMenus } from "@/hooks/useContextMenuClose";
+import { useTranslation, getAppTranslation } from "@/i18n";
 
 interface DesktopShortcutProps {
   shortcut: DesktopShortcutItem;
@@ -15,6 +16,7 @@ interface DesktopShortcutProps {
 
 export const DesktopShortcut: React.FC<DesktopShortcutProps> = ({ shortcut, isSelected }) => {
   const { openWindow, removeDesktopShortcut, updateDesktopShortcutPos, desktopShortcuts, soundEnabled } = useWindowStore();
+  const { language } = useTranslation();
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragPreviewPos, setDragPreviewPos] = useState<{ x: number; y: number } | null>(null);
@@ -25,15 +27,18 @@ export const DesktopShortcut: React.FC<DesktopShortcutProps> = ({ shortcut, isSe
   const app = APPS.find((a) => a.id === shortcut.appId);
   if (!app) return null;
 
+  const appMeta = getAppTranslation(app.id, language);
+  const translatedTitle = appMeta?.title || app.title;
+
   const handleDoubleClick = () => {
-    openWindow(app);
+    openWindow({ ...app, title: translatedTitle });
   };
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     // On mobile view (<768px), single tap opens the app directly
     if (typeof window !== "undefined" && window.innerWidth < 768) {
-      openWindow(app);
+      openWindow({ ...app, title: translatedTitle });
     }
   };
 
@@ -59,74 +64,69 @@ export const DesktopShortcut: React.FC<DesktopShortcutProps> = ({ shortcut, isSe
     const maxCol = Math.max(0, Math.floor((screenW - 120) / GRID_W));
     const maxRow = Math.max(0, Math.floor((screenH - 160) / GRID_H));
 
-    const targetCol = Math.min(col, maxCol);
-    const targetRow = Math.min(row, maxRow);
+    const clampedCol = Math.min(col, maxCol);
+    const clampedRow = Math.min(row, maxRow);
 
     return {
-      x: START_X + targetCol * GRID_W,
-      y: START_Y + targetRow * GRID_H,
-      col: targetCol,
-      row: targetRow,
+      x: START_X + clampedCol * GRID_W,
+      y: START_Y + clampedRow * GRID_H,
+      col: clampedCol,
+      row: clampedRow,
       maxCol,
       maxRow,
     };
   };
 
+  const isSlotOccupied = (targetX: number, targetY: number) => {
+    return desktopShortcuts.some(
+      (s) => s.id !== shortcut.id && s.x === targetX && s.y === targetY
+    );
+  };
+
   return (
     <>
-      {/* Visual Grid Drop Target Highlight Box */}
+      {/* Ghost Snap Preview indicator while dragging */}
       {isDragging && dragPreviewPos && (
         <div
           style={{
             position: "absolute",
-            left: `${dragPreviewPos.x}px`,
-            top: `${dragPreviewPos.y}px`,
+            left: dragPreviewPos.x,
+            top: dragPreviewPos.y,
           }}
-          className="w-22 h-24 rounded-2xl border-2 border-dashed border-blue-400/80 bg-blue-500/20 shadow-lg shadow-blue-500/10 backdrop-blur-xs z-5 pointer-events-none transition-all duration-100 flex items-center justify-center"
-        >
-          <div className="w-10 h-10 rounded-xl border border-blue-400/50 bg-blue-400/10" />
-        </div>
+          className="w-22 h-24 rounded-2xl border-2 border-dashed border-blue-400/60 bg-blue-500/10 pointer-events-none z-5 transition-all duration-75"
+        />
       )}
 
+      {/* Main Drag-enabled Shortcut Item */}
       <motion.div
         drag
         dragMomentum={false}
-        dragElastic={0.05}
+        dragElastic={0.08}
         animate={{ x: shortcut.x, y: shortcut.y }}
-        transition={{ type: "spring", stiffness: 450, damping: 28 }}
-        whileDrag={{ scale: 1.08, zIndex: 15, cursor: "grabbing" }}
-        onDragStart={() => {
-          setIsDragging(true);
-          setDragPreviewPos({ x: shortcut.x, y: shortcut.y });
+        transition={{ type: "spring", stiffness: 450, damping: 30 }}
+        onDragStart={() => setIsDragging(true)}
+        onDrag={(_event, info) => {
+          const currentX = shortcut.x + info.offset.x;
+          const currentY = shortcut.y + info.offset.y;
+          const preview = getGridPosition(currentX, currentY);
+          setDragPreviewPos({ x: preview.x, y: preview.y });
         }}
-        onDrag={(_, info) => {
-          const rawX = shortcut.x + info.offset.x;
-          const rawY = shortcut.y + info.offset.y;
-          const target = getGridPosition(rawX, rawY);
-          setDragPreviewPos({ x: target.x, y: target.y });
-        }}
-        onDragEnd={(_, info) => {
+        onDragEnd={(_event, info) => {
           setIsDragging(false);
           setDragPreviewPos(null);
 
-          const rawX = shortcut.x + info.offset.x;
-          const rawY = shortcut.y + info.offset.y;
-          const target = getGridPosition(rawX, rawY);
-
-          const otherShortcuts = desktopShortcuts.filter((s) => s.id !== shortcut.id);
-          const isSlotOccupied = (x: number, y: number) => {
-            return otherShortcuts.some((s) => Math.abs(s.x - x) < 30 && Math.abs(s.y - y) < 30);
-          };
+          const finalRawX = shortcut.x + info.offset.x;
+          const finalRawY = shortcut.y + info.offset.y;
+          const target = getGridPosition(finalRawX, finalRawY);
 
           let finalX = target.x;
           let finalY = target.y;
 
-          // If target grid slot is occupied by another icon, find nearest empty grid slot
           if (isSlotOccupied(finalX, finalY)) {
             let found = false;
-            for (let dist = 1; dist <= 12 && !found; dist++) {
-              for (let dRow = -dist; dRow <= dist && !found; dRow++) {
-                for (let dCol = -dist; dCol <= dist && !found; dCol++) {
+            for (let radius = 1; radius <= 4 && !found; radius++) {
+              for (let dRow = -radius; dRow <= radius && !found; dRow++) {
+                for (let dCol = -radius; dCol <= radius && !found; dCol++) {
                   const c = Math.max(0, Math.min(target.col + dCol, target.maxCol));
                   const r = Math.max(0, Math.min(target.row + dRow, target.maxRow));
                   const testX = START_X + c * GRID_W;
@@ -161,7 +161,7 @@ export const DesktopShortcut: React.FC<DesktopShortcutProps> = ({ shortcut, isSe
           <AppIcon name={app.icon} size={24} />
         </div>
         <span className="text-[11px] font-semibold text-white text-center line-clamp-2 drop-shadow-md leading-tight px-1">
-          {app.title}
+          {translatedTitle}
         </span>
       </motion.div>
 
@@ -176,23 +176,25 @@ export const DesktopShortcut: React.FC<DesktopShortcutProps> = ({ shortcut, isSe
         >
           <div className="flex flex-col gap-0.5 text-xs text-zinc-200">
             <button
+              type="button"
               onClick={() => {
-                openWindow(app);
+                openWindow({ ...app, title: translatedTitle });
                 setMenu(null);
               }}
               className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-blue-600 hover:text-white transition-colors cursor-pointer w-full text-left font-medium"
             >
-              <ExternalLink size={14} /> Buka {app.title}
+              <ExternalLink size={14} /> {language === "en" ? `Open ${translatedTitle}` : `Buka ${translatedTitle}`}
             </button>
 
             <button
+              type="button"
               onClick={() => {
                 removeDesktopShortcut(shortcut.id);
                 setMenu(null);
               }}
               className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-colors cursor-pointer w-full text-left font-medium"
             >
-              <Trash2 size={14} /> Hapus Shortcut
+              <Trash2 size={14} /> {language === "en" ? "Remove Shortcut" : "Hapus Shortcut"}
             </button>
           </div>
         </div>

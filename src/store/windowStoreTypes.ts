@@ -84,6 +84,7 @@ export interface WindowStore {
   widgetGalleryOpen: boolean;
 
   // Accessibility & System Preferences
+  language: 'en' | 'id' | string;
   reducedMotion: boolean;
   textScale: 'small' | 'normal' | 'large';
   highContrast: boolean;
@@ -136,6 +137,7 @@ export interface WindowStore {
   removeWidget: (id: string) => void;
   reorderWidgets: (newWidgets: DesktopWidgetConfig[]) => void;
   resetWidgets: () => void;
+  setLanguage: (language: 'en' | 'id' | string) => void;
   toggleReducedMotion: (enabled?: boolean) => void;
   setTextScale: (scale: 'small' | 'normal' | 'large') => void;
   toggleHighContrast: (enabled?: boolean) => void;

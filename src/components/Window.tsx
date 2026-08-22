@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Minus, Square, Copy, X } from "lucide-react";
 import { WindowState, useWindowStore } from "@/store/windowStore";
 import { AppIcon } from "./AppIcon";
+import { useTranslation, getAppTranslation } from "@/i18n";
 
 interface WindowProps {
   window: WindowState;
@@ -30,6 +31,7 @@ const MIN_W = 320;
 const MIN_H = 200;
 
 const FULL_BLEED_APPS = [
+  "about",
   "camera",
   "photobooth",
   "app-store",
@@ -50,8 +52,12 @@ const FULL_BLEED_APPS = [
 ];
 
 export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, children }) => {
+  const { language } = useTranslation();
   const { id, title, icon, accentColor, position, size, isMinimized, isMaximized, zIndex } = windowState;
   const { closeWindow, minimizeWindow, focusWindow, moveWindow, resizeWindow, toggleMaximizeWindow, activeWindowId, theme } = useWindowStore();
+
+  const appMeta = getAppTranslation(id, language);
+  const displayTitle = appMeta?.title || title;
 
   const isLight = theme === 'light';
 
@@ -239,7 +245,7 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
             <div className={`p-1.5 rounded-lg text-white ${accentColor || "bg-blue-600"} shadow-sm`}>
               <AppIcon name={icon} size={15} />
             </div>
-            <span className={`text-sm font-medium truncate ${isLight ? "text-slate-900" : "text-zinc-200"}`}>{title}</span>
+            <span className={`text-sm font-medium truncate ${isLight ? "text-slate-900" : "text-zinc-200"}`}>{displayTitle}</span>
           </div>
 
           {/* Window control buttons */}

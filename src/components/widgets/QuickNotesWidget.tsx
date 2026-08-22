@@ -4,8 +4,10 @@ import React, { useState } from "react";
 import { StickyNote, Edit3 } from "lucide-react";
 import { useWindowStore } from "@/store/windowStore";
 import { APPS } from "@/config/appsConfig";
+import { useTranslation, getAppTranslation } from "@/i18n";
 
 export const QuickNotesWidget: React.FC = () => {
+  const { t, language } = useTranslation();
   const { openWindow, theme } = useWindowStore();
   const isLight = theme === "light";
   const [noteText, setNoteText] = useState<string>(() => {
@@ -13,7 +15,7 @@ export const QuickNotesWidget: React.FC = () => {
       const savedText = localStorage.getItem("sonos_quick_note_widget");
       if (savedText) return savedText;
     }
-    return "Tulis Catatan Cepat...";
+    return "";
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -32,7 +34,8 @@ export const QuickNotesWidget: React.FC = () => {
     e.stopPropagation();
     const notesApp = APPS.find((a) => a.id === "notes");
     if (notesApp) {
-      openWindow(notesApp);
+      const appMeta = getAppTranslation("notes", language);
+      openWindow({ ...notesApp, title: appMeta?.title || notesApp.title });
     }
   };
 
@@ -47,11 +50,12 @@ export const QuickNotesWidget: React.FC = () => {
     >
       <div className={`flex items-center justify-between pb-1 ${isLight ? "text-amber-700" : "text-amber-400"}`}>
         <span className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5">
-          <StickyNote size={14} /> Catatan Cepat
+          <StickyNote size={14} /> {t.widgetGallery.notesTitle}
         </span>
         <button
+          type="button"
           onClick={handleOpenApp}
-          title="Buka Aplikasi Notes"
+          title={t.widgets.notes.openTooltip}
           className={`p-1 rounded-lg transition-colors cursor-pointer ${
             isLight ? "hover:bg-amber-200 text-amber-800" : "hover:bg-amber-500/20 text-amber-400"
           }`}
@@ -64,7 +68,7 @@ export const QuickNotesWidget: React.FC = () => {
         value={noteText}
         onChange={handleChange}
         onPointerDown={(e) => e.stopPropagation()}
-        placeholder="Ketik catatan di sini..."
+        placeholder={t.widgets.notes.placeholder}
         className={`w-full flex-1 bg-transparent text-xs resize-none outline-hidden font-sans leading-relaxed pt-1 ${
           isLight ? "text-amber-950 placeholder-amber-700/50" : "text-amber-100 placeholder-amber-400/50"
         }`}

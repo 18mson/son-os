@@ -1,6 +1,8 @@
 import { playUiClickSound } from "@/utils/audio";
 import { DesktopWidgetConfig, DesktopShortcutItem, DesktopWidgetType, WindowStore } from "./windowStoreTypes";
 import { DEFAULT_DESKTOP_WIDGETS } from "./windowStoreHelpers";
+import { getTranslation } from "@/i18n";
+import { useSettingsStore } from "./settingsStore";
 
 export const createDesktopActions = (
   set: (fn: Partial<WindowStore> | ((state: WindowStore) => Partial<WindowStore>)) => void,
@@ -15,10 +17,13 @@ export const createDesktopActions = (
         localStorage.setItem("sonos_pinned_apps", JSON.stringify(updated));
       } catch {}
     }
+    const lang = useSettingsStore.getState().language;
+    const t = getTranslation(lang);
     get().showNotification(
-      isPinned ? "Sematkan Dibatalkan" : "Aplikasi Disematkan",
-      isPinned ? "Aplikasi telah dihapus dari Shelf" : "Aplikasi ditambahkan ke Shelf",
-      "Shelf System"
+      isPinned ? t.notifications.unpinnedTitle : t.notifications.pinnedTitle,
+      isPinned ? t.notifications.unpinnedDesc : t.notifications.pinnedDesc,
+      "Shelf",
+      isPinned ? "PinOff" : "Pin"
     );
     set({ pinnedApps: updated });
   },
@@ -35,9 +40,16 @@ export const createDesktopActions = (
   isPinnedApp: (appId: string) => get().pinnedApps.includes(appId),
 
   addDesktopShortcut: (appId: string) => {
+    const lang = useSettingsStore.getState().language;
+    const t = getTranslation(lang);
     const current = get().desktopShortcuts;
     if (current.some((s) => s.appId === appId)) {
-      get().showNotification("Pintasan Sudah Ada", "Pintasan aplikasi ini sudah ada di Desktop");
+      get().showNotification(
+        t.notifications.shortcutExistsTitle,
+        t.notifications.shortcutExistsDesc,
+        "Desktop",
+        "Monitor"
+      );
       return;
     }
 
@@ -76,18 +88,30 @@ export const createDesktopActions = (
         localStorage.setItem("sonos_desktop_shortcuts", JSON.stringify(updated));
       } catch {}
     }
-    get().showNotification("Pintasan Dibuat", "Pintasan aplikasi telah ditambahkan ke Desktop");
+    get().showNotification(
+      t.notifications.shortcutCreatedTitle,
+      t.notifications.shortcutCreatedDesc,
+      "Desktop",
+      "Monitor"
+    );
     set({ desktopShortcuts: updated });
   },
 
   removeDesktopShortcut: (id: string) => {
+    const lang = useSettingsStore.getState().language;
+    const t = getTranslation(lang);
     const updated = get().desktopShortcuts.filter((s) => s.id !== id);
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem("sonos_desktop_shortcuts", JSON.stringify(updated));
       } catch {}
     }
-    get().showNotification("Pintasan Dihapus", "Pintasan telah dihapus dari Desktop");
+    get().showNotification(
+      t.notifications.shortcutRemovedTitle,
+      t.notifications.shortcutRemovedDesc,
+      "Desktop",
+      "Trash"
+    );
     set({ desktopShortcuts: updated });
   },
 
@@ -107,6 +131,8 @@ export const createDesktopActions = (
   },
 
   addWidget: (type: DesktopWidgetType) => {
+    const lang = useSettingsStore.getState().language;
+    const t = getTranslation(lang);
     const newWidget: DesktopWidgetConfig = {
       id: `w-${type}-${Date.now()}`,
       type,
@@ -117,18 +143,31 @@ export const createDesktopActions = (
         localStorage.setItem("sonos_desktop_widgets", JSON.stringify(updated));
       } catch {}
     }
-    get().showNotification("Widget Ditambahkan", `Widget ${type} telah ditambahkan ke Desktop`, "Widget Gallery");
+    const widgetName = (t.widgetGallery as Record<string, string>)[`${type}Title`] || type;
+    get().showNotification(
+      t.notifications.widgetAddedTitle,
+      `${widgetName} ${t.notifications.widgetAddedDesc}`,
+      "Widget Gallery",
+      "Palette"
+    );
     set({ desktopWidgets: updated });
   },
 
   removeWidget: (id: string) => {
+    const lang = useSettingsStore.getState().language;
+    const t = getTranslation(lang);
     const updated = get().desktopWidgets.filter((w) => w.id !== id);
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem("sonos_desktop_widgets", JSON.stringify(updated));
       } catch {}
     }
-    get().showNotification("Widget Dihapus", "Widget telah dihapus dari Desktop", "Widget Gallery");
+    get().showNotification(
+      t.notifications.widgetRemovedTitle,
+      t.notifications.widgetRemovedDesc,
+      "Widget Gallery",
+      "Trash"
+    );
     set({ desktopWidgets: updated });
   },
 

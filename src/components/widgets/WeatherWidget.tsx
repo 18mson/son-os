@@ -4,23 +4,25 @@ import React, { useState, useEffect } from "react";
 import { Sun, CloudSun, MapPin } from "lucide-react";
 import { useWindowStore } from "@/store/windowStore";
 import { APPS } from "@/config/appsConfig";
+import { useTranslation, getAppTranslation } from "@/i18n";
 
-const getWeatherDesc = (code: number) => {
-  if (code === 0) return "Cerah";
-  if (code === 1 || code === 2) return "Cerah Berawan";
-  if (code === 3) return "Berawan";
-  if (code >= 51 && code <= 67) return "Hujan Ringan";
-  if (code >= 80 && code <= 82) return "Hujan Lebat";
-  if (code >= 95) return "Badai Petir";
-  if (code >= 71) return "Salju";
-  return "Cerah";
+const getWeatherDesc = (code: number, isEn: boolean) => {
+  if (code === 0) return isEn ? "Clear Sky" : "Cerah";
+  if (code === 1 || code === 2) return isEn ? "Partly Cloudy" : "Cerah Berawan";
+  if (code === 3) return isEn ? "Overcast" : "Berawan";
+  if (code >= 51 && code <= 67) return isEn ? "Light Rain" : "Hujan Ringan";
+  if (code >= 80 && code <= 82) return isEn ? "Heavy Rain" : "Hujan Lebat";
+  if (code >= 95) return isEn ? "Thunderstorm" : "Badai Petir";
+  if (code >= 71) return isEn ? "Snow" : "Salju";
+  return isEn ? "Clear" : "Cerah";
 };
 
 export const WeatherWidget: React.FC = () => {
+  const { t, language } = useTranslation();
   const { openWindow, theme } = useWindowStore();
   const isLight = theme === "light";
   const [temp, setTemp] = useState<number>(29);
-  const [condition, setCondition] = useState<string>("Cerah Berawan");
+  const [weatherCode, setWeatherCode] = useState<number>(1);
 
   useEffect(() => {
     // Fetch real weather from Open-Meteo or fallback
@@ -31,7 +33,7 @@ export const WeatherWidget: React.FC = () => {
           setTemp(Math.round(data.current_weather.temperature));
         }
         if (data.current_weather?.weathercode !== undefined) {
-          setCondition(getWeatherDesc(data.current_weather.weathercode));
+          setWeatherCode(data.current_weather.weathercode);
         }
       })
       .catch(() => {
@@ -39,10 +41,13 @@ export const WeatherWidget: React.FC = () => {
       });
   }, []);
 
+  const condition = getWeatherDesc(weatherCode, language === "en");
+
   const handleClick = () => {
     const weatherApp = APPS.find((a) => a.id === "weather");
     if (weatherApp) {
-      openWindow(weatherApp);
+      const appMeta = getAppTranslation("weather", language);
+      openWindow({ ...weatherApp, title: appMeta?.title || weatherApp.title });
     }
   };
 
@@ -50,7 +55,7 @@ export const WeatherWidget: React.FC = () => {
     <div
       data-widget
       onClick={handleClick}
-      title="Buka Aplikasi Cuaca"
+      title={t.widgets.weather.openTooltip}
       className={`group relative p-5 rounded-3xl overflow-hidden [clip-path:inset(0_round_1.5rem)] backdrop-blur-xl transition-colors duration-300 cursor-pointer select-none flex flex-col justify-between w-64 h-36 shadow-none ${
         isLight
           ? "bg-white/45 hover:bg-white/55 border border-white/70 text-slate-900"

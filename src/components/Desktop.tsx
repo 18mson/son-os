@@ -22,8 +22,10 @@ import { DesktopWidgetsLayer } from "./desktop/DesktopWidgetsLayer";
 import { useContextMenuClose, closeAllContextMenus } from "@/hooks/useContextMenuClose";
 import { useDesktopGlobalHandlers } from "@/hooks/useDesktopGlobalHandlers";
 import { WALLPAPER_CONFIGS, LIGHT_WALLPAPER_CONFIGS } from "@/config/wallpaperConfig";
+import { useTranslation } from "@/i18n";
 
 export const Desktop: React.FC = () => {
+  const { t } = useTranslation();
   const {
     windows,
     wallpaper,
@@ -245,7 +247,7 @@ export const Desktop: React.FC = () => {
               }}
               className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-blue-600 hover:text-white transition-colors cursor-pointer w-full text-left"
             >
-              <Plus size={14} /> Kelola Galeri Widget
+              <Plus size={14} /> {t.widgets.manageGallery}
             </button>
             <button
               onClick={() => {
@@ -254,7 +256,7 @@ export const Desktop: React.FC = () => {
               }}
               className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-colors cursor-pointer w-full text-left"
             >
-              <Trash2 size={14} /> Hapus Widget Ini
+              <Trash2 size={14} /> {t.widgets.removeThisWidget}
             </button>
           </div>
         </div>

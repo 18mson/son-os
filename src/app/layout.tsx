@@ -30,8 +30,8 @@ export const metadata: Metadata = {
     "Zustand",
     "Framer Motion",
   ],
-  authors: [{ name: "Sony", url: "https://github.com/18mson" }],
-  creator: "Sony",
+  authors: [{ name: "Muhamad Son'ani (Son)", url: "https://github.com/18mson" }],
+  creator: "Muhamad Son'ani",
   publisher: "Son-OS",
   robots: {
     index: true,

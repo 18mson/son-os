@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useWindowStore } from "@/store/windowStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { processTerminalCommand } from "./terminal/terminalCommands";
+import { useTranslation } from "@/i18n";
 
 interface CommandHistory {
   command: string;
@@ -11,14 +12,19 @@ interface CommandHistory {
 }
 
 export const TerminalApp: React.FC = () => {
+  const { language, setLanguage } = useTranslation();
   const [input, setInput] = useState<string>("");
   const [history, setHistory] = useState<CommandHistory[]>([
     {
       command: "",
       output: (
         <div className="space-y-1 text-zinc-300">
-          <p className="text-emerald-400 font-bold">Son-OS Terminal (x86_64-crosh-linux)</p>
-          <p>Ketik <span className="text-amber-300 font-semibold">&apos;help&apos;</span> untuk melihat daftar perintah yang tersedia.</p>
+          <p className="text-emerald-400 font-bold">Son-OS Terminal v2.8 (x86_64-apple-darwin)</p>
+          <p>
+            {language === "en" ? "Type " : "Ketik "}
+            <span className="text-amber-300 font-semibold">&apos;help&apos;</span>
+            {language === "en" ? " to see list of available commands." : " untuk melihat daftar perintah yang tersedia."}
+          </p>
         </div>
       ),
     },
@@ -61,6 +67,8 @@ export const TerminalApp: React.FC = () => {
       toggleTheme,
       setSettingsTheme,
       toggleSettingsTheme,
+      language,
+      setLanguage,
       brightness,
       setBrightness,
       volume,
@@ -100,9 +108,8 @@ export const TerminalApp: React.FC = () => {
 
   return (
     <div
-      className={`h-full w-full p-4 font-mono text-xs select-text overflow-y-auto ${
-        isLight ? "bg-slate-900 text-slate-100" : "bg-zinc-950 text-zinc-100"
-      }`}
+      className={`h-full w-full p-4 font-mono text-xs select-text overflow-y-auto ${isLight ? "bg-slate-900 text-slate-100" : "bg-zinc-950 text-zinc-100"
+        }`}
       onClick={() => inputRef.current?.focus()}
     >
       <div className="space-y-3">

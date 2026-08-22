@@ -1,5 +1,6 @@
 import React from "react";
 import { Volume2, VolumeX } from "lucide-react";
+import { useTranslation } from "@/i18n";
 
 interface SoundTabProps {
   isLight: boolean;
@@ -16,14 +17,16 @@ export const SoundTab: React.FC<SoundTabProps> = ({
   volume,
   setVolume,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className={`text-base font-bold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
-          Efek Suara & Audio
+          {t.settings.sound.title}
         </h2>
         <p className={`text-xs ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
-          Pengaturan efek suara klik dan volume sistem.
+          {t.settings.sound.subtitle}
         </p>
       </div>
 
@@ -38,9 +41,11 @@ export const SoundTab: React.FC<SoundTabProps> = ({
             {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
           </div>
           <div>
-            <h3 className={`text-sm font-bold ${isLight ? "text-slate-900" : "text-white"}`}>Efek Suara Klik OS</h3>
+            <h3 className={`text-sm font-bold ${isLight ? "text-slate-900" : "text-white"}`}>
+              {t.settings.sound.soundEffects}
+            </h3>
             <p className={`text-xs mt-0.5 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
-              {soundEnabled ? "Efek Suara Aktif" : "Mute Efek Suara"}
+              {t.settings.sound.soundEffectsDesc}
             </p>
           </div>
         </div>
@@ -68,7 +73,7 @@ export const SoundTab: React.FC<SoundTabProps> = ({
       >
         <div className="flex items-center justify-between">
           <h3 className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-700" : "text-zinc-300"}`}>
-            Volume Output Sistem
+            {t.settings.sound.masterVolume}
           </h3>
           <span className="font-mono text-xs font-semibold">{Math.round(volume)}%</span>
         </div>

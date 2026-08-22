@@ -36,6 +36,7 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
   desktopWidgets: getInitialDesktopWidgets(),
 
   // Accessibility & System Preferences
+  language: "en",
   reducedMotion: false,
   textScale: "normal",
   highContrast: false,
@@ -158,6 +159,19 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
 
   clearNotification: () => set({ notification: null }),
 
+  setLanguage: (language: string) => {
+    if (get().soundEnabled) playUiClickSound();
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("sonos_language", language);
+      } catch {}
+    }
+    set({ language });
+    import('./settingsStore').then(({ useSettingsStore }) => {
+      useSettingsStore.getState().setLanguage(language);
+    });
+  },
+
   toggleReducedMotion: (enabled?: boolean) => {
     const next = enabled !== undefined ? enabled : !get().reducedMotion;
     if (typeof window !== "undefined") {
@@ -249,6 +263,7 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
     if (typeof window === "undefined") return;
     try {
       const savedTheme = localStorage.getItem("sonos_theme") as "dark" | "light" | null;
+      const savedLanguage = localStorage.getItem("sonos_language");
       const savedWallpaper = localStorage.getItem("sonos_wallpaper");
       const savedWidgets = localStorage.getItem("sonos_desktop_widgets");
       const savedPinned = localStorage.getItem("sonos_pinned_apps");
@@ -266,6 +281,7 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
       const updates: Partial<WindowStore> = {};
 
       if (savedTheme === "dark" || savedTheme === "light") updates.theme = savedTheme;
+      if (savedLanguage) updates.language = savedLanguage;
       if (savedWallpaper) updates.wallpaper = savedWallpaper;
       if (savedWidgets) {
         try { updates.desktopWidgets = JSON.parse(savedWidgets); } catch {}

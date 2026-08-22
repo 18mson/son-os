@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useWindowStore } from "@/store/windowStore";
 import { PLAYLIST, Track, extractYouTubeId } from "@/config/musicConfig";
+import { useTranslation } from "@/i18n";
 
 const YoutubeIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = "" }) => (
   <svg
@@ -36,6 +37,7 @@ const YoutubeIcon: React.FC<{ size?: number; className?: string }> = ({ size = 1
 );
 
 export const MusicPlayerApp: React.FC = () => {
+  const { t } = useTranslation();
   const {
     mediaTrackIndex,
     mediaIsPlaying,
@@ -98,7 +100,11 @@ export const MusicPlayerApp: React.FC = () => {
     e.preventDefault();
     const ytId = extractYouTubeId(youtubeInput);
     if (!ytId) {
-      showNotification("URL Tidak Valid", "Masukkan URL atau ID YouTube yang valid (contoh: https://youtu.be/...)", "Music Player");
+      showNotification(
+        t.notifications.invalidUrlTitle,
+        t.notifications.invalidUrlDesc,
+        t.apps["music-player"]?.title || "Music Player"
+      );
       return;
     }
 
@@ -120,7 +126,11 @@ export const MusicPlayerApp: React.FC = () => {
     setYoutubeInput("");
     setYoutubeTitleInput("");
     setShowYouTubeModal(false);
-    showNotification("Lagu YouTube Ditambahkan", `Menambahkan "${title}" ke playlist`, "Music Player");
+    showNotification(
+      t.notifications.musicAddedTitle,
+      `${t.notifications.musicAddedDesc} "${title}"`,
+      t.apps["music-player"]?.title || "Music Player"
+    );
   };
 
   const formatTime = (secs: number) => {

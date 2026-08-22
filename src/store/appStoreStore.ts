@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { APPS } from "@/data/apps";
 import { useWindowStore } from "./windowStore";
+import { useSettingsStore } from "./settingsStore";
+import { getTranslation, getAppTranslation } from "@/i18n";
 
 const STORAGE_KEY = "sonos_installed_apps";
 
@@ -47,11 +49,15 @@ export const useAppStoreStore = create<AppStoreState>((set, get) => ({
 
       const app = APPS.find((a) => a.id === id);
       if (app) {
+        const lang = useSettingsStore.getState().language;
+        const t = getTranslation(lang);
+        const appMeta = getAppTranslation(app.id, lang);
+        const title = appMeta?.title || app.title;
         useWindowStore.getState().showNotification(
-          "App Terinstall",
-          `${app.title} berhasil dipasang ke Son-OS.`,
+          t.notifications.appInstalledTitle,
+          `${title} ${t.notifications.appInstalledDesc}`,
           "App Store",
-          "ShoppingBag"
+          "CheckCircle2"
         );
       }
     }
@@ -90,11 +96,15 @@ export const useAppStoreStore = create<AppStoreState>((set, get) => ({
       });
 
       if (app) {
+        const lang = useSettingsStore.getState().language;
+        const t = getTranslation(lang);
+        const appMeta = getAppTranslation(app.id, lang);
+        const title = appMeta?.title || app.title;
         windowStore.showNotification(
-          "App Di-uninstall",
-          `${app.title} telah dihapus dari sistem.`,
+          t.notifications.appUninstalledTitle,
+          `${title} ${t.notifications.appUninstalledDesc}`,
           "App Store",
-          "Trash2"
+          "Trash"
         );
       }
     }

@@ -1,5 +1,6 @@
 import React from "react";
 import { Sun, Moon, Palette, Check, Type, Eye } from "lucide-react";
+import { useTranslation } from "@/i18n";
 
 interface AppearanceTabProps {
   isLight: boolean;
@@ -26,14 +27,16 @@ export const AppearanceTab: React.FC<AppearanceTabProps> = ({
   textScale,
   setTextScale,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className={`text-base font-bold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
-          Tampilan & Tema
+          {t.settings.appearance.title}
         </h2>
         <p className={`text-xs ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
-          Kustomisasi mode warna, kontras, ukuran teks, dan wallpaper desktop.
+          {t.settings.appearance.subtitle}
         </p>
       </div>
 
@@ -48,9 +51,11 @@ export const AppearanceTab: React.FC<AppearanceTabProps> = ({
             {isLight ? <Sun size={20} /> : <Moon size={20} />}
           </div>
           <div>
-            <h3 className={`text-sm font-bold ${isLight ? "text-slate-900" : "text-white"}`}>Mode Tampilan OS</h3>
+            <h3 className={`text-sm font-bold ${isLight ? "text-slate-900" : "text-white"}`}>
+              {t.settings.appearance.themeMode}
+            </h3>
             <p className={`text-xs mt-0.5 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
-              {theme === "light" ? "Mode Terang (Light Mode)" : "Mode Gelap (Dark Mode)"}
+              {theme === "light" ? t.settings.appearance.themeLight : t.settings.appearance.themeDark}
             </p>
           </div>
         </div>
@@ -82,10 +87,10 @@ export const AppearanceTab: React.FC<AppearanceTabProps> = ({
           </div>
           <div>
             <h3 className={`text-sm font-bold ${isLight ? "text-slate-900" : "text-white"}`}>
-              Kontras Tinggi (High Contrast)
+              {t.settings.appearance.highContrast}
             </h3>
             <p className={`text-xs mt-0.5 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
-              Tingkatkan keterbacaan teks dan ketajaman elemen UI.
+              {t.settings.appearance.highContrastDesc}
             </p>
           </div>
         </div>
@@ -114,38 +119,49 @@ export const AppearanceTab: React.FC<AppearanceTabProps> = ({
         <div className="flex items-center gap-2">
           <Type size={16} className="text-purple-500" />
           <h3 className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-700" : "text-zinc-300"}`}>
-            Ukuran Teks Sistem
+            {t.settings.appearance.textScale}
           </h3>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          {(["small", "normal", "large"] as const).map((scale) => (
-            <button
-              key={scale}
-              onClick={() => setTextScale(scale)}
-              className={`py-2 px-3 rounded-xl text-xs font-semibold capitalize transition-all cursor-pointer border ${
-                textScale === scale
-                  ? "bg-purple-600 text-white border-purple-500 shadow-md"
-                  : isLight
-                  ? "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200"
-                  : "bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10"
-              }`}
-            >
-              {scale}
-            </button>
-          ))}
+          {(["small", "normal", "large"] as const).map((scale) => {
+            const label =
+              scale === "small"
+                ? t.settings.appearance.textSmall
+                : scale === "large"
+                ? t.settings.appearance.textLarge
+                : t.settings.appearance.textNormal;
+
+            return (
+              <button
+                key={scale}
+                type="button"
+                onClick={() => setTextScale(scale)}
+                className={`py-2 px-3 rounded-xl text-xs font-semibold capitalize transition-all cursor-pointer border ${
+                  textScale === scale
+                    ? "bg-purple-600 text-white border-purple-500 shadow-md"
+                    : isLight
+                    ? "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200"
+                    : "bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Wallpaper Picker */}
       <div className="space-y-3">
         <h3 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${isLight ? "text-slate-700" : "text-zinc-300"}`}>
-          <Palette size={14} className="text-blue-500" /> Wallpaper Desktop
+          <Palette size={14} className="text-blue-500" /> {t.settings.appearance.wallpaper}
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {WALLPAPERS.map((wp) => (
             <button
               key={wp.id}
+              type="button"
               onClick={() => setWallpaper(wp.id)}
               className={`group relative rounded-xl overflow-hidden border-2 transition-all cursor-pointer aspect-video flex items-center justify-center ${
                 wallpaper === wp.id

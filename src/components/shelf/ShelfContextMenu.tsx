@@ -1,6 +1,7 @@
 import React from "react";
 import { ExternalLink, Pin, PinOff, X } from "lucide-react";
 import { AppDefinition } from "@/store/windowStore";
+import { useTranslation, getAppTranslation } from "@/i18n";
 
 interface ShelfContextMenuProps {
   menuRef: React.RefObject<HTMLDivElement | null>;
@@ -23,10 +24,13 @@ export const ShelfContextMenu: React.FC<ShelfContextMenuProps> = ({
   onCloseWindow,
   onCloseMenu,
 }) => {
+  const { t, language } = useTranslation();
   if (!contextMenu) return null;
 
   const { app, x } = contextMenu;
   const isPinned = pinnedApps.includes(app.id);
+  const appMeta = getAppTranslation(app.id, language);
+  const translatedTitle = appMeta?.title || app.title;
 
   return (
     <div
@@ -42,17 +46,19 @@ export const ShelfContextMenu: React.FC<ShelfContextMenuProps> = ({
     >
       <div className="flex flex-col gap-0.5 text-xs text-zinc-200">
         <button
+          type="button"
           onClick={() => {
-            onOpenWindow(app);
+            onOpenWindow({ ...app, title: translatedTitle });
             onCloseMenu();
           }}
           className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-blue-600 hover:text-white transition-colors cursor-pointer w-full text-left font-medium"
         >
-          <ExternalLink size={14} /> {isOpen ? "Bawa ke Depan" : "Buka App"}
+          <ExternalLink size={14} /> {isOpen ? (language === "en" ? "Bring to Front" : "Bawa ke Depan") : (language === "en" ? "Open App" : "Buka App")}
         </button>
 
         {app.id !== "app-store" && (
           <button
+            type="button"
             onClick={() => {
               onTogglePin(app.id);
               onCloseMenu();
@@ -61,11 +67,11 @@ export const ShelfContextMenu: React.FC<ShelfContextMenuProps> = ({
           >
             {isPinned ? (
               <>
-                <PinOff size={14} className="text-rose-400" /> Unpin dari Shelf
+                <PinOff size={14} className="text-rose-400" /> {t.launcher.unpinFromShelf}
               </>
             ) : (
               <>
-                <Pin size={14} className="text-blue-400" /> Pin ke Shelf
+                <Pin size={14} className="text-blue-400" /> {t.launcher.pinToShelf}
               </>
             )}
           </button>
@@ -73,13 +79,14 @@ export const ShelfContextMenu: React.FC<ShelfContextMenuProps> = ({
 
         {isOpen && (
           <button
+            type="button"
             onClick={() => {
               onCloseWindow(app.id);
               onCloseMenu();
             }}
             className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-colors cursor-pointer w-full text-left font-medium"
           >
-            <X size={14} /> Tutup Window
+            <X size={14} /> {t.shelf.closeApp}
           </button>
         )}
       </div>

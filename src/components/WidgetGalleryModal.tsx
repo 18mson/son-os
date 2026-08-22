@@ -13,6 +13,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useWindowStore, DesktopWidgetType } from "@/store/windowStore";
+import { useTranslation } from "@/i18n";
 
 interface WidgetCatalogItem {
   type: DesktopWidgetType;
@@ -23,50 +24,8 @@ interface WidgetCatalogItem {
   accentColor: string;
 }
 
-const WIDGET_CATALOG: WidgetCatalogItem[] = [
-  {
-    type: "clock",
-    title: "Jam Sistem",
-    category: "Waktu & Tanggal",
-    description: "Tampilan jam digital real-time beserta hari dan tanggal.",
-    icon: <ClockIcon size={20} className="text-blue-400" />,
-    accentColor: "bg-blue-600/20 border-blue-500/30",
-  },
-  {
-    type: "weather",
-    title: "Perkiraan Cuaca",
-    category: "Informasi",
-    description: "Informasi cuaca dan suhu real-time berdasarkan lokasi Anda.",
-    icon: <Sun size={20} className="text-amber-400" />,
-    accentColor: "bg-amber-500/20 border-amber-500/30",
-  },
-  {
-    type: "calendar",
-    title: "Kalender Bulanan",
-    category: "Waktu & Tanggal",
-    description: "Widget kalender bulanan mini untuk memantau tanggal aktif.",
-    icon: <CalendarIcon size={20} className="text-rose-400" />,
-    accentColor: "bg-rose-500/20 border-rose-500/30",
-  },
-  {
-    type: "notes",
-    title: "Catatan Cepat",
-    category: "Produktivitas",
-    description: "Sticky note untuk menulis pesan singkat langsung di desktop.",
-    icon: <StickyNote size={20} className="text-amber-300" />,
-    accentColor: "bg-amber-400/20 border-amber-400/30",
-  },
-  {
-    type: "calculator",
-    title: "Kalkulator Cepat",
-    category: "Utilitas",
-    description: "Kalkulator mini untuk perhitungan matematika instan di desktop.",
-    icon: <Calculator size={20} className="text-purple-400" />,
-    accentColor: "bg-purple-500/20 border-purple-500/30",
-  },
-];
-
 export const WidgetGalleryModal: React.FC = () => {
+  const { t, language } = useTranslation();
   const {
     widgetGalleryOpen,
     toggleWidgetGallery,
@@ -90,7 +49,50 @@ export const WidgetGalleryModal: React.FC = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [widgetGalleryOpen, toggleWidgetGallery]);
 
-  const filteredCatalog = WIDGET_CATALOG.filter(
+  const widgetCatalog: WidgetCatalogItem[] = [
+    {
+      type: "clock",
+      title: t.widgetGallery.clockTitle,
+      category: language === "en" ? "Time & Date" : "Waktu & Tanggal",
+      description: t.widgetGallery.clockDesc,
+      icon: <ClockIcon size={20} className="text-blue-400" />,
+      accentColor: "bg-blue-600/20 border-blue-500/30",
+    },
+    {
+      type: "weather",
+      title: t.widgetGallery.weatherTitle,
+      category: language === "en" ? "Information" : "Informasi",
+      description: t.widgetGallery.weatherDesc,
+      icon: <Sun size={20} className="text-amber-400" />,
+      accentColor: "bg-amber-500/20 border-amber-500/30",
+    },
+    {
+      type: "calendar",
+      title: t.widgetGallery.calendarTitle,
+      category: language === "en" ? "Time & Date" : "Waktu & Tanggal",
+      description: t.widgetGallery.calendarDesc,
+      icon: <CalendarIcon size={20} className="text-rose-400" />,
+      accentColor: "bg-rose-500/20 border-rose-500/30",
+    },
+    {
+      type: "notes",
+      title: t.widgetGallery.notesTitle,
+      category: language === "en" ? "Productivity" : "Produktivitas",
+      description: t.widgetGallery.notesDesc,
+      icon: <StickyNote size={20} className="text-amber-300" />,
+      accentColor: "bg-amber-400/20 border-amber-400/30",
+    },
+    {
+      type: "calculator",
+      title: t.widgetGallery.calcTitle,
+      category: language === "en" ? "Utilities" : "Utilitas",
+      description: t.widgetGallery.calcDesc,
+      icon: <Calculator size={20} className="text-purple-400" />,
+      accentColor: "bg-purple-500/20 border-purple-500/30",
+    },
+  ];
+
+  const filteredCatalog = widgetCatalog.filter(
     (w) =>
       w.title.toLowerCase().includes(search.toLowerCase()) ||
       w.category.toLowerCase().includes(search.toLowerCase()) ||
@@ -124,27 +126,29 @@ export const WidgetGalleryModal: React.FC = () => {
             <div className="flex items-center justify-between pb-3 border-b border-white/10 shrink-0">
               <div>
                 <h2 className="text-xl font-extrabold text-white tracking-tight flex items-center gap-2">
-                  Galeri Widget Desktop
+                  {t.widgetGallery.title}
                 </h2>
                 <p className="text-xs text-zinc-400 mt-0.5">
-                  Tambahkan widget ke desktop Anda ala macOS Sonoma &amp; ChromeOS.
+                  {t.widgetGallery.subtitle}
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={resetWidgets}
-                  title="Reset ke widget default"
+                  title="Reset widgets"
                   className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-zinc-300 hover:text-white transition-colors cursor-pointer flex items-center gap-1.5"
                 >
-                  <RotateCcw size={13} /> Reset
+                  <RotateCcw size={13} /> {t.common.reset}
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => toggleWidgetGallery(false)}
                   className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/30 cursor-pointer"
                 >
-                  Selesai
+                  {t.common.ok}
                 </button>
               </div>
             </div>
@@ -155,7 +159,7 @@ export const WidgetGalleryModal: React.FC = () => {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Cari widget (misal: Jam, Cuaca, Notes)..."
+                placeholder={language === "en" ? "Search widgets (e.g. Clock, Weather, Notes)..." : "Cari widget (misal: Jam, Cuaca, Notes)..."}
                 className="w-full px-4 py-2.5 rounded-2xl bg-white/5 border border-white/10 text-xs text-white placeholder-zinc-500 outline-hidden focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
               />
             </div>
@@ -194,27 +198,31 @@ export const WidgetGalleryModal: React.FC = () => {
                     {/* Action Bar */}
                     <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs">
                       <span className="text-[11px] text-zinc-400 font-medium">
-                        {isAdded ? `${activeCount} aktif di Desktop` : "Belum ditambahkan"}
+                        {isAdded
+                          ? `${activeCount} ${t.widgetGallery.activeWidgets}`
+                          : t.widgets.notAddedYet}
                       </span>
 
                       <div className="flex items-center gap-2">
                         {isAdded && (
                           <button
+                            type="button"
                             onClick={() => {
                               const found = desktopWidgets.find((w) => w.type === catalogItem.type);
                               if (found) removeWidget(found.id);
                             }}
                             className="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 font-semibold transition-colors cursor-pointer flex items-center gap-1"
                           >
-                            <Trash2 size={13} /> Hapus
+                            <Trash2 size={13} /> {t.widgetGallery.removeWidget}
                           </button>
                         )}
 
                         <button
+                          type="button"
                           onClick={() => addWidget(catalogItem.type)}
                           className="px-3 py-1.5 rounded-xl bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 border border-blue-500/40 font-semibold transition-colors cursor-pointer flex items-center gap-1"
                         >
-                          <Plus size={14} /> Tambah
+                          <Plus size={14} /> {t.widgetGallery.addWidget}
                         </button>
                       </div>
                     </div>

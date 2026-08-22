@@ -4,8 +4,10 @@ import React, { useState, useEffect } from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { useWindowStore } from "@/store/windowStore";
 import { APPS } from "@/config/appsConfig";
+import { useTranslation, getAppTranslation } from "@/i18n";
 
 export const CalendarWidget: React.FC = () => {
+  const { t, language } = useTranslation();
   const { openWindow, theme } = useWindowStore();
   const isLight = theme === "light";
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
@@ -20,7 +22,8 @@ export const CalendarWidget: React.FC = () => {
   const handleClick = () => {
     const calendarApp = APPS.find((a) => a.id === "calendar");
     if (calendarApp) {
-      openWindow(calendarApp);
+      const appMeta = getAppTranslation("calendar", language);
+      openWindow({ ...calendarApp, title: appMeta?.title || calendarApp.title });
     }
   };
 
@@ -28,10 +31,19 @@ export const CalendarWidget: React.FC = () => {
   const month = currentDate.getMonth();
   const today = new Date().getDate();
 
-  const monthNames = [
+  const monthNamesId = [
     "Januari", "Februari", "Maret", "April", "Mei", "Juni",
     "Juli", "Agustus", "September", "Oktober", "November", "Desember"
   ];
+  const monthNamesEn = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  const monthNames = language === "en" ? monthNamesEn : monthNamesId;
+
+  const daysHeader = language === "en"
+    ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    : ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
   // Days in month
   const firstDay = new Date(year, month, 1).getDay();
@@ -49,7 +61,7 @@ export const CalendarWidget: React.FC = () => {
     <div
       data-widget
       onClick={handleClick}
-      title="Buka Aplikasi Kalender"
+      title={t.widgets.calendar.openTooltip}
       className={`group relative p-4 rounded-3xl overflow-hidden [clip-path:inset(0_round_1.5rem)] backdrop-blur-xl transition-colors duration-300 cursor-pointer select-none flex flex-col justify-between w-64 h-52 shadow-none ${
         isLight
           ? "bg-white/45 hover:bg-white/55 border border-white/70 text-slate-900"
@@ -63,7 +75,7 @@ export const CalendarWidget: React.FC = () => {
         <span className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${
           isLight ? "text-rose-600" : "text-rose-400"
         }`}>
-          <CalendarIcon size={14} /> Kalender
+          <CalendarIcon size={14} /> {t.widgetGallery.calendarTitle}
         </span>
         <span className={`text-xs font-bold ${isLight ? "text-slate-900" : "text-white"}`}>
           {monthNames[month]} {year}
@@ -74,13 +86,9 @@ export const CalendarWidget: React.FC = () => {
       <div className={`grid grid-cols-7 gap-1 text-center text-[10px] font-bold border-b pb-1 ${
         isLight ? "text-slate-500 border-slate-300/60" : "text-zinc-400 border-white/10"
       }`}>
-        <span>Min</span>
-        <span>Sen</span>
-        <span>Sel</span>
-        <span>Rab</span>
-        <span>Kam</span>
-        <span>Jum</span>
-        <span>Sab</span>
+        {daysHeader.map((d, i) => (
+          <span key={i}>{d}</span>
+        ))}
       </div>
 
       {/* Grid of days */}

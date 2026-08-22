@@ -60,7 +60,10 @@ const GALLERY_ITEMS: GalleryItem[] = [
 
 const CATEGORIES = ["Semua", "UI/UX", "Web Dev", "Wallpapers", "Photography"];
 
+import { useTranslation } from "@/i18n";
+
 export const GalleryApp: React.FC = () => {
+  const { t } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState<string>("Semua");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
@@ -86,9 +89,9 @@ export const GalleryApp: React.FC = () => {
     if (e) e.stopPropagation();
     setWallpaper(imageUrl);
     showNotification(
-      "Wallpaper Desktop Diperbarui",
-      `Gambar "${title || "Portofolio"}" telah dijadikan latar belakang desktop.`,
-      "Galeri",
+      t.notifications.wallpaperUpdatedTitle,
+      `"${title || "Portofolio"}" ${t.notifications.wallpaperUpdatedDesc}`,
+      t.apps["gallery"]?.title || "Gallery",
       "Monitor"
     );
   };

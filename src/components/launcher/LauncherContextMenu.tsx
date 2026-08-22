@@ -3,6 +3,7 @@ import { ExternalLink, Pin, PinOff, Monitor, Trash2 } from "lucide-react";
 import { APPS } from "@/config/appsConfig";
 import { AppDefinition, DesktopShortcutItem } from "@/store/windowStore";
 import { useAppStoreStore } from "@/store/appStoreStore";
+import { useTranslation, getAppTranslation } from "@/i18n";
 
 interface LauncherContextMenuProps {
   menuRef: React.RefObject<HTMLDivElement | null>;
@@ -29,11 +30,14 @@ export const LauncherContextMenu: React.FC<LauncherContextMenuProps> = ({
   showNotification,
   onCloseMenu,
 }) => {
+  const { t, language } = useTranslation();
   if (!appContextMenu) return null;
 
   const targetApp = APPS.find((a) => a.id === appContextMenu.appId);
   if (!targetApp) return null;
 
+  const appMeta = getAppTranslation(targetApp.id, language);
+  const translatedTitle = appMeta?.title || targetApp.title;
   const isPinned = pinnedApps.includes(appContextMenu.appId);
   const existingShortcut = desktopShortcuts.find((s) => s.appId === targetApp.id);
 
@@ -56,16 +60,18 @@ export const LauncherContextMenu: React.FC<LauncherContextMenuProps> = ({
     >
       <div className="flex flex-col gap-0.5 text-xs text-zinc-200">
         <button
+          type="button"
           onClick={() => {
-            onOpenApp(targetApp);
+            onOpenApp({ ...targetApp, title: translatedTitle });
             onCloseMenu();
           }}
           className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-blue-600 hover:text-white transition-colors cursor-pointer w-full text-left font-medium"
         >
-          <ExternalLink size={13} /> Buka {targetApp.title}
+          <ExternalLink size={13} /> {language === "en" ? `Open ${translatedTitle}` : `Buka ${translatedTitle}`}
         </button>
 
         <button
+          type="button"
           onClick={() => {
             onTogglePinApp(targetApp.id);
             onCloseMenu();
@@ -74,38 +80,52 @@ export const LauncherContextMenu: React.FC<LauncherContextMenuProps> = ({
         >
           {isPinned ? (
             <>
-              <PinOff size={13} className="text-rose-400" /> Unpin dari Shelf
+              <PinOff size={13} className="text-rose-400" /> {t.launcher.unpinFromShelf}
             </>
           ) : (
             <>
-              <Pin size={13} className="text-blue-400" /> Pin ke Shelf
+              <Pin size={13} className="text-blue-400" /> {t.launcher.pinToShelf}
             </>
           )}
         </button>
 
         <button
+          type="button"
           onClick={() => {
             if (existingShortcut) {
               onRemoveDesktopShortcut(existingShortcut.id);
-              showNotification("Desktop Shortcut", `Shortcut ${targetApp.title} dihapus.`, "Desktop", "Monitor");
+              showNotification(
+                "Desktop Shortcut",
+                language === "en" ? `Shortcut for ${translatedTitle} removed.` : `Shortcut ${translatedTitle} dihapus.`,
+                "Desktop",
+                "Monitor"
+              );
             } else {
               onAddDesktopShortcut(targetApp.id);
-              showNotification("Desktop Shortcut", `Shortcut ${targetApp.title} ditambahkan ke desktop.`, "Desktop", "Monitor");
+              showNotification(
+                "Desktop Shortcut",
+                language === "en" ? `Shortcut for ${translatedTitle} added to desktop.` : `Shortcut ${translatedTitle} ditambahkan ke desktop.`,
+                "Desktop",
+                "Monitor"
+              );
             }
             onCloseMenu();
           }}
           className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/10 hover:text-white transition-colors cursor-pointer w-full text-left font-medium"
         >
           <Monitor size={13} className="text-emerald-400" />
-          {existingShortcut ? "Hapus dari Desktop" : "Tambah ke Desktop"}
+          {existingShortcut
+            ? (language === "en" ? "Remove from Desktop" : "Hapus dari Desktop")
+            : t.launcher.addDesktopShortcut}
         </button>
 
         {!targetApp.isSystemApp && (
           <button
+            type="button"
             onClick={handleUninstall}
             className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-rose-600/20 hover:text-rose-300 text-rose-400 transition-colors cursor-pointer w-full text-left font-medium border-t border-white/5 mt-0.5 pt-2"
           >
-            <Trash2 size={13} /> Uninstall Aplikasi
+            <Trash2 size={13} /> {t.launcher.uninstallApp}
           </button>
         )}
       </div>

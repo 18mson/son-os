@@ -4,8 +4,10 @@ import React, { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Monitor, CheckCircle2, Bell, Pin, Volume2, VolumeX, Palette, Trash } from "lucide-react";
 import { useWindowStore } from "@/store/windowStore";
+import { useTranslation } from "@/i18n";
 
 export const SystemNotificationToast: React.FC = () => {
+  const { t } = useTranslation();
   const { notification, clearNotification } = useWindowStore();
 
   useEffect(() => {
@@ -63,7 +65,9 @@ export const SystemNotificationToast: React.FC = () => {
               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
                 {notification.appName || "Son-OS System"}
               </span>
-              <span className="text-[9px] text-zinc-500 font-mono shrink-0">Sekarang</span>
+              <span className="text-[9px] text-zinc-500 font-mono shrink-0">
+                {t.notifications.now}
+              </span>
             </div>
             <h4 className="text-xs font-bold text-white mt-0.5 truncate leading-snug">
               {notification.title}
@@ -75,9 +79,10 @@ export const SystemNotificationToast: React.FC = () => {
 
           {/* Close Button */}
           <button
+            type="button"
             onClick={clearNotification}
-            className="p-1 rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 transition-colors shrink-0"
-            title="Tutup Notifikasi"
+            className="p-1 rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 transition-colors shrink-0 cursor-pointer"
+            title={t.notifications.dismiss}
           >
             <X size={14} />
           </button>

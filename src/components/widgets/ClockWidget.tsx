@@ -4,8 +4,10 @@ import React, { useState, useEffect } from "react";
 import { Clock } from "lucide-react";
 import { useWindowStore } from "@/store/windowStore";
 import { APPS } from "@/config/appsConfig";
+import { useTranslation, getAppTranslation } from "@/i18n";
 
 export const ClockWidget: React.FC = () => {
+  const { t, language } = useTranslation();
   const { openWindow, theme, clockFormat } = useWindowStore();
   const isLight = theme === "light";
   const [timeStr, setTimeStr] = useState<string>("");
@@ -15,15 +17,17 @@ export const ClockWidget: React.FC = () => {
     const updateTime = () => {
       const now = new Date();
       const is12h = clockFormat === "12h";
+      const localeCode = language === "en" ? "en-US" : "id-ID";
+
       setTimeStr(
-        now.toLocaleTimeString([], {
+        now.toLocaleTimeString(localeCode, {
           hour: "2-digit",
           minute: "2-digit",
           hour12: is12h,
         })
       );
       setDateStr(
-        now.toLocaleDateString([], {
+        now.toLocaleDateString(localeCode, {
           weekday: "long",
           month: "short",
           day: "numeric",
@@ -34,12 +38,13 @@ export const ClockWidget: React.FC = () => {
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
-  }, [clockFormat]);
+  }, [clockFormat, language]);
 
   const handleClick = () => {
     const clockApp = APPS.find((a) => a.id === "clock");
     if (clockApp) {
-      openWindow(clockApp);
+      const appMeta = getAppTranslation("clock", language);
+      openWindow({ ...clockApp, title: appMeta?.title || clockApp.title });
     }
   };
 
@@ -47,7 +52,7 @@ export const ClockWidget: React.FC = () => {
     <div
       data-widget
       onClick={handleClick}
-      title="Buka Aplikasi Jam"
+      title={t.widgets.clock.openTooltip}
       className={`group relative p-5 rounded-3xl overflow-hidden [clip-path:inset(0_round_1.5rem)] backdrop-blur-xl transition-colors duration-300 cursor-pointer select-none flex flex-col justify-between w-64 h-36 shadow-none ${
         isLight
           ? "bg-white/45 hover:bg-white/55 border border-white/70 text-slate-900"
@@ -60,7 +65,7 @@ export const ClockWidget: React.FC = () => {
         <span className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${
           isLight ? "text-blue-600" : "text-blue-400"
         }`}>
-          <Clock size={14} /> Jam Sistem
+          <Clock size={14} /> {t.widgetGallery.clockTitle}
         </span>
         <span className={`text-[10px] transition-colors ${
           isLight ? "text-slate-400 group-hover:text-slate-600" : "text-zinc-500 group-hover:text-zinc-300"

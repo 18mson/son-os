@@ -12,8 +12,10 @@ import { ShelfContextMenu } from "./shelf/ShelfContextMenu";
 import { ShelfMobileDeck } from "./shelf/ShelfMobileDeck";
 import { ShelfDesktopStatusTray } from "./shelf/ShelfDesktopStatusTray";
 import { ShelfDesktopLauncherButton } from "./shelf/ShelfDesktopLauncherButton";
+import { useTranslation, getAppTranslation } from "@/i18n";
 
 export const Shelf: React.FC = () => {
+  const { language } = useTranslation();
   const {
     windows,
     launcherOpen,
@@ -35,7 +37,7 @@ export const Shelf: React.FC = () => {
   const { isInstalled } = useAppStoreStore();
   const { volume, soundEnabled } = useSettingsStore();
 
-  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
+  const mounted = useSyncExternalStore(() => () => { }, () => true, () => false);
   const effectiveWindows = mounted ? windows : [];
   const effectivePinnedApps = mounted ? pinnedApps : DEFAULT_PINNED_APPS;
   const [time, setTime] = useState<string>("");
@@ -121,6 +123,8 @@ export const Shelf: React.FC = () => {
         const win = effectiveWindows.find((w) => w.id === app.id);
         const isOpen = Boolean(win);
         const isActive = activeWindowId === app.id && win && !win.isMinimized;
+        const appMeta = getAppTranslation(app.id, language);
+        const translatedTitle = appMeta?.title || app.title;
 
         return (
           <div
@@ -133,7 +137,7 @@ export const Shelf: React.FC = () => {
               e.preventDefault();
               e.stopPropagation();
               closeAllContextMenus();
-              setShelfContextMenu({ app, x: e.clientX, y: e.clientY });
+              setShelfContextMenu({ app: { ...app, title: translatedTitle }, x: e.clientX, y: e.clientY });
             }}
             className="relative flex flex-col items-center justify-center shrink-0 cursor-grab active:cursor-grabbing px-1 h-11"
           >
@@ -142,10 +146,10 @@ export const Shelf: React.FC = () => {
                 if (isOpen) {
                   toggleMinimizeWindow(app.id);
                 } else {
-                  openWindow(app);
+                  openWindow({ ...app, title: translatedTitle });
                 }
               }}
-              title={app.title}
+              title={translatedTitle}
               className={`p-2 rounded-2xl transition-all duration-200 cursor-pointer flex items-center justify-center ${app.accentColor} text-white shadow-md hover:scale-110 active:scale-95 ${isActive ? "ring-2 ring-blue-400" : ""
                 }`}
             >
@@ -169,6 +173,8 @@ export const Shelf: React.FC = () => {
         const win = effectiveWindows.find((w) => w.id === app.id);
         const isOpen = Boolean(win);
         const isActive = activeWindowId === app.id && win && !win.isMinimized;
+        const appMeta = getAppTranslation(app.id, language);
+        const translatedTitle = appMeta?.title || app.title;
 
         return (
           <div
@@ -177,13 +183,13 @@ export const Shelf: React.FC = () => {
               e.preventDefault();
               e.stopPropagation();
               closeAllContextMenus();
-              setShelfContextMenu({ app, x: e.clientX, y: e.clientY });
+              setShelfContextMenu({ app: { ...app, title: translatedTitle }, x: e.clientX, y: e.clientY });
             }}
             className="relative flex flex-col items-center justify-center shrink-0 px-1 h-11"
           >
             <button
               onClick={() => toggleMinimizeWindow(app.id)}
-              title={app.title}
+              title={translatedTitle}
               className={`p-2 rounded-2xl transition-all duration-200 cursor-pointer flex items-center justify-center ${app.accentColor} text-white shadow-md hover:scale-110 active:scale-95 ${isActive ? "ring-2 ring-blue-400" : ""
                 }`}
             >
@@ -212,11 +218,10 @@ export const Shelf: React.FC = () => {
         />
 
         {totalShelfItemsCount > 0 && (
-          <div data-shelf-dock className={`fixed bottom-3 left-1/2 -translate-x-1/2 z-50 h-14 flex items-center gap-1.5 px-3 pt-1.5 rounded-full backdrop-blur-2xl border max-w-[80vw] md:max-w-none overflow-x-auto no-scrollbar transition-all duration-300 ${
-            theme === "light"
+          <div data-shelf-dock className={`fixed bottom-3 left-1/2 -translate-x-1/2 z-50 h-14 flex items-center gap-1.5 px-3 pt-1.5 rounded-full backdrop-blur-2xl border max-w-[80vw] md:max-w-none overflow-x-auto no-scrollbar transition-all duration-300 ${theme === "light"
               ? "bg-white/90 border-slate-300/80 shadow-xl shadow-slate-400/25 text-slate-800"
               : "bg-zinc-950/90 border-white/15 shadow-2xl shadow-black/80 text-zinc-100"
-          }`}>
+            }`}>
             {renderAppIcons()}
           </div>
         )}

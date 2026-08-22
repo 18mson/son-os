@@ -1,6 +1,7 @@
 import React from "react";
 import { Folder, File, Check, Download, Edit2, Trash2, Image as ImageIcon, Music, Film, FileText } from "lucide-react";
 import { VirtualItem } from "./fileManagerStorage";
+import { useTranslation } from "@/i18n";
 
 interface FileItemGridProps {
   items: VirtualItem[];
@@ -31,6 +32,8 @@ export const FileItemGrid: React.FC<FileItemGridProps> = ({
   handleDeleteItem,
   isLight,
 }) => {
+  const { language } = useTranslation();
+
   const getItemIcon = (item: VirtualItem) => {
     if (item.isFolder) return <Folder className="text-amber-400 fill-amber-400/20" size={24} />;
     const ext = item.name.split(".").pop()?.toLowerCase();
@@ -98,34 +101,37 @@ export const FileItemGrid: React.FC<FileItemGridProps> = ({
           <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
             {!item.isFolder && (
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDownloadFile(item);
                 }}
                 className="p-1 rounded-lg bg-black/40 text-white hover:bg-black/60 cursor-pointer"
-                title="Unduh File"
+                title={language === "en" ? "Download File" : "Unduh File"}
               >
                 <Download size={11} />
               </button>
             )}
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 setRenamingId(item.id);
                 setRenamingName(item.name);
               }}
               className="p-1 rounded-lg bg-black/40 text-white hover:bg-black/60 cursor-pointer"
-              title="Ganti Nama"
+              title={language === "en" ? "Rename" : "Ganti Nama"}
             >
               <Edit2 size={11} />
             </button>
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 handleDeleteItem(item.id);
               }}
               className="p-1 rounded-lg bg-rose-500/80 text-white hover:bg-rose-600 cursor-pointer"
-              title="Hapus"
+              title={language === "en" ? "Delete" : "Hapus"}
             >
               <Trash2 size={11} />
             </button>

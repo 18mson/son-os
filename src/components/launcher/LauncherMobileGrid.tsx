@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, ShoppingBag } from "lucide-react";
 import { AppDefinition } from "@/store/windowStore";
 import { AppIcon } from "../AppIcon";
+import { useTranslation, getAppTranslation } from "@/i18n";
 
 interface LauncherMobileGridProps {
   launcherOpen: boolean;
@@ -29,6 +30,8 @@ export const LauncherMobileGrid: React.FC<LauncherMobileGridProps> = ({
   handleClose,
   APPS,
 }) => {
+  const { t, language } = useTranslation();
+
   return (
     <AnimatePresence>
       {launcherOpen && (
@@ -46,17 +49,18 @@ export const LauncherMobileGrid: React.FC<LauncherMobileGridProps> = ({
               <Search size={18} className="text-zinc-400" />
               <input
                 type="text"
-                placeholder="Cari aplikasi..."
+                placeholder={t.launcher.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-transparent text-sm text-white placeholder-zinc-400 outline-hidden"
               />
             </div>
             <button
+              type="button"
               onClick={handleClose}
               className="px-3 py-2 rounded-xl bg-white/10 text-xs font-semibold text-white cursor-pointer active:scale-95 transition-transform"
             >
-              Tutup
+              {t.common.close}
             </button>
           </div>
 
@@ -65,37 +69,46 @@ export const LauncherMobileGrid: React.FC<LauncherMobileGridProps> = ({
             {installedAppsList.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-48 text-center">
                 <ShoppingBag size={36} className="text-blue-500 mb-2" />
-                <p className="text-xs text-zinc-400">Belum ada aplikasi terinstal.</p>
+                <p className="text-xs text-zinc-400">{t.launcher.noResults}</p>
                 <button
+                  type="button"
                   onClick={() => {
                     const appStore = APPS.find((a) => a.id === "app-store");
-                    if (appStore) openWindow(appStore);
+                    if (appStore) {
+                      const appMeta = getAppTranslation("app-store", language);
+                      openWindow({ ...appStore, title: appMeta?.title || appStore.title });
+                    }
                     handleClose();
                   }}
                   className="mt-3 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold shadow-md cursor-pointer"
                 >
-                  Buka App Store
+                  {t.launcher.viewInAppStore}
                 </button>
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-3 pb-8">
-                {(searchQuery ? filteredApps : installedAppsList).map((app) => (
-                  <button
-                    key={app.id}
-                    onClick={() => {
-                      handleOpenApp(app);
-                    }}
-                    onContextMenu={(e) => handleAppContextMenu(e, app.id)}
-                    className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/5 border border-white/5 active:bg-white/20 active:scale-95 cursor-pointer touch-manipulation transition-all"
-                  >
-                    <div className={`w-12 h-12 rounded-2xl ${app.accentColor} flex items-center justify-center text-white shadow-md`}>
-                      <AppIcon name={app.icon} size={22} />
-                    </div>
-                    <span className="text-[11px] font-medium text-zinc-200 text-center line-clamp-1">
-                      {app.title}
-                    </span>
-                  </button>
-                ))}
+                {(searchQuery ? filteredApps : installedAppsList).map((app) => {
+                  const appMeta = getAppTranslation(app.id, language);
+                  const translatedTitle = appMeta?.title || app.title;
+                  return (
+                    <button
+                      key={app.id}
+                      type="button"
+                      onClick={() => {
+                        handleOpenApp(app);
+                      }}
+                      onContextMenu={(e) => handleAppContextMenu(e, app.id)}
+                      className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/5 border border-white/5 active:bg-white/20 active:scale-95 cursor-pointer touch-manipulation transition-all"
+                    >
+                      <div className={`w-12 h-12 rounded-2xl ${app.accentColor} flex items-center justify-center text-white shadow-md`}>
+                        <AppIcon name={app.icon} size={22} />
+                      </div>
+                      <span className="text-[11px] font-medium text-zinc-200 text-center line-clamp-1">
+                        {translatedTitle}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>

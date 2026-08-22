@@ -5,7 +5,10 @@ import { Calculator } from "lucide-react";
 import { useWindowStore } from "@/store/windowStore";
 import { APPS } from "@/config/appsConfig";
 
+import { useTranslation, getAppTranslation } from "@/i18n";
+
 export const MiniCalcWidget: React.FC = () => {
+  const { t, language } = useTranslation();
   const { openWindow, theme } = useWindowStore();
   const isLight = theme === "light";
   const [display, setDisplay] = useState<string>("0");
@@ -46,7 +49,10 @@ export const MiniCalcWidget: React.FC = () => {
   const handleOpenApp = (e: React.MouseEvent) => {
     e.stopPropagation();
     const calcApp = APPS.find((a) => a.id === "calculator");
-    if (calcApp) openWindow(calcApp);
+    if (calcApp) {
+      const appMeta = getAppTranslation("calculator", language);
+      openWindow({ ...calcApp, title: appMeta?.title || calcApp.title });
+    }
   };
 
   return (
@@ -64,16 +70,16 @@ export const MiniCalcWidget: React.FC = () => {
         <span className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${
           isLight ? "text-purple-600" : "text-purple-400"
         }`}>
-          <Calculator size={14} /> Kalkulator
+          <Calculator size={14} /> {t.widgetGallery.calcTitle}
         </span>
         <button
           onClick={handleOpenApp}
-          title="Buka Aplikasi Kalkulator Lengkap"
+          title={t.widgets.calculator.openTooltip}
           className={`text-[10px] font-semibold cursor-pointer ${
             isLight ? "text-purple-700 hover:text-purple-900" : "text-purple-400 hover:text-purple-300"
           }`}
         >
-          Buka App ↗
+          {t.widgets.calculator.openApp}
         </button>
       </div>
 
