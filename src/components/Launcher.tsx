@@ -162,8 +162,10 @@ export const Launcher: React.FC = () => {
             exit={{ opacity: 0, scale: 0.92, y: 16 }}
             transition={{ type: "spring", duration: 0.28, bounce: 0.05 }}
             style={{ transformOrigin: "bottom left" }}
-            className={`fixed bottom-17 left-3 z-45 w-130 max-h-[calc(100vh-100px)] h-135 rounded-3xl backdrop-blur-3xl border shadow-2xl select-none overflow-hidden flex flex-col ${
+            className={`fixed bottom-17 left-3 z-75 w-130 max-h-[calc(100vh-100px)] h-135 rounded-3xl backdrop-blur-3xl border shadow-2xl select-none overflow-hidden flex flex-col ${
               isLight
+
+
                 ? "bg-white/90 border-black/10 shadow-slate-400/30 text-slate-900"
                 : "bg-zinc-950/88 border-white/12 shadow-black/80 text-zinc-100"
             }`}

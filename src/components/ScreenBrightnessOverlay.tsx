@@ -11,9 +11,11 @@ export const ScreenBrightnessOverlay: React.FC = () => {
   return (
     <div
       id="brightness-overlay"
-      className="fixed inset-0 pointer-events-none z-90 bg-black transition-opacity duration-200"
+      className="fixed inset-0 pointer-events-none z-60 bg-black transition-opacity duration-200"
       style={{ opacity }}
       aria-hidden="true"
     />
   );
+
+
 };

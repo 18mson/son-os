@@ -102,8 +102,10 @@ export const WidgetGalleryModal: React.FC = () => {
   return (
     <AnimatePresence>
       {widgetGalleryOpen && (
-        <div className="fixed inset-0 z-75 flex items-center justify-center p-4 select-none">
+        <div className="fixed inset-0 z-95 flex items-center justify-center p-4 select-none">
           {/* Backdrop Click */}
+
+
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

@@ -10,8 +10,16 @@ export const createWindowActions = (
     if (get().soundEnabled) playUiClickSound();
     const state = get();
     const existing = state.windows.find((w) => w.id === app.id);
-    const newZ = Math.max(state.highestZIndex + 1, 100);
+    let newZ = Math.max(state.highestZIndex + 1, 20);
+    if (newZ > 50) {
+      const sorted = [...state.windows].sort((a, b) => a.zIndex - b.zIndex);
+      sorted.forEach((w, idx) => {
+        w.zIndex = 20 + idx;
+      });
+      newZ = 20 + sorted.length;
+    }
     let nextWindows: WindowState[];
+
 
     if (existing) {
       nextWindows = state.windows.map((w) =>
@@ -100,10 +108,19 @@ export const createWindowActions = (
     if (!win) return;
     if (state.activeWindowId === id && !win.isMinimized) return;
 
-    const newZ = Math.max(state.highestZIndex + 1, 100);
+    let newZ = Math.max(state.highestZIndex + 1, 20);
+    if (newZ > 50) {
+      const sorted = [...state.windows].sort((a, b) => a.zIndex - b.zIndex);
+      sorted.forEach((w, idx) => {
+        w.zIndex = 20 + idx;
+      });
+      newZ = 20 + sorted.length;
+    }
     const nextWindows = state.windows.map((w) =>
       w.id === id ? { ...w, isMinimized: false, zIndex: newZ } : w
     );
+
+
 
     saveWindowsSession(nextWindows, id);
     set(() => ({ windows: nextWindows, activeWindowId: id, highestZIndex: newZ }));

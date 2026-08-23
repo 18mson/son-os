@@ -16,9 +16,11 @@ export const DeleteAppConfirmModal: React.FC = () => {
 
   return (
     <div
-      className="fixed inset-0 z-90 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-95 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
       onClick={() => setPendingUninstallAppId(null)}
     >
+
+
       <div
         className="w-full max-w-md bg-zinc-900 border border-white/15 rounded-3xl p-6 shadow-2xl space-y-5 select-none animate-in zoom-in-95 duration-150 relative"
         onClick={(e) => e.stopPropagation()}

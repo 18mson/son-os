@@ -218,13 +218,15 @@ export const Shelf: React.FC = () => {
         />
 
         {totalShelfItemsCount > 0 && (
-          <div data-shelf-dock className={`fixed bottom-3 left-1/2 -translate-x-1/2 z-50 h-14 flex items-center gap-1.5 px-3 pt-1.5 rounded-full backdrop-blur-2xl border max-w-[80vw] md:max-w-none overflow-x-auto no-scrollbar transition-all duration-300 ${theme === "light"
+          <div data-shelf-dock className={`fixed bottom-3 left-1/2 -translate-x-1/2 z-70 h-14 flex items-center gap-1.5 px-3 pt-1.5 rounded-full backdrop-blur-2xl border max-w-[80vw] md:max-w-none overflow-x-auto no-scrollbar transition-all duration-300 ${theme === "light"
               ? "bg-white/90 border-slate-300/80 shadow-xl shadow-slate-400/25 text-slate-800"
               : "bg-zinc-950/90 border-white/15 shadow-2xl shadow-black/80 text-zinc-100"
             }`}>
             {renderAppIcons()}
           </div>
         )}
+
+
 
         <ShelfDesktopStatusTray
           theme={theme}

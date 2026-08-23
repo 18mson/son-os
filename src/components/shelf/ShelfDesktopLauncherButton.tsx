@@ -21,8 +21,10 @@ export const ShelfDesktopLauncherButton: React.FC<ShelfDesktopLauncherButtonProp
       }}
       title="Launcher"
       aria-label="Toggle App Launcher"
-      className={`fixed bottom-3 left-3 z-50 p-2.5 min-w-11 min-h-11 flex items-center justify-center rounded-full backdrop-blur-2xl transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden hover:scale-105 active:scale-95 ${
+      className={`fixed bottom-3 left-3 z-70 p-2.5 min-w-11 min-h-11 flex items-center justify-center rounded-full backdrop-blur-2xl transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden hover:scale-105 active:scale-95 ${
         launcherOpen
+
+
           ? "bg-blue-600 text-white border border-blue-500 shadow-xl shadow-blue-600/30 scale-105"
           : theme === "light"
           ? "bg-white/90 text-slate-800 border border-slate-300/80 hover:bg-white shadow-xl shadow-slate-400/25"

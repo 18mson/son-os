@@ -27,8 +27,10 @@ export const ShelfMobileDeck: React.FC<ShelfMobileDeckProps> = ({
   return (
     <div
       data-shelf-dock
-      className={`flex md:hidden fixed bottom-2 left-2 right-2 z-50 items-center justify-between px-2 py-1.5 rounded-full backdrop-blur-2xl border select-none max-w-[calc(100vw-16px)] transition-all duration-300 ${
+      className={`flex md:hidden fixed bottom-2 left-2 right-2 z-70 items-center justify-between px-2 py-1.5 rounded-full backdrop-blur-2xl border select-none max-w-[calc(100vw-16px)] transition-all duration-300 ${
         hasActiveWindow && !launcherOpen && !quickSettingsOpen
+
+
           ? "translate-y-24 opacity-0 pointer-events-none"
           : "translate-y-0 opacity-100"
       } ${

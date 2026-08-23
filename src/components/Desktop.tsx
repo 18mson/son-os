@@ -236,7 +236,7 @@ export const Desktop: React.FC = () => {
           ref={widgetMenuRef}
           style={{ position: "fixed", left: widgetMenu.x, top: widgetMenu.y }}
           onClick={(e) => e.stopPropagation()}
-          className="z-70 w-52 rounded-2xl bg-zinc-900/95 border border-white/15 p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 select-none"
+          className="z-90 w-52 rounded-2xl bg-zinc-900/95 border border-white/15 p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 select-none"
           data-context-menu
         >
           <div className="flex flex-col gap-0.5 text-xs text-zinc-200 font-medium">
@@ -270,6 +270,8 @@ export const Desktop: React.FC = () => {
         <QuickSettingsPanel />
         <SystemNotificationToast />
       </div>
+
+
 
       {/* Fullscreen Overlay Launcher */}
       <Launcher />

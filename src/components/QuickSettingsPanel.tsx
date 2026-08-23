@@ -121,11 +121,13 @@ export const QuickSettingsPanel: React.FC = () => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ type: "spring", duration: 0.25, bounce: 0.05 }}
-          className={`w-84 sm:w-96 rounded-3xl p-5 backdrop-blur-3xl border shadow-2xl select-none z-50 pointer-events-auto ${
+          className={`w-84 sm:w-96 rounded-3xl p-5 backdrop-blur-3xl border shadow-2xl select-none z-80 pointer-events-auto ${
             isLight
               ? "bg-white/90 border-black/10 shadow-slate-400/30 text-slate-900"
               : "bg-zinc-950/85 border-white/12 shadow-black/80 text-zinc-100"
           }`}
+
+
         >
           {/* Header Clock & Date */}
           <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
