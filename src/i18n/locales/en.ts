@@ -636,5 +636,10 @@ export const en: TranslationSchema = {
       title: "Video Downloader",
       description: "Download videos directly from URL, stream preview, batch queue, & audio extractor",
     },
+    "paper-size": {
+      title: "Paper Size",
+      description: "Detect PDF page paper sizes and convert to A4, Letter, Legal, A3, A5 or custom with Fit, Stretch, Crop & Pad modes",
+    },
   },
 };
+

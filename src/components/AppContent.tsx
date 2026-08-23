@@ -202,6 +202,15 @@ const VideoDownloaderApp = dynamic(() => import("./apps/VideoDownloaderApp").the
   ),
 });
 
+const PaperSizeApp = dynamic(() => import("./apps/PaperSizeApp").then((mod) => mod.PaperSizeApp), {
+  loading: () => (
+    <div className="flex flex-col items-center justify-center h-full p-8 text-zinc-400 gap-3">
+      <Loader2 className="animate-spin text-indigo-400" size={28} />
+      <span className="text-xs font-medium">Memuat Paper Size...</span>
+    </div>
+  ),
+});
+
 interface AppContentProps {
   appId: string;
 }
@@ -216,6 +225,8 @@ export const AppContent: React.FC<AppContentProps> = ({ appId }) => {
       return <PhotoboothApp />;
     case "video-downloader":
       return <VideoDownloaderApp />;
+    case "paper-size":
+      return <PaperSizeApp />;
     case "pdf":
       return <PdfApp />;
     case "file-manager":
@@ -261,4 +272,5 @@ export const AppContent: React.FC<AppContentProps> = ({ appId }) => {
       );
   }
 };
+
 

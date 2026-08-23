@@ -636,5 +636,10 @@ export const id: TranslationSchema = {
       title: "Pengunduh Video",
       description: "Unduh video langsung dari URL, pratinjau stream, antrean batch, & ekstraktor audio",
     },
+    "paper-size": {
+      title: "Paper Size",
+      description: "Deteksi ukuran kertas PDF dan konversi ke A4, Letter, Legal, A3, A5 atau custom dengan mode Fit, Stretch, Crop & Pad",
+    },
   },
 };
+

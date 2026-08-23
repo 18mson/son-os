@@ -290,4 +290,18 @@ export const APPS: AppDefinition[] = [
     version: "v2.8.16",
     defaultSize: { w: 820, h: 620 },
   },
+  {
+    id: "paper-size",
+    title: "Paper Size",
+    icon: "FileStack",
+    accentColor: "bg-linear-to-br from-indigo-500 via-purple-600 to-pink-600",
+    description: "Deteksi ukuran kertas PDF dan konversi ke A4, Letter, Legal, A3, A5, atau custom dengan mode Fit, Stretch, Crop & Pad",
+    type: "static",
+    category: ["utility"],
+    isSystemApp: false,
+    isPreinstalled: true,
+    version: "v1.0.0",
+    defaultSize: { w: 860, h: 640 },
+  },
 ];
+
