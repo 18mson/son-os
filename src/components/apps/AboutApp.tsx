@@ -108,17 +108,15 @@ export const AboutApp: React.FC = () => {
 
   return (
     <div
-      className={`flex flex-col h-full w-full select-none font-sans overflow-hidden ${
-        isLight ? "bg-slate-100 text-slate-900" : "bg-zinc-950 text-zinc-100"
-      }`}
+      className={`flex flex-col h-full w-full select-none font-sans overflow-hidden ${isLight ? "bg-slate-100 text-slate-900" : "bg-zinc-950 text-zinc-100"
+        }`}
     >
       {/* Profile Header Hero */}
       <div
-        className={`shrink-0 border-b p-5 sm:p-6 transition-colors ${
-          isLight
-            ? "bg-linear-to-r from-blue-50 via-indigo-50/50 to-white border-slate-300"
-            : "bg-linear-to-r from-blue-950/40 via-indigo-950/20 to-zinc-900/60 border-white/10"
-        }`}
+        className={`shrink-0 border-b p-5 sm:p-6 transition-colors ${isLight
+          ? "bg-linear-to-r from-blue-50 via-indigo-50/50 to-white border-slate-300"
+          : "bg-linear-to-r from-blue-950/40 via-indigo-950/20 to-zinc-900/60 border-white/10"
+          }`}
       >
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -173,7 +171,7 @@ export const AboutApp: React.FC = () => {
               <span>WhatsApp</span>
             </a>
             <a
-              href="https://linkedin.com/in/muhamad-son-ani"
+              href="https://linkedin.com/in/muhamad-son-ani-549230153"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/20 transition-all cursor-pointer"
@@ -185,11 +183,10 @@ export const AboutApp: React.FC = () => {
               href="https://github.com/18mson"
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all border cursor-pointer ${
-                isLight
-                  ? "bg-white hover:bg-slate-100 text-slate-800 border-slate-300"
-                  : "bg-white/10 hover:bg-white/15 text-white border-white/10"
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all border cursor-pointer ${isLight
+                ? "bg-white hover:bg-slate-100 text-slate-800 border-slate-300"
+                : "bg-white/10 hover:bg-white/15 text-white border-white/10"
+                }`}
             >
               <Globe size={13} />
               <span>GitHub</span>
@@ -200,20 +197,18 @@ export const AboutApp: React.FC = () => {
 
       {/* Tabs Header Navigation */}
       <div
-        className={`flex items-center gap-1 px-4 py-2 border-b overflow-x-auto no-scrollbar shrink-0 ${
-          isLight ? "bg-slate-200/70 border-slate-300" : "bg-zinc-900/80 border-white/10"
-        }`}
+        className={`flex items-center gap-1 px-4 py-2 border-b overflow-x-auto no-scrollbar shrink-0 ${isLight ? "bg-slate-200/70 border-slate-300" : "bg-zinc-900/80 border-white/10"
+          }`}
       >
         <button
           type="button"
           onClick={() => setActiveTab("overview")}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-            activeTab === "overview"
-              ? "bg-blue-600 text-white shadow-sm"
-              : isLight
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${activeTab === "overview"
+            ? "bg-blue-600 text-white shadow-sm"
+            : isLight
               ? "text-slate-600 hover:bg-slate-300/60"
               : "text-zinc-400 hover:bg-white/5"
-          }`}
+            }`}
         >
           <User size={14} /> {t.aboutApp.tabOverview}
         </button>
@@ -221,13 +216,12 @@ export const AboutApp: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveTab("experience")}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-            activeTab === "experience"
-              ? "bg-blue-600 text-white shadow-sm"
-              : isLight
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${activeTab === "experience"
+            ? "bg-blue-600 text-white shadow-sm"
+            : isLight
               ? "text-slate-600 hover:bg-slate-300/60"
               : "text-zinc-400 hover:bg-white/5"
-          }`}
+            }`}
         >
           <Briefcase size={14} /> {t.aboutApp.tabExperience} ({experiences.length})
         </button>
@@ -235,13 +229,12 @@ export const AboutApp: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveTab("skills")}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-            activeTab === "skills"
-              ? "bg-blue-600 text-white shadow-sm"
-              : isLight
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${activeTab === "skills"
+            ? "bg-blue-600 text-white shadow-sm"
+            : isLight
               ? "text-slate-600 hover:bg-slate-300/60"
               : "text-zinc-400 hover:bg-white/5"
-          }`}
+            }`}
         >
           <Code2 size={14} /> {t.aboutApp.tabSkills}
         </button>
@@ -249,13 +242,12 @@ export const AboutApp: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveTab("education")}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-            activeTab === "education"
-              ? "bg-blue-600 text-white shadow-sm"
-              : isLight
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${activeTab === "education"
+            ? "bg-blue-600 text-white shadow-sm"
+            : isLight
               ? "text-slate-600 hover:bg-slate-300/60"
               : "text-zinc-400 hover:bg-white/5"
-          }`}
+            }`}
         >
           <GraduationCap size={14} /> {t.aboutApp.tabEducation}
         </button>
@@ -263,13 +255,12 @@ export const AboutApp: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveTab("accomplishments")}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-            activeTab === "accomplishments"
-              ? "bg-blue-600 text-white shadow-sm"
-              : isLight
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${activeTab === "accomplishments"
+            ? "bg-blue-600 text-white shadow-sm"
+            : isLight
               ? "text-slate-600 hover:bg-slate-300/60"
               : "text-zinc-400 hover:bg-white/5"
-          }`}
+            }`}
         >
           <Award size={14} /> {t.aboutApp.tabAccomplishments}
         </button>
@@ -282,9 +273,8 @@ export const AboutApp: React.FC = () => {
           <div className="space-y-6 max-w-4xl mx-auto">
             {/* Bio Summary Card */}
             <div
-              className={`p-5 rounded-2xl border ${
-                isLight ? "bg-white border-slate-200 shadow-xs" : "bg-zinc-900/70 border-white/10"
-              }`}
+              className={`p-5 rounded-2xl border ${isLight ? "bg-white border-slate-200 shadow-xs" : "bg-zinc-900/70 border-white/10"
+                }`}
             >
               <h2 className="text-sm font-bold text-blue-500 uppercase tracking-wider mb-2 flex items-center gap-2">
                 <Sparkles size={16} /> {t.aboutApp.bioTitle}
@@ -329,9 +319,8 @@ export const AboutApp: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Personal Details */}
               <div
-                className={`p-5 rounded-2xl border space-y-3 ${
-                  isLight ? "bg-white border-slate-200" : "bg-zinc-900/60 border-white/10"
-                }`}
+                className={`p-5 rounded-2xl border space-y-3 ${isLight ? "bg-white border-slate-200" : "bg-zinc-900/60 border-white/10"
+                  }`}
               >
                 <h3 className="text-xs font-bold uppercase tracking-wider text-blue-500 flex items-center gap-2">
                   <User size={15} /> {t.aboutApp.personalDetails}
@@ -374,9 +363,8 @@ export const AboutApp: React.FC = () => {
 
               {/* Career Objective & Profile Traits */}
               <div
-                className={`p-5 rounded-2xl border space-y-3 ${
-                  isLight ? "bg-white border-slate-200" : "bg-zinc-900/60 border-white/10"
-                }`}
+                className={`p-5 rounded-2xl border space-y-3 ${isLight ? "bg-white border-slate-200" : "bg-zinc-900/60 border-white/10"
+                  }`}
               >
                 <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-500 flex items-center gap-2">
                   <Zap size={15} /> {t.aboutApp.careerFocusTitle}
@@ -420,11 +408,10 @@ export const AboutApp: React.FC = () => {
                   </div>
 
                   <div
-                    className={`p-5 rounded-2xl border transition-all ${
-                      isLight
-                        ? "bg-white border-slate-200 shadow-xs hover:border-slate-300"
-                        : "bg-zinc-900/70 border-white/10 hover:border-white/20"
-                    }`}
+                    className={`p-5 rounded-2xl border transition-all ${isLight
+                      ? "bg-white border-slate-200 shadow-xs hover:border-slate-300"
+                      : "bg-zinc-900/70 border-white/10 hover:border-white/20"
+                      }`}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
                       <div>
@@ -441,23 +428,20 @@ export const AboutApp: React.FC = () => {
                             {t.aboutApp.currentlyActive}
                           </span>
                         )}
-                        <span className={`text-xs font-mono font-medium px-2.5 py-1 rounded-lg ${
-                          isLight ? "bg-slate-100 text-slate-700" : "bg-white/5 text-zinc-300"
-                        }`}>
+                        <span className={`text-xs font-mono font-medium px-2.5 py-1 rounded-lg ${isLight ? "bg-slate-100 text-slate-700" : "bg-white/5 text-zinc-300"
+                          }`}>
                           {exp.period}
                         </span>
                       </div>
                     </div>
 
-                    <div className={`text-xs font-medium mb-3 pb-2 border-b ${
-                      isLight ? "text-indigo-600 border-slate-200" : "text-indigo-300 border-white/5"
-                    }`}>
+                    <div className={`text-xs font-medium mb-3 pb-2 border-b ${isLight ? "text-indigo-600 border-slate-200" : "text-indigo-300 border-white/5"
+                      }`}>
                       {t.aboutApp.projectLabel}: <span className="font-bold">{exp.project}</span>
                     </div>
 
-                    <ul className={`space-y-1.5 text-xs list-disc pl-4 mb-4 leading-relaxed ${
-                      isLight ? "text-slate-700" : "text-zinc-300"
-                    }`}>
+                    <ul className={`space-y-1.5 text-xs list-disc pl-4 mb-4 leading-relaxed ${isLight ? "text-slate-700" : "text-zinc-300"
+                      }`}>
                       {exp.points.map((pt, ptIdx) => (
                         <li key={ptIdx}>{pt}</li>
                       ))}
@@ -468,11 +452,10 @@ export const AboutApp: React.FC = () => {
                       {exp.tools.map((tool, tIdx) => (
                         <span
                           key={tIdx}
-                          className={`text-[10px] font-medium px-2 py-0.5 rounded-md ${
-                            isLight
-                              ? "bg-slate-100 text-slate-700 border border-slate-200"
-                              : "bg-white/5 text-zinc-300 border border-white/5"
-                          }`}
+                          className={`text-[10px] font-medium px-2 py-0.5 rounded-md ${isLight
+                            ? "bg-slate-100 text-slate-700 border border-slate-200"
+                            : "bg-white/5 text-zinc-300 border border-white/5"
+                            }`}
                         >
                           {tool}
                         </span>
@@ -501,9 +484,8 @@ export const AboutApp: React.FC = () => {
               {skillGroups.map((group, idx) => (
                 <div
                   key={idx}
-                  className={`p-5 rounded-2xl border space-y-3 ${
-                    isLight ? "bg-white border-slate-200" : "bg-zinc-900/70 border-white/10"
-                  }`}
+                  className={`p-5 rounded-2xl border space-y-3 ${isLight ? "bg-white border-slate-200" : "bg-zinc-900/70 border-white/10"
+                    }`}
                 >
                   <div className="flex items-center gap-2 border-b pb-2.5 border-white/5">
                     {group.icon}
@@ -516,9 +498,8 @@ export const AboutApp: React.FC = () => {
                     {group.items.map((item, itemIdx) => (
                       <div
                         key={itemIdx}
-                        className={`p-2.5 rounded-xl border flex flex-col justify-between ${
-                          isLight ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/5"
-                        }`}
+                        className={`p-2.5 rounded-xl border flex flex-col justify-between ${isLight ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/5"
+                          }`}
                       >
                         <span className={`text-xs font-bold ${isLight ? "text-slate-800" : "text-zinc-200"}`}>
                           {item.name}
@@ -557,9 +538,8 @@ export const AboutApp: React.FC = () => {
                 {t.aboutApp.educations.map((edu, idx) => (
                   <div
                     key={idx}
-                    className={`p-5 rounded-2xl border space-y-1.5 ${
-                      isLight ? "bg-white border-slate-200" : "bg-zinc-900/70 border-white/10"
-                    }`}
+                    className={`p-5 rounded-2xl border space-y-1.5 ${isLight ? "bg-white border-slate-200" : "bg-zinc-900/70 border-white/10"
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-blue-500">{edu.period}</span>
@@ -585,9 +565,8 @@ export const AboutApp: React.FC = () => {
               </h3>
 
               <div
-                className={`rounded-2xl border overflow-hidden ${
-                  isLight ? "bg-white border-slate-200" : "bg-zinc-900/70 border-white/10"
-                }`}
+                className={`rounded-2xl border overflow-hidden ${isLight ? "bg-white border-slate-200" : "bg-zinc-900/70 border-white/10"
+                  }`}
               >
                 <div className="divide-y divide-white/5">
                   {t.aboutApp.trainings.map((tr, idx) => (
@@ -641,9 +620,8 @@ export const AboutApp: React.FC = () => {
                 return (
                   <div
                     key={idx}
-                    className={`p-5 rounded-2xl border space-y-2.5 ${
-                      isLight ? "bg-white border-slate-200" : "bg-zinc-900/70 border-white/10"
-                    }`}
+                    className={`p-5 rounded-2xl border space-y-2.5 ${isLight ? "bg-white border-slate-200" : "bg-zinc-900/70 border-white/10"
+                      }`}
                   >
                     <div className={`w-9 h-9 rounded-xl ${colors[idx % colors.length]} flex items-center justify-center`}>
                       {icons[idx % icons.length]}
@@ -664,9 +642,8 @@ export const AboutApp: React.FC = () => {
 
       {/* App Footer Bar */}
       <div
-        className={`px-4 py-2 border-t flex flex-wrap items-center justify-between text-[11px] shrink-0 ${
-          isLight ? "bg-slate-200/50 border-slate-300 text-slate-600" : "bg-zinc-900/60 border-white/5 text-zinc-400"
-        }`}
+        className={`px-4 py-2 border-t flex flex-wrap items-center justify-between text-[11px] shrink-0 ${isLight ? "bg-slate-200/50 border-slate-300 text-slate-600" : "bg-zinc-900/60 border-white/5 text-zinc-400"
+          }`}
       >
         <span>{t.aboutApp.footerCv}</span>
         <span className="font-mono text-[10px]">Son-OS Profile Engine v2.8</span>

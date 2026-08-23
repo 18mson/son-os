@@ -1,3 +1,4 @@
+import type { PDFPage, PDFEmbeddedPage } from "pdf-lib";
 import {
   ConversionMode,
   TargetOrientation,
@@ -10,6 +11,7 @@ import {
   inspectPageDimension,
   PageDimensionInfo,
 } from "./paperSizes";
+
 
 export interface ConvertPdfOptions {
   targetStandardId?: string; // e.g. "a4", "letter"
@@ -171,7 +173,76 @@ export async function convertPdfPaperSize(
   originalFileName: string,
   options: ConvertPdfOptions
 ): Promise<ConvertPdfResult> {
-  const { PDFDocument, degrees } = await import("pdf-lib");
+  const {
+    PDFDocument,
+    degrees,
+    pushGraphicsState,
+    popGraphicsState,
+    rectangle,
+    clip,
+    endPath,
+  } = await import("pdf-lib");
+
+  // Helper to draw embedded page with rotation and optional clipping path
+  const drawEmbeddedWithRotation = (
+    page: PDFPage,
+    embedded: PDFEmbeddedPage,
+    x: number,
+    y: number,
+    visualW: number,
+    visualH: number,
+    xScale: number,
+    yScale: number,
+    normRot: number,
+    clipRect?: { x: number; y: number; width: number; height: number }
+  ) => {
+
+    if (clipRect) {
+      page.pushOperators(
+        pushGraphicsState(),
+        rectangle(clipRect.x, clipRect.y, clipRect.width, clipRect.height),
+        clip(),
+        endPath()
+      );
+    }
+
+    if (normRot === 0) {
+      page.drawPage(embedded, {
+        x,
+        y,
+        xScale,
+        yScale,
+      });
+    } else if (normRot === 90) {
+      page.drawPage(embedded, {
+        x: x + visualW * xScale,
+        y,
+        xScale,
+        yScale,
+        rotate: degrees(90),
+      });
+    } else if (normRot === 180) {
+      page.drawPage(embedded, {
+        x: x + visualW * xScale,
+        y: y + visualH * yScale,
+        xScale,
+        yScale,
+        rotate: degrees(180),
+      });
+    } else if (normRot === 270) {
+      page.drawPage(embedded, {
+        x,
+        y: y + visualH * yScale,
+        xScale,
+        yScale,
+        rotate: degrees(270),
+      });
+    }
+
+    if (clipRect) {
+      page.pushOperators(popGraphicsState());
+    }
+  };
 
   // Load source document
   const sourceDoc = await PDFDocument.load(pdfBuffer, { ignoreEncryption: false });
@@ -229,41 +300,32 @@ export async function convertPdfPaperSize(
       const stepW = usableTargetW - overlapPt;
       const stepH = usableTargetH - overlapPt;
 
+      const clipRect = {
+        x: targetMarginPt,
+        y: targetMarginPt,
+        width: usableTargetW,
+        height: usableTargetH,
+      };
+
       for (let row = 0; row < grid.rows; row++) {
         for (let col = 0; col < grid.cols; col++) {
           const x = targetMarginPt - col * stepW;
-          const y = targetMarginPt - (grid.rows - 1 - row) * stepH;
+          const y = (targetHeightPt - targetMarginPt - visualEmbeddedH) + row * stepH;
 
           // 1. Add to combined document
           const tilePage = targetDoc.addPage([targetWidthPt, targetHeightPt]);
-
-          if (normRotation === 0) {
-            tilePage.drawPage(embeddedPage, { x, y, xScale: 1, yScale: 1 });
-          } else if (normRotation === 90) {
-            tilePage.drawPage(embeddedPage, {
-              x: x + visualEmbeddedW,
-              y,
-              xScale: 1,
-              yScale: 1,
-              rotate: degrees(90),
-            });
-          } else if (normRotation === 180) {
-            tilePage.drawPage(embeddedPage, {
-              x: x + visualEmbeddedW,
-              y: y + visualEmbeddedH,
-              xScale: 1,
-              yScale: 1,
-              rotate: degrees(180),
-            });
-          } else if (normRotation === 270) {
-            tilePage.drawPage(embeddedPage, {
-              x,
-              y: y + visualEmbeddedH,
-              xScale: 1,
-              yScale: 1,
-              rotate: degrees(270),
-            });
-          }
+          drawEmbeddedWithRotation(
+            tilePage,
+            embeddedPage,
+            x,
+            y,
+            visualEmbeddedW,
+            visualEmbeddedH,
+            1,
+            1,
+            normRotation,
+            clipRect
+          );
 
           // 2. If separate files requested, generate individual single-page PDF
           if (options.tileOutputMode === "separate_files") {
@@ -271,33 +333,18 @@ export async function convertPdfPaperSize(
             const singleEmbedded = await singleTileDoc.embedPage(sourcePage);
             const stPage = singleTileDoc.addPage([targetWidthPt, targetHeightPt]);
 
-            if (normRotation === 0) {
-              stPage.drawPage(singleEmbedded, { x, y, xScale: 1, yScale: 1 });
-            } else if (normRotation === 90) {
-              stPage.drawPage(singleEmbedded, {
-                x: x + visualEmbeddedW,
-                y,
-                xScale: 1,
-                yScale: 1,
-                rotate: degrees(90),
-              });
-            } else if (normRotation === 180) {
-              stPage.drawPage(singleEmbedded, {
-                x: x + visualEmbeddedW,
-                y: y + visualEmbeddedH,
-                xScale: 1,
-                yScale: 1,
-                rotate: degrees(180),
-              });
-            } else if (normRotation === 270) {
-              stPage.drawPage(singleEmbedded, {
-                x,
-                y: y + visualEmbeddedH,
-                xScale: 1,
-                yScale: 1,
-                rotate: degrees(270),
-              });
-            }
+            drawEmbeddedWithRotation(
+              stPage,
+              singleEmbedded,
+              x,
+              y,
+              visualEmbeddedW,
+              visualEmbeddedH,
+              1,
+              1,
+              normRotation,
+              clipRect
+            );
 
             const stBytes = await singleTileDoc.save();
             const stBlob = new Blob([stBytes.buffer as ArrayBuffer], { type: "application/pdf" });
@@ -338,39 +385,27 @@ export async function convertPdfPaperSize(
         targetMarginPt
       );
 
-      // Draw the embedded page with its natural rotation
-      if (normRotation === 0) {
-        newPage.drawPage(embeddedPage, {
-          x,
-          y,
-          xScale,
-          yScale,
-        });
-      } else if (normRotation === 90) {
-        newPage.drawPage(embeddedPage, {
-          x: x + visualEmbeddedW * xScale,
-          y,
-          xScale,
-          yScale,
-          rotate: degrees(90),
-        });
-      } else if (normRotation === 180) {
-        newPage.drawPage(embeddedPage, {
-          x: x + visualEmbeddedW * xScale,
-          y: y + visualEmbeddedH * yScale,
-          xScale,
-          yScale,
-          rotate: degrees(180),
-        });
-      } else if (normRotation === 270) {
-        newPage.drawPage(embeddedPage, {
-          x,
-          y: y + visualEmbeddedH * yScale,
-          xScale,
-          yScale,
-          rotate: degrees(270),
-        });
-      }
+      const usableTargetW = Math.max(1, targetWidthPt - 2 * targetMarginPt);
+      const usableTargetH = Math.max(1, targetHeightPt - 2 * targetMarginPt);
+      const clipRect = targetMarginPt > 0 ? {
+        x: targetMarginPt,
+        y: targetMarginPt,
+        width: usableTargetW,
+        height: usableTargetH,
+      } : undefined;
+
+      drawEmbeddedWithRotation(
+        newPage,
+        embeddedPage,
+        x,
+        y,
+        visualEmbeddedW,
+        visualEmbeddedH,
+        xScale,
+        yScale,
+        normRotation,
+        clipRect
+      );
 
       totalProcessedItems++;
       if (options.onProgress) {
@@ -382,7 +417,9 @@ export async function convertPdfPaperSize(
     }
   }
 
+
   // Generate output bytes
+
   const modifiedBytes = await targetDoc.save();
   const blob = new Blob([modifiedBytes.buffer as ArrayBuffer], { type: "application/pdf" });
   const newBuffer = await blob.arrayBuffer();
