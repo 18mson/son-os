@@ -41,6 +41,21 @@ export interface AccomplishmentItem {
   description: string;
 }
 
+export interface PortfolioProjectItem {
+  id: string;
+  title: string;
+  badge: string;
+  tagline: string;
+  description: string;
+  highlights: string[];
+  techStack: string[];
+  liveUrl?: string;
+  githubUrl?: string;
+  appId?: string;
+  gradient: string;
+  category: string;
+}
+
 export interface TranslationSchema {
   common: {
     ok: string;
@@ -280,10 +295,19 @@ export interface TranslationSchema {
     downloadCv: string;
     contactMe: string;
     tabOverview: string;
+    tabPortfolio: string;
     tabExperience: string;
     tabSkills: string;
     tabEducation: string;
     tabAccomplishments: string;
+    portfolioSectionTitle: string;
+    portfolioSectionSubtitle: string;
+    portfolioLaunchSonOs: string;
+    portfolioLiveDemo: string;
+    portfolioSourceCode: string;
+    portfolioCurrentSystem: string;
+    portfolioExploreApps: string;
+    portfolioProjects: PortfolioProjectItem[];
     bioTitle: string;
     bioParagraph1: string;
     bioParagraph2: string;

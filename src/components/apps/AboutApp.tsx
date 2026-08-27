@@ -19,17 +19,31 @@ import {
   Cpu,
   ShieldCheck,
   TrendingUp,
+  FolderKanban,
+  Rocket,
+  ShoppingBag,
+  Laptop,
+  Languages,
 } from "lucide-react";
 import { useWindowStore } from "@/store/windowStore";
 import { useTranslation } from "@/i18n";
+import { APPS } from "@/data/apps";
 
-type TabType = "overview" | "experience" | "skills" | "education" | "accomplishments";
+type TabType = "overview" | "portfolio" | "experience" | "skills" | "education" | "accomplishments";
 
 export const AboutApp: React.FC = () => {
-  const { theme } = useWindowStore();
+  const { theme, openWindow } = useWindowStore();
   const { t, language } = useTranslation();
   const isLight = theme === "light";
   const [activeTab, setActiveTab] = useState<TabType>("overview");
+
+  const handleLaunchApp = (appId?: string) => {
+    if (!appId) return;
+    const targetApp = APPS.find((a) => a.id === appId);
+    if (targetApp) {
+      openWindow(targetApp);
+    }
+  };
 
   const experiences = t.aboutApp.experiences;
 
@@ -215,6 +229,19 @@ export const AboutApp: React.FC = () => {
 
         <button
           type="button"
+          onClick={() => setActiveTab("portfolio")}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${activeTab === "portfolio"
+            ? "bg-blue-600 text-white shadow-sm"
+            : isLight
+              ? "text-slate-600 hover:bg-slate-300/60"
+              : "text-zinc-400 hover:bg-white/5"
+            }`}
+        >
+          <FolderKanban size={14} /> {t.aboutApp.tabPortfolio} ({t.aboutApp.portfolioProjects.length})
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab("experience")}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${activeTab === "experience"
             ? "bg-blue-600 text-white shadow-sm"
@@ -383,6 +410,223 @@ export const AboutApp: React.FC = () => {
                   </ul>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: PORTFOLIO */}
+        {activeTab === "portfolio" && (
+          <div className="space-y-6 max-w-4xl mx-auto">
+            <div>
+              <h2 className={`text-base font-bold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
+                {t.aboutApp.portfolioSectionTitle}
+              </h2>
+              <p className={`text-xs ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+                {t.aboutApp.portfolioSectionSubtitle}
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              {t.aboutApp.portfolioProjects.map((proj) => {
+                const isSonOs = proj.id === "son-os";
+                const isJapaneseQuiz = proj.id === "japanese-quiz";
+
+                return (
+                  <div
+                    key={proj.id}
+                    className={`rounded-2xl border overflow-hidden transition-all duration-300 ${isLight
+                        ? "bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300"
+                        : "bg-zinc-900/80 border-white/10 hover:border-white/20 shadow-xl"
+                      }`}
+                  >
+                    {/* Mockup Header Window Bar */}
+                    <div
+                      className={`relative px-4 py-3 border-b flex flex-wrap items-center justify-between gap-2 overflow-hidden ${isLight ? "bg-slate-100/90 border-slate-200" : "bg-zinc-950/70 border-white/10"
+                        }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {/* Traffic light dots */}
+                        <div className="flex items-center gap-1.5 mr-2">
+                          <div className="w-3 h-3 rounded-full bg-rose-500/80" />
+                          <div className="w-3 h-3 rounded-full bg-amber-500/80" />
+                          <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
+                        </div>
+                        <span className="text-[11px] font-mono font-bold tracking-wide opacity-75">
+                          {proj.id === "son-os" ? "son-os://desktop-env" : "app://japanese-quiz"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wide uppercase bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                          {proj.badge}
+                        </span>
+                        <span
+                          className={`text-[10px] font-medium px-2 py-0.5 rounded-md ${isLight ? "bg-slate-200 text-slate-700" : "bg-white/10 text-zinc-300"
+                            }`}
+                        >
+                          {proj.category}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Visual Hero Mockup Banner */}
+                    <div className={`relative p-6 sm:p-8 bg-linear-to-r ${proj.gradient} text-white overflow-hidden`}>
+                      {/* Decorative Background Patterns */}
+                      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] bg-size-[16px_16px]" />
+                      <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
+
+                      <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-center text-white shadow-2xl shrink-0">
+                            {isSonOs ? <Laptop size={32} /> : <Languages size={32} />}
+                          </div>
+                          <div>
+                            <h3 className="text-lg sm:text-xl font-black tracking-tight text-white drop-shadow-sm">
+                              {proj.title}
+                            </h3>
+                            <p className="text-xs sm:text-sm font-medium text-white/90 mt-1 max-w-xl line-clamp-2">
+                              {proj.tagline}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Quick Action in banner if Japanese Quiz */}
+                        {isJapaneseQuiz && (
+                          <button
+                            type="button"
+                            onClick={() => handleLaunchApp("japanese-quiz")}
+                            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-zinc-900 hover:bg-zinc-100 font-bold text-xs shadow-lg transition-all transform hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+                          >
+                            <Rocket size={15} className="text-rose-600" />
+                            <span>{t.aboutApp.portfolioLaunchSonOs}</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Main Content Body */}
+                    <div className="p-5 sm:p-6 space-y-5">
+                      {/* Description */}
+                      <p className={`text-xs sm:text-sm leading-relaxed ${isLight ? "text-slate-700" : "text-zinc-300"}`}>
+                        {proj.description}
+                      </p>
+
+                      {/* Highlights */}
+                      <div className="space-y-2">
+                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-blue-500 flex items-center gap-1.5">
+                          <Sparkles size={14} /> Key Architecture & Features
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {proj.highlights.map((hl, hIdx) => (
+                            <div
+                              key={hIdx}
+                              className={`p-3 rounded-xl border flex items-start gap-2.5 text-xs leading-normal ${isLight
+                                  ? "bg-slate-50/80 border-slate-200/80 text-slate-800"
+                                  : "bg-white/5 border-white/5 text-zinc-200"
+                                }`}
+                            >
+                              <CheckCircle2 size={15} className="text-emerald-500 shrink-0 mt-0.5" />
+                              <span>{hl}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Tech Stack Tags */}
+                      <div className="space-y-2 pt-1">
+                        <h4 className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+                          Tech Stack & Technologies
+                        </h4>
+                        <div className="flex flex-wrap gap-1.5">
+                          {proj.techStack.map((tech, techIdx) => (
+                            <span
+                              key={techIdx}
+                              className={`text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-all ${isLight
+                                  ? "bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200/70"
+                                  : "bg-zinc-800/90 text-zinc-200 border-white/10 hover:bg-white/10"
+                                }`}
+                            >
+                              {tech}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Action Bar Footer */}
+                      <div
+                        className={`pt-4 border-t flex flex-wrap items-center justify-between gap-3 ${isLight ? "border-slate-200" : "border-white/10"
+                          }`}
+                      >
+                        <div className="flex flex-wrap items-center gap-2">
+                          {isSonOs ? (
+                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/25 text-xs font-bold">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                              <span>{t.aboutApp.portfolioCurrentSystem}</span>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleLaunchApp(proj.appId)}
+                              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-linear-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white text-xs font-bold shadow-md shadow-rose-600/20 transition-all transform hover:scale-[1.02] active:scale-95 cursor-pointer"
+                            >
+                              <Rocket size={14} />
+                              <span>{t.aboutApp.portfolioLaunchSonOs}</span>
+                            </button>
+                          )}
+
+                          {isSonOs && (
+                            <button
+                              type="button"
+                              onClick={() => handleLaunchApp("app-store")}
+                              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${isLight
+                                  ? "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                                  : "bg-blue-500/15 text-blue-300 border-blue-500/30 hover:bg-blue-500/25"
+                                }`}
+                            >
+                              <ShoppingBag size={14} />
+                              <span>{t.aboutApp.portfolioExploreApps}</span>
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {proj.liveUrl && (
+                            <a
+                              href={proj.liveUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${isLight
+                                  ? "bg-white hover:bg-slate-100 text-slate-800 border-slate-300"
+                                  : "bg-white/10 hover:bg-white/15 text-white border-white/10"
+                                }`}
+                            >
+                              <Globe size={14} className="text-blue-400" />
+                              <span>{t.aboutApp.portfolioLiveDemo}</span>
+                              <ExternalLink size={12} className="opacity-60" />
+                            </a>
+                          )}
+
+                          {proj.githubUrl && (
+                            <a
+                              href={proj.githubUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${isLight
+                                  ? "bg-white hover:bg-slate-100 text-slate-800 border-slate-300"
+                                  : "bg-white/10 hover:bg-white/15 text-white border-white/10"
+                                }`}
+                            >
+                              <Code2 size={14} className="text-indigo-400" />
+                              <span>{t.aboutApp.portfolioSourceCode}</span>
+                              <ExternalLink size={12} className="opacity-60" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
