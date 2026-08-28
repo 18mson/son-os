@@ -14,7 +14,6 @@ import { QuickSettingsPanel } from "./QuickSettingsPanel";
 import { SystemNotificationToast } from "./SystemNotificationToast";
 import { GlobalAudioManager } from "./GlobalAudioManager";
 import { WidgetGalleryModal } from "./WidgetGalleryModal";
-import { DeleteAppConfirmModal } from "./modals/DeleteAppConfirmModal";
 import { ScreenBrightnessOverlay } from "./ScreenBrightnessOverlay";
 import { Trash2, Plus } from "lucide-react";
 import { DesktopShortcut } from "./DesktopShortcut";
@@ -278,9 +277,6 @@ export const Desktop: React.FC = () => {
 
       {/* Widget Gallery Modal */}
       <WidgetGalleryModal />
-
-      {/* Delete App Confirmation Modal */}
-      <DeleteAppConfirmModal />
 
       {/* Screen Hardware Brightness Overlay */}
       <ScreenBrightnessOverlay />

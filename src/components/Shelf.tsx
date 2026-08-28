@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, useSyncExternalStore } from "react"
 import { useWindowStore, AppDefinition } from "@/store/windowStore";
 import { DEFAULT_PINNED_APPS } from "@/store/windowStoreHelpers";
 import { useSettingsStore } from "@/store/settingsStore";
-import { useAppStoreStore } from "@/store/appStoreStore";
 import { APPS } from "@/config/appsConfig";
 import { AppIcon } from "./AppIcon";
 import { useContextMenuClose, closeAllContextMenus } from "@/hooks/useContextMenuClose";
@@ -34,7 +33,6 @@ export const Shelf: React.FC = () => {
     clockFormat,
   } = useWindowStore();
 
-  const { isInstalled } = useAppStoreStore();
   const { volume, soundEnabled } = useSettingsStore();
 
   const mounted = useSyncExternalStore(() => () => { }, () => true, () => false);
@@ -108,7 +106,7 @@ export const Shelf: React.FC = () => {
 
   const pinnedAppDefs = effectivePinnedApps
     .map((id) => APPS.find((a) => a.id === id))
-    .filter((a): a is AppDefinition => a !== undefined && Boolean(a.isPreinstalled || a.isSystemApp || isInstalled(a.id)));
+    .filter((a): a is AppDefinition => a !== undefined);
 
   const unpinnedOpenWindows = effectiveWindows.filter((w) => !effectivePinnedApps.includes(w.id));
   const unpinnedOpenDefs = unpinnedOpenWindows

@@ -1,14 +1,12 @@
 import React from "react";
-import { Search, ShoppingBag } from "lucide-react";
-import { APPS } from "@/config/appsConfig";
-import { AppDefinition } from "@/store/windowStore";
+import { Search } from "lucide-react";
+import { useTranslation } from "@/i18n";
 
 interface LauncherSearchBarProps {
   isLight: boolean;
   searchQuery: string;
   setSearchQuery: (v: string) => void;
   searchInputRef: React.RefObject<HTMLInputElement | null>;
-  onOpenApp: (app: AppDefinition) => void;
 }
 
 export const LauncherSearchBar: React.FC<LauncherSearchBarProps> = ({
@@ -16,9 +14,8 @@ export const LauncherSearchBar: React.FC<LauncherSearchBarProps> = ({
   searchQuery,
   setSearchQuery,
   searchInputRef,
-  onOpenApp,
 }) => {
-  const appStoreApp = APPS.find((a) => a.id === "app-store");
+  const { t } = useTranslation();
 
   return (
     <div className="flex items-center gap-3">
@@ -33,21 +30,12 @@ export const LauncherSearchBar: React.FC<LauncherSearchBarProps> = ({
         <input
           ref={searchInputRef}
           type="text"
-          placeholder="Cari aplikasi atau fitur Son-OS..."
+          placeholder={t.launcher.searchPlaceholder}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full bg-transparent text-xs font-medium outline-hidden placeholder:text-zinc-400"
         />
       </div>
-
-      {appStoreApp && (
-        <button
-          onClick={() => onOpenApp(appStoreApp)}
-          className="flex items-center gap-1.5 px-3 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md transition-colors cursor-pointer shrink-0"
-        >
-          <ShoppingBag size={15} /> App Store
-        </button>
-      )}
     </div>
   );
 };

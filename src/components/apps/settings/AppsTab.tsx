@@ -5,14 +5,12 @@ import {
   Search,
   Globe,
   Cpu,
-  Trash2,
   ExternalLink,
   ShieldCheck,
   RefreshCw,
 } from "lucide-react";
 import { APPS } from "@/data/apps";
 import { AppDefinition, useWindowStore } from "@/store/windowStore";
-import { useAppStoreStore } from "@/store/appStoreStore";
 import { useTranslation, getAppTranslation } from "@/i18n";
 import { AppIcon } from "../../AppIcon";
 
@@ -20,7 +18,7 @@ interface AppsTabProps {
   isLight: boolean;
 }
 
-type AppFilterType = "all" | "entertainment" | "native" | "iframe" | "installed" | "system";
+type AppFilterType = "all" | "portfolio" | "entertainment" | "utility" | "native" | "iframe" | "system";
 
 export const AppsTab: React.FC<AppsTabProps> = ({ isLight }) => {
   const { t, language } = useTranslation();
@@ -28,7 +26,6 @@ export const AppsTab: React.FC<AppsTabProps> = ({ isLight }) => {
   const [filterType, setFilterType] = useState<AppFilterType>("all");
 
   const { openWindow, customTracks, showNotification } = useWindowStore();
-  const { installedApps, setPendingUninstallAppId } = useAppStoreStore();
 
   // Helper to detect stored data per app
   const getAppStoredDataInfo = (appId: string): { hasData: boolean; label: string; key?: string } => {
@@ -70,12 +67,6 @@ export const AppsTab: React.FC<AppsTabProps> = ({ isLight }) => {
           label: saved ? (language === "en" ? "System Preferences" : "Preferensi Sistem") : "Default Config",
           key: "sonos_settings",
         };
-      } else if (appId === "app-store") {
-        return {
-          hasData: installedApps.length > 0,
-          label: `${installedApps.length} ${language === "en" ? "Apps Installed" : "App Terpasang"}`,
-          key: "sonos_installed_apps",
-        };
       }
     } catch { }
 
@@ -108,10 +99,11 @@ export const AppsTab: React.FC<AppsTabProps> = ({ isLight }) => {
     const appCategories = Array.isArray(app.category) ? app.category : app.category ? [app.category] : ["utility"];
 
     let matchesFilter = true;
-    if (filterType === "entertainment") matchesFilter = appCategories.includes("entertainment");
+    if (filterType === "portfolio") matchesFilter = appCategories.includes("portfolio");
+    else if (filterType === "utility") matchesFilter = appCategories.includes("utility");
+    else if (filterType === "entertainment") matchesFilter = appCategories.includes("entertainment");
     else if (filterType === "native") matchesFilter = app.type !== "iframe";
     else if (filterType === "iframe") matchesFilter = app.type === "iframe";
-    else if (filterType === "installed") matchesFilter = installedApps.includes(app.id);
     else if (filterType === "system") matchesFilter = Boolean(app.isSystemApp);
 
     return matchesSearch && matchesFilter;
@@ -138,11 +130,10 @@ export const AppsTab: React.FC<AppsTabProps> = ({ isLight }) => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={language === "en" ? "Search app name or version..." : "Cari nama aplikasi atau versi..."}
-            className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs border outline-hidden transition-all ${
-              isLight
+            className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs border outline-hidden transition-all ${isLight
                 ? "bg-white border-slate-200 text-slate-800 focus:border-blue-500"
                 : "bg-zinc-900 border-white/10 text-white placeholder-zinc-500 focus:border-blue-500"
-            }`}
+              }`}
           />
         </div>
 
@@ -150,8 +141,9 @@ export const AppsTab: React.FC<AppsTabProps> = ({ isLight }) => {
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
           {[
             { id: "all", label: `${t.common.all} (${APPS.length})` },
+            { id: "portfolio", label: t.launcher.portfolio },
+            { id: "utility", label: t.launcher.utility },
             { id: "entertainment", label: t.launcher.entertainment },
-            { id: "installed", label: `${t.common.installed} (${installedApps.length})` },
             { id: "iframe", label: "Iframe App" },
             { id: "native", label: "Native" },
             { id: "system", label: t.launcher.system },
@@ -160,13 +152,12 @@ export const AppsTab: React.FC<AppsTabProps> = ({ isLight }) => {
               key={f.id}
               type="button"
               onClick={() => setFilterType(f.id as AppFilterType)}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
-                filterType === f.id
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer ${filterType === f.id
                   ? "bg-blue-600 text-white shadow-xs"
                   : isLight
-                  ? "bg-slate-200 text-slate-700 hover:bg-slate-300"
-                  : "bg-white/5 text-zinc-300 hover:bg-white/10"
-              }`}
+                    ? "bg-slate-200 text-slate-700 hover:bg-slate-300"
+                    : "bg-white/5 text-zinc-300 hover:bg-white/10"
+                }`}
             >
               {f.label}
             </button>
@@ -177,7 +168,6 @@ export const AppsTab: React.FC<AppsTabProps> = ({ isLight }) => {
       {/* App Table List */}
       <div className="space-y-2">
         {filteredApps.map((app: AppDefinition) => {
-          const isInstalled = installedApps.includes(app.id);
           const isIframe = app.type === "iframe";
           const dataInfo = getAppStoredDataInfo(app.id);
           const appMeta = getAppTranslation(app.id, language);
@@ -186,18 +176,16 @@ export const AppsTab: React.FC<AppsTabProps> = ({ isLight }) => {
           return (
             <div
               key={app.id}
-              className={`p-2.5 sm:p-3 rounded-2xl border flex items-center justify-between gap-3 transition-all ${
-                isLight
+              className={`p-2.5 sm:p-3 rounded-2xl border flex items-center justify-between gap-3 transition-all ${isLight
                   ? "bg-white border-slate-200/80 shadow-xs hover:border-slate-300"
                   : "bg-zinc-900/80 border-white/10 hover:border-white/20 hover:bg-zinc-900"
-              }`}
+                }`}
             >
               {/* Left: Icon, Name, Version, Type & Data Badge */}
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <div
-                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl ${
-                    app.accentColor || "bg-blue-600"
-                  } flex items-center justify-center text-white shadow-md shrink-0`}
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl ${app.accentColor || "bg-blue-600"
+                    } flex items-center justify-center text-white shadow-md shrink-0`}
                 >
                   <AppIcon name={app.icon} size={18} />
                 </div>
@@ -255,17 +243,6 @@ export const AppsTab: React.FC<AppsTabProps> = ({ isLight }) => {
                 >
                   <ExternalLink size={12} /> {t.common.open}
                 </button>
-
-                {!app.isSystemApp && isInstalled && (
-                  <button
-                    type="button"
-                    onClick={() => setPendingUninstallAppId(app.id)}
-                    title={t.common.uninstall}
-                    className="p-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/25 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
-                  >
-                    <Trash2 size={12} /> <span className="hidden sm:inline">{t.common.uninstall}</span>
-                  </button>
-                )}
               </div>
             </div>
           );

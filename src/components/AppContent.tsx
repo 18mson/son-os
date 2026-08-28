@@ -130,15 +130,6 @@ const SettingsApp = dynamic(() => import("./apps/SettingsApp").then((mod) => mod
   ),
 });
 
-const AppStoreApp = dynamic(() => import("./apps/AppStoreApp").then((mod) => mod.AppStoreApp), {
-  loading: () => (
-    <div className="flex flex-col items-center justify-center h-full p-8 text-zinc-400 gap-3">
-      <Loader2 className="animate-spin text-indigo-400" size={28} />
-      <span className="text-xs font-medium">Memuat App Store...</span>
-    </div>
-  ),
-});
-
 const CameraApp = dynamic(() => import("./apps/CameraApp").then((mod) => mod.CameraApp), {
   loading: () => (
     <div className="flex flex-col items-center justify-center h-full p-8 text-zinc-400 gap-3">
@@ -217,8 +208,6 @@ interface AppContentProps {
 
 export const AppContent: React.FC<AppContentProps> = ({ appId }) => {
   switch (appId) {
-    case "app-store":
-      return <AppStoreApp />;
     case "camera":
       return <CameraApp />;
     case "photobooth":

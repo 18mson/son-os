@@ -14,7 +14,7 @@ export const createDesktopActions = (
     const updated = isPinned ? current.filter((id) => id !== appId) : [...current, appId];
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("sonos_pinned_apps", JSON.stringify(updated));
+        localStorage.setItem("sonos-pinned-apps", JSON.stringify(updated));
       } catch {}
     }
     const lang = useSettingsStore.getState().language;
@@ -31,7 +31,7 @@ export const createDesktopActions = (
   reorderPinnedApps: (newOrder: string[]) => {
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("sonos_pinned_apps", JSON.stringify(newOrder));
+        localStorage.setItem("sonos-pinned-apps", JSON.stringify(newOrder));
       } catch {}
     }
     set({ pinnedApps: newOrder });

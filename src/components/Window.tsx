@@ -34,7 +34,6 @@ const FULL_BLEED_APPS = [
   "about",
   "camera",
   "photobooth",
-  "app-store",
   "gallery",
   "music",
   "snake",

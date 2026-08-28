@@ -2,19 +2,6 @@ import { AppDefinition } from "@/store/windowStore";
 
 export const APPS: AppDefinition[] = [
   {
-    id: "app-store",
-    title: "App Store",
-    icon: "ShoppingBag",
-    accentColor: "bg-linear-to-br from-indigo-500 to-violet-700",
-    description: "Jelajahi, pasang, dan kelola aplikasi untuk Son-OS desktop portfolio",
-    type: "static",
-    category: ["system"],
-    isSystemApp: true,
-    isPreinstalled: true,
-    version: "v2.8.16",
-    defaultSize: { w: 840, h: 600 },
-  },
-  {
     id: "japanese-quiz",
     title: "Japanese Quiz",
     icon: "Languages",

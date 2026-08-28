@@ -1,5 +1,5 @@
 import React from "react";
-import { Plus, Trash2, RotateCw, Combine, Scissors, X } from "lucide-react";
+import { Plus, Minus, Trash2, RotateCw, Combine, Scissors, X } from "lucide-react";
 
 interface SplitRange {
   start: number;
@@ -70,21 +70,14 @@ export const PdfSidebarControls: React.FC<PdfSidebarControlsProps> = ({
     );
   };
 
-  const addCurrentPageRange = () => {
-    setSplitRanges((prev) => [
-      ...prev,
-      { start: currentPage, end: currentPage, label: `hal${currentPage}` },
-    ]);
-  };
-
   return (
     <div
-      className={`w-full md:w-64 border-r p-4 space-y-4 shrink-0 overflow-y-auto ${
+      className={`w-full md:w-64 border-r p-4 shrink-0 flex flex-col h-full overflow-hidden ${
         isLight ? "bg-slate-100/90 border-slate-300" : "bg-zinc-900/60 border-white/10"
       }`}
     >
       {activeTab === "viewer" && (
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto space-y-4">
           <h3 className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-700" : "text-zinc-300"}`}>
             Informasi File
           </h3>
@@ -105,7 +98,7 @@ export const PdfSidebarControls: React.FC<PdfSidebarControlsProps> = ({
       )}
 
       {activeTab === "watermark" && (
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto space-y-4">
           <h3 className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-700" : "text-zinc-300"}`}>
             Teks Watermark
           </h3>
@@ -144,7 +137,7 @@ export const PdfSidebarControls: React.FC<PdfSidebarControlsProps> = ({
       )}
 
       {activeTab === "tools" && (
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto space-y-4">
           <h3 className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-700" : "text-zinc-300"}`}>
             Edit Halaman ({currentPage})
           </h3>
@@ -170,8 +163,8 @@ export const PdfSidebarControls: React.FC<PdfSidebarControlsProps> = ({
       )}
 
       {activeTab === "merge" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="flex-1 flex flex-col h-full overflow-hidden space-y-4">
+          <div className="flex items-center justify-between shrink-0">
             <h3 className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-700" : "text-zinc-300"}`}>
               Gabung PDF
             </h3>
@@ -192,7 +185,7 @@ export const PdfSidebarControls: React.FC<PdfSidebarControlsProps> = ({
             </button>
           </div>
 
-          <div className="space-y-2 max-h-48 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto space-y-2 min-h-0 pr-0.5">
             {mergeFiles.length === 0 ? (
               <p className="text-xs opacity-75">Klik + untuk menambah file PDF yang ingin digabungkan.</p>
             ) : (
@@ -215,55 +208,59 @@ export const PdfSidebarControls: React.FC<PdfSidebarControlsProps> = ({
             )}
           </div>
 
-          <button
-            onClick={handleMergePdfs}
-            disabled={mergeFiles.length < 2}
-            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white text-xs font-semibold shadow-md transition-all cursor-pointer"
-          >
-            <Combine size={14} /> Gabungkan {mergeFiles.length} File
-          </button>
+          <div className="shrink-0 pt-2 border-t border-white/5">
+            <button
+              onClick={handleMergePdfs}
+              disabled={mergeFiles.length < 2}
+              className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white text-xs font-semibold shadow-md transition-all cursor-pointer"
+            >
+              <Combine size={14} /> Gabungkan {mergeFiles.length} File
+            </button>
+          </div>
         </div>
       )}
 
       {activeTab === "split" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-700" : "text-zinc-300"}`}>
-              Pisahkan PDF
-            </h3>
-            <button
-              onClick={addSplitRange}
-              className="p-1 rounded-lg bg-rose-600 text-white hover:bg-rose-500 cursor-pointer"
-              title="Tambah Range"
-            >
-              <Plus size={14} />
-            </button>
+        <div className="flex flex-col h-full overflow-hidden space-y-3">
+          {/* Top Fixed Header & Presets */}
+          <div className="space-y-3 shrink-0">
+            <div className="flex items-center justify-between">
+              <h3 className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-700" : "text-zinc-300"}`}>
+                Pisahkan PDF
+              </h3>
+              <button
+                onClick={addSplitRange}
+                className="p-1 rounded-lg bg-rose-600 text-white hover:bg-rose-500 cursor-pointer"
+                title="Tambah Range"
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+
+            {!pdfFile && (
+              <p className="text-xs opacity-75">Buka file PDF terlebih dahulu untuk menggunakan fitur split.</p>
+            )}
+
+            {pdfFile && (
+              <>
+                <div
+                  className={`px-3 py-2 rounded-xl border text-[11px] ${
+                    isLight ? "bg-white/70 border-slate-200 text-slate-600" : "bg-white/5 border-white/10 text-zinc-400"
+                  }`}
+                >
+                  Total: <span className="font-semibold text-rose-500">{numPages} halaman</span>.
+                  <p className="text-[10px] opacity-75 mt-0.5">
+                    Atur rentang atau klik garis gunting pada preview halaman.
+                  </p>
+                </div>
+              </>
+            )}
           </div>
 
-          {!pdfFile && (
-            <p className="text-xs opacity-75">Buka file PDF terlebih dahulu untuk menggunakan fitur split.</p>
-          )}
-
+          {/* Full-Height Scrollable Range Cards List */}
           {pdfFile && (
             <>
-              <div
-                className={`px-3 py-2 rounded-xl border text-[11px] ${
-                  isLight ? "bg-white/70 border-slate-200 text-slate-600" : "bg-white/5 border-white/10 text-zinc-400"
-                }`}
-              >
-                Total: <span className="font-semibold">{numPages} halaman</span>. Tambah range lalu klik Split.
-              </div>
-
-              <button
-                onClick={addCurrentPageRange}
-                className={`w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
-                  isLight ? "bg-white border-slate-300 hover:bg-slate-50" : "bg-white/8 border-white/10 hover:bg-white/12"
-                }`}
-              >
-                <Plus size={12} /> Tambah Halaman Aktif ({currentPage})
-              </button>
-
-              <div className="space-y-3 max-h-52 overflow-y-auto pr-0.5">
+              <div className="flex-1 overflow-y-auto pr-0.5 space-y-2 min-h-0">
                 {splitRanges.map((range, idx) => (
                   <div
                     key={idx}
@@ -272,11 +269,17 @@ export const PdfSidebarControls: React.FC<PdfSidebarControlsProps> = ({
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-semibold opacity-75">Bagian {idx + 1}</span>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-rose-500" />
+                        <span className="text-[11px] font-bold">Bagian {idx + 1}</span>
+                        <span className="text-[10px] opacity-60">
+                          ({Math.max(0, range.end - range.start + 1)} hal)
+                        </span>
+                      </div>
                       {splitRanges.length > 1 && (
                         <button
                           onClick={() => removeSplitRange(idx)}
-                          className="text-rose-400 hover:text-rose-300 cursor-pointer"
+                          className="text-rose-400 hover:text-rose-300 p-0.5 cursor-pointer"
                         >
                           <X size={12} />
                         </button>
@@ -286,29 +289,94 @@ export const PdfSidebarControls: React.FC<PdfSidebarControlsProps> = ({
                     <div className="grid grid-cols-2 gap-1.5">
                       <div>
                         <label className="text-[10px] opacity-60 block mb-0.5">Dari hal.</label>
-                        <input
-                          type="number"
-                          min={1}
-                          max={numPages}
-                          value={range.start}
-                          onChange={(e) => updateSplitRange(idx, "start", Number(e.target.value))}
-                          className={`w-full px-2 py-1 rounded-lg border text-xs outline-none focus:border-rose-500 ${
-                            isLight ? "bg-slate-50 border-slate-300 text-slate-900" : "bg-white/8 border-white/15 text-white"
+                        <div
+                          className={`flex items-center rounded-lg border overflow-hidden transition-colors ${
+                            isLight
+                              ? "bg-slate-50 border-slate-300 focus-within:border-rose-500"
+                              : "bg-white/8 border-white/15 focus-within:border-rose-500"
                           }`}
-                        />
+                        >
+                          <button
+                            type="button"
+                            onClick={() => updateSplitRange(idx, "start", Math.max(1, range.start - 1))}
+                            disabled={range.start <= 1}
+                            className="px-1.5 py-1 hover:bg-black/10 disabled:opacity-30 cursor-pointer text-zinc-400 hover:text-rose-500 transition-colors"
+                            title="Kurang 1 Halaman"
+                          >
+                            <Minus size={11} />
+                          </button>
+                          <input
+                            type="number"
+                            min={1}
+                            max={numPages || 1}
+                            value={range.start}
+                            onChange={(e) =>
+                              updateSplitRange(
+                                idx,
+                                "start",
+                                Math.max(1, Math.min(numPages || 1, Number(e.target.value) || 1))
+                              )
+                            }
+                            className={`w-full text-center py-1 text-xs font-mono font-bold outline-hidden bg-transparent ${
+                              isLight ? "text-slate-900" : "text-white"
+                            }`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => updateSplitRange(idx, "start", Math.min(range.end, range.start + 1))}
+                            disabled={range.start >= range.end}
+                            className="px-1.5 py-1 hover:bg-black/10 disabled:opacity-30 cursor-pointer text-zinc-400 hover:text-rose-500 transition-colors"
+                            title="Tambah 1 Halaman"
+                          >
+                            <Plus size={11} />
+                          </button>
+                        </div>
                       </div>
+
                       <div>
                         <label className="text-[10px] opacity-60 block mb-0.5">Sampai hal.</label>
-                        <input
-                          type="number"
-                          min={1}
-                          max={numPages}
-                          value={range.end}
-                          onChange={(e) => updateSplitRange(idx, "end", Number(e.target.value))}
-                          className={`w-full px-2 py-1 rounded-lg border text-xs outline-none focus:border-rose-500 ${
-                            isLight ? "bg-slate-50 border-slate-300 text-slate-900" : "bg-white/8 border-white/15 text-white"
+                        <div
+                          className={`flex items-center rounded-lg border overflow-hidden transition-colors ${
+                            isLight
+                              ? "bg-slate-50 border-slate-300 focus-within:border-rose-500"
+                              : "bg-white/8 border-white/15 focus-within:border-rose-500"
                           }`}
-                        />
+                        >
+                          <button
+                            type="button"
+                            onClick={() => updateSplitRange(idx, "end", Math.max(range.start, range.end - 1))}
+                            disabled={range.end <= range.start}
+                            className="px-1.5 py-1 hover:bg-black/10 disabled:opacity-30 cursor-pointer text-zinc-400 hover:text-rose-500 transition-colors"
+                            title="Kurang 1 Halaman"
+                          >
+                            <Minus size={11} />
+                          </button>
+                          <input
+                            type="number"
+                            min={1}
+                            max={numPages || 1}
+                            value={range.end}
+                            onChange={(e) =>
+                              updateSplitRange(
+                                idx,
+                                "end",
+                                Math.max(1, Math.min(numPages || 1, Number(e.target.value) || 1))
+                              )
+                            }
+                            className={`w-full text-center py-1 text-xs font-mono font-bold outline-hidden bg-transparent ${
+                              isLight ? "text-slate-900" : "text-white"
+                            }`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => updateSplitRange(idx, "end", Math.min(numPages || 1, range.end + 1))}
+                            disabled={range.end >= (numPages || 1)}
+                            className="px-1.5 py-1 hover:bg-black/10 disabled:opacity-30 cursor-pointer text-zinc-400 hover:text-rose-500 transition-colors"
+                            title="Tambah 1 Halaman"
+                          >
+                            <Plus size={11} />
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -318,7 +386,7 @@ export const PdfSidebarControls: React.FC<PdfSidebarControlsProps> = ({
                         type="text"
                         value={range.label}
                         onChange={(e) => updateSplitRange(idx, "label", e.target.value)}
-                        className={`w-full px-2 py-1 rounded-lg border text-xs outline-none focus:border-rose-500 ${
+                        className={`w-full px-2 py-1 rounded-lg border text-xs outline-hidden focus:border-rose-500 ${
                           isLight ? "bg-slate-50 border-slate-300 text-slate-900" : "bg-white/8 border-white/15 text-white"
                         }`}
                         placeholder="e.g. bab1"
@@ -328,13 +396,16 @@ export const PdfSidebarControls: React.FC<PdfSidebarControlsProps> = ({
                 ))}
               </div>
 
-              <button
-                onClick={handleSplitPdf}
-                disabled={splitRanges.length === 0}
-                className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white text-xs font-semibold shadow-md transition-all cursor-pointer"
-              >
-                <Scissors size={14} /> Split {splitRanges.length} Bagian
-              </button>
+              {/* Action Button Docked at Bottom */}
+              <div className="shrink-0 pt-2 border-t border-white/5">
+                <button
+                  onClick={handleSplitPdf}
+                  disabled={splitRanges.length === 0}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white text-xs font-semibold shadow-md transition-all cursor-pointer"
+                >
+                  <Scissors size={14} /> Split {splitRanges.length} Bagian
+                </button>
+              </div>
             </>
           )}
         </div>

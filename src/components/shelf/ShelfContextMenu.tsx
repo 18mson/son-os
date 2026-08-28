@@ -58,26 +58,24 @@ export const ShelfContextMenu: React.FC<ShelfContextMenuProps> = ({
           <ExternalLink size={14} /> {isOpen ? (language === "en" ? "Bring to Front" : "Bawa ke Depan") : (language === "en" ? "Open App" : "Buka App")}
         </button>
 
-        {app.id !== "app-store" && (
-          <button
-            type="button"
-            onClick={() => {
-              onTogglePin(app.id);
-              onCloseMenu();
-            }}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/10 hover:text-white transition-colors cursor-pointer w-full text-left font-medium"
-          >
-            {isPinned ? (
-              <>
-                <PinOff size={14} className="text-rose-400" /> {t.launcher.unpinFromShelf}
-              </>
-            ) : (
-              <>
-                <Pin size={14} className="text-blue-400" /> {t.launcher.pinToShelf}
-              </>
-            )}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => {
+            onTogglePin(app.id);
+            onCloseMenu();
+          }}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/10 hover:text-white transition-colors cursor-pointer w-full text-left font-medium"
+        >
+          {isPinned ? (
+            <>
+              <PinOff size={14} className="text-rose-400" /> {t.launcher.unpinFromShelf}
+            </>
+          ) : (
+            <>
+              <Pin size={14} className="text-blue-400" /> {t.launcher.pinToShelf}
+            </>
+          )}
+        </button>
 
         {isOpen && (
           <button

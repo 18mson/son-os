@@ -21,9 +21,9 @@ import {
   TrendingUp,
   FolderKanban,
   Rocket,
-  ShoppingBag,
   Laptop,
   Languages,
+  LayoutGrid,
 } from "lucide-react";
 import { useWindowStore } from "@/store/windowStore";
 import { useTranslation } from "@/i18n";
@@ -32,7 +32,7 @@ import { APPS } from "@/data/apps";
 type TabType = "overview" | "portfolio" | "experience" | "skills" | "education" | "accomplishments";
 
 export const AboutApp: React.FC = () => {
-  const { theme, openWindow } = useWindowStore();
+  const { theme, openWindow, toggleLauncher } = useWindowStore();
   const { t, language } = useTranslation();
   const isLight = theme === "light";
   const [activeTab, setActiveTab] = useState<TabType>("overview");
@@ -435,8 +435,8 @@ export const AboutApp: React.FC = () => {
                   <div
                     key={proj.id}
                     className={`rounded-2xl border overflow-hidden transition-all duration-300 ${isLight
-                        ? "bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300"
-                        : "bg-zinc-900/80 border-white/10 hover:border-white/20 shadow-xl"
+                      ? "bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300"
+                      : "bg-zinc-900/80 border-white/10 hover:border-white/20 shadow-xl"
                       }`}
                   >
                     {/* Mockup Header Window Bar */}
@@ -521,8 +521,8 @@ export const AboutApp: React.FC = () => {
                             <div
                               key={hIdx}
                               className={`p-3 rounded-xl border flex items-start gap-2.5 text-xs leading-normal ${isLight
-                                  ? "bg-slate-50/80 border-slate-200/80 text-slate-800"
-                                  : "bg-white/5 border-white/5 text-zinc-200"
+                                ? "bg-slate-50/80 border-slate-200/80 text-slate-800"
+                                : "bg-white/5 border-white/5 text-zinc-200"
                                 }`}
                             >
                               <CheckCircle2 size={15} className="text-emerald-500 shrink-0 mt-0.5" />
@@ -542,8 +542,8 @@ export const AboutApp: React.FC = () => {
                             <span
                               key={techIdx}
                               className={`text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-all ${isLight
-                                  ? "bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200/70"
-                                  : "bg-zinc-800/90 text-zinc-200 border-white/10 hover:bg-white/10"
+                                ? "bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200/70"
+                                : "bg-zinc-800/90 text-zinc-200 border-white/10 hover:bg-white/10"
                                 }`}
                             >
                               {tech}
@@ -577,14 +577,14 @@ export const AboutApp: React.FC = () => {
                           {isSonOs && (
                             <button
                               type="button"
-                              onClick={() => handleLaunchApp("app-store")}
+                              onClick={() => toggleLauncher(true)}
                               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${isLight
-                                  ? "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
-                                  : "bg-blue-500/15 text-blue-300 border-blue-500/30 hover:bg-blue-500/25"
+                                ? "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                                : "bg-blue-500/15 text-blue-300 border-blue-500/30 hover:bg-blue-500/25"
                                 }`}
                             >
-                              <ShoppingBag size={14} />
-                              <span>{t.aboutApp.portfolioExploreApps}</span>
+                              <LayoutGrid size={14} />
+                              <span>{language === "en" ? "Explore App Drawer" : "Buka App Drawer"}</span>
                             </button>
                           )}
                         </div>
@@ -596,8 +596,8 @@ export const AboutApp: React.FC = () => {
                               target="_blank"
                               rel="noopener noreferrer"
                               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${isLight
-                                  ? "bg-white hover:bg-slate-100 text-slate-800 border-slate-300"
-                                  : "bg-white/10 hover:bg-white/15 text-white border-white/10"
+                                ? "bg-white hover:bg-slate-100 text-slate-800 border-slate-300"
+                                : "bg-white/10 hover:bg-white/15 text-white border-white/10"
                                 }`}
                             >
                               <Globe size={14} className="text-blue-400" />
@@ -612,8 +612,8 @@ export const AboutApp: React.FC = () => {
                               target="_blank"
                               rel="noopener noreferrer"
                               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${isLight
-                                  ? "bg-white hover:bg-slate-100 text-slate-800 border-slate-300"
-                                  : "bg-white/10 hover:bg-white/15 text-white border-white/10"
+                                ? "bg-white hover:bg-slate-100 text-slate-800 border-slate-300"
+                                : "bg-white/10 hover:bg-white/15 text-white border-white/10"
                                 }`}
                             >
                               <Code2 size={14} className="text-indigo-400" />

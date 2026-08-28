@@ -266,7 +266,6 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
       const savedLanguage = localStorage.getItem("sonos_language");
       const savedWallpaper = localStorage.getItem("sonos_wallpaper");
       const savedWidgets = localStorage.getItem("sonos_desktop_widgets");
-      const savedPinned = localStorage.getItem("sonos_pinned_apps");
       const savedShortcuts = localStorage.getItem("sonos_desktop_shortcuts");
       const savedSound = localStorage.getItem("sonos_sound_enabled");
       const savedReducedMotion = localStorage.getItem("sonos_reduced_motion");
@@ -286,10 +285,48 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
       if (savedWidgets) {
         try { updates.desktopWidgets = JSON.parse(savedWidgets); } catch {}
       }
+
+      // Silent migration of old install-state data & pinned apps
+      const oldInstalledKey1 = localStorage.getItem("sonos_installed_apps");
+      const oldInstalledKey2 = localStorage.getItem("sonos-installed-apps");
+      const oldInstalledRaw = oldInstalledKey1 || oldInstalledKey2;
+
+      let savedPinned = localStorage.getItem("sonos-pinned-apps");
+      if (!savedPinned) {
+        // Fallback to legacy pinned apps key if present
+        const legacyPinned = localStorage.getItem("sonos_pinned_apps");
+        if (legacyPinned) {
+          savedPinned = legacyPinned;
+          try {
+            localStorage.setItem("sonos-pinned-apps", legacyPinned);
+            localStorage.removeItem("sonos_pinned_apps");
+          } catch {}
+        }
+      }
+
+      if (oldInstalledRaw) {
+        try {
+          const installedIds: string[] = JSON.parse(oldInstalledRaw);
+          if (Array.isArray(installedIds)) {
+            const cleanInstalled = installedIds.filter((id) => id && id !== "app-store");
+            const existingPinned: string[] = savedPinned ? JSON.parse(savedPinned) : [];
+            const merged = Array.from(new Set([...cleanInstalled, ...existingPinned.filter((id) => id !== "app-store")]));
+            localStorage.setItem("sonos-pinned-apps", JSON.stringify(merged));
+            savedPinned = JSON.stringify(merged);
+          }
+        } catch {}
+        try {
+          localStorage.removeItem("sonos_installed_apps");
+          localStorage.removeItem("sonos-installed-apps");
+        } catch {}
+      }
+
       if (savedPinned) {
         try {
-          const parsed = JSON.parse(savedPinned);
-          updates.pinnedApps = parsed.includes("app-store") ? parsed : ["app-store", ...parsed];
+          const parsed: string[] = JSON.parse(savedPinned);
+          if (Array.isArray(parsed)) {
+            updates.pinnedApps = parsed.filter((id) => id !== "app-store");
+          }
         } catch {}
       }
       if (savedShortcuts) {

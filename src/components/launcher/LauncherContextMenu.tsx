@@ -1,8 +1,7 @@
 import React from "react";
-import { ExternalLink, Pin, PinOff, Monitor, Trash2 } from "lucide-react";
+import { ExternalLink, Pin, PinOff, Monitor } from "lucide-react";
 import { APPS } from "@/config/appsConfig";
 import { AppDefinition, DesktopShortcutItem } from "@/store/windowStore";
-import { useAppStoreStore } from "@/store/appStoreStore";
 import { useTranslation, getAppTranslation } from "@/i18n";
 
 interface LauncherContextMenuProps {
@@ -41,11 +40,6 @@ export const LauncherContextMenu: React.FC<LauncherContextMenuProps> = ({
   const isPinned = pinnedApps.includes(appContextMenu.appId);
   const existingShortcut = desktopShortcuts.find((s) => s.appId === targetApp.id);
 
-  const handleUninstall = () => {
-    useAppStoreStore.getState().setPendingUninstallAppId(targetApp.id);
-    onCloseMenu();
-  };
-
   return (
     <div
       ref={menuRef}
@@ -57,8 +51,6 @@ export const LauncherContextMenu: React.FC<LauncherContextMenuProps> = ({
       onClick={(e) => e.stopPropagation()}
       className="z-90 w-52 rounded-2xl bg-zinc-900/98 border border-white/15 p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 select-none"
       data-context-menu
-
-
     >
       <div className="flex flex-col gap-0.5 text-xs text-zinc-200">
         <button
@@ -120,16 +112,6 @@ export const LauncherContextMenu: React.FC<LauncherContextMenuProps> = ({
             ? (language === "en" ? "Remove from Desktop" : "Hapus dari Desktop")
             : t.launcher.addDesktopShortcut}
         </button>
-
-        {!targetApp.isSystemApp && (
-          <button
-            type="button"
-            onClick={handleUninstall}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-rose-600/20 hover:text-rose-300 text-rose-400 transition-colors cursor-pointer w-full text-left font-medium border-t border-white/5 mt-0.5 pt-2"
-          >
-            <Trash2 size={13} /> {t.launcher.uninstallApp}
-          </button>
-        )}
       </div>
     </div>
   );

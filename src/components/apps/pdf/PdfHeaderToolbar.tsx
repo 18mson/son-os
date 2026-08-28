@@ -119,8 +119,8 @@ export const PdfHeaderToolbar: React.FC<PdfHeaderToolbarProps> = ({
         </div>
       </div>
 
-      {/* Persistent Page & Zoom Control Bar */}
-      {pdfBuffer && (
+      {/* Persistent Page & Zoom Control Bar (hidden in split tab as split view has its own grid density controls) */}
+      {pdfBuffer && activeTab !== "split" && (
         <div
           className={`px-4 py-2 border-b flex flex-wrap items-center justify-between gap-3 text-xs shrink-0 ${
             isLight ? "bg-slate-100 border-slate-300 text-slate-800" : "bg-zinc-900/60 border-white/5 text-zinc-300"

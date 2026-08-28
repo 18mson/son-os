@@ -1,6 +1,6 @@
 import { DesktopShortcutItem, DesktopWidgetConfig, WindowState } from './windowStoreTypes';
 
-export const DEFAULT_PINNED_APPS = ["app-store", "japanese-quiz", "lovely-ever", "about", "settings"];
+export const DEFAULT_PINNED_APPS = ["japanese-quiz", "lovely-ever", "about", "settings", "file-manager"];
 
 export const DEFAULT_DESKTOP_SHORTCUTS: DesktopShortcutItem[] = [
   { id: "ds-japanese-quiz", appId: "japanese-quiz", x: 28, y: 28 },
