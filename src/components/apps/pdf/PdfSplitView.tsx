@@ -14,7 +14,9 @@ import {
   X,
   FileText,
   Loader2,
+  Download,
 } from "lucide-react";
+import { renderPageToJpgBlob, handleDownloadSinglePagePdf } from "./pdfOperations";
 
 export interface SplitRange {
   start: number;
@@ -463,6 +465,7 @@ export const PdfSplitView: React.FC<PdfSplitViewProps> = ({
           pageNum={modalPreviewPage}
           numPages={numPages}
           pdfDoc={pdfDoc}
+          pdfBuffer={pdfBuffer}
           partInfo={pageToPartMap.get(modalPreviewPage)}
           onClose={() => setModalPreviewPage(null)}
           onPrevPage={() => setModalPreviewPage((p) => (p && p > 1 ? p - 1 : p))}
@@ -572,18 +575,29 @@ const SplitPageThumbnail: React.FC<SplitPageThumbnailProps> = ({
           )}
 
           {/* Quick Preview Hover Overlay */}
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-1">
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onPreview();
               }}
-              className="p-1.5 rounded-lg bg-white/90 text-zinc-900 hover:bg-white hover:scale-110 transition-all cursor-pointer shadow-md"
-              title="Buka Preview Popup"
+              className="p-1.5 rounded-lg bg-white text-zinc-900 hover:scale-110 transition-all cursor-pointer shadow-md"
+              title="Lihat & Download Halaman"
             >
-              <Eye size={14} />
+              <Eye size={13} />
             </button>
+            {thumbData && (
+              <a
+                href={thumbData}
+                download={`halaman_${pageNum}.jpg`}
+                onClick={(e) => e.stopPropagation()}
+                className="p-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-white hover:scale-110 transition-all cursor-pointer shadow-md"
+                title={`Unduh Halaman ${pageNum} (.jpg)`}
+              >
+                <Download size={13} />
+              </a>
+            )}
           </div>
         </div>
 
@@ -636,6 +650,7 @@ interface PdfPageModalPreviewProps {
   numPages: number;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   pdfDoc: any;
+  pdfBuffer: ArrayBuffer;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   partInfo?: any;
   onClose: () => void;
@@ -648,6 +663,7 @@ const PdfPageModalPreview: React.FC<PdfPageModalPreviewProps> = ({
   pageNum,
   numPages,
   pdfDoc,
+  pdfBuffer,
   partInfo,
   onClose,
   onPrevPage,
@@ -658,6 +674,38 @@ const PdfPageModalPreview: React.FC<PdfPageModalPreviewProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [zoomScale, setZoomScale] = useState(1.0);
   const [loadingPage, setLoadingPage] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleDownloadJpg = async () => {
+    if (!pdfDoc || isExporting) return;
+    try {
+      setIsExporting(true);
+      const res = await renderPageToJpgBlob(pdfDoc, pageNum, { scale: 1.2, quality: 0.85 });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(res.blob);
+      a.download = `halaman_${pageNum}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    } catch (err) {
+      console.error("Failed to export modal page to JPG:", err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!pdfBuffer || isExporting) return;
+    try {
+      setIsExporting(true);
+      await handleDownloadSinglePagePdf(pdfBuffer, pageNum - 1);
+    } catch (err) {
+      console.error("Failed to export modal page to PDF:", err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   // Keyboard navigation (Escape to close, Left/Right arrows to flip pages)
   useEffect(() => {
@@ -732,7 +780,7 @@ const PdfPageModalPreview: React.FC<PdfPageModalPreviewProps> = ({
       >
         {/* Modal Header */}
         <div
-          className={`px-4 py-3 border-b flex items-center justify-between gap-3 shrink-0 ${
+          className={`px-4 py-3 border-b flex flex-wrap items-center justify-between gap-3 shrink-0 ${
             isLight ? "bg-slate-100 border-slate-200" : "bg-zinc-900 border-white/10"
           }`}
         >
@@ -756,8 +804,31 @@ const PdfPageModalPreview: React.FC<PdfPageModalPreviewProps> = ({
             </div>
           </div>
 
-          {/* Navigation & Zoom Tools */}
-          <div className="flex items-center gap-2">
+          {/* Navigation & Zoom & Download Tools */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Quick Download Page Buttons */}
+            <button
+              type="button"
+              onClick={handleDownloadJpg}
+              disabled={isExporting}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-white text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50 transition-all"
+              title={`Unduh Halaman ${pageNum} sebagai file JPG`}
+            >
+              <Download size={13} />
+              <span>Unduh JPG</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDownloadPdf}
+              disabled={isExporting}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50 transition-all"
+              title={`Unduh Halaman ${pageNum} sebagai file PDF`}
+            >
+              <FileText size={13} />
+              <span>Unduh PDF</span>
+            </button>
+
             {/* Prev & Next Buttons */}
             <div className="flex items-center gap-1 border p-0.5 rounded-xl">
               <button

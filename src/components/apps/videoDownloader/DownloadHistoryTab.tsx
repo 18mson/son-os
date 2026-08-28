@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { DownloadHistoryItem } from "./types";
+import { useTranslation } from "@/i18n";
 
 interface DownloadHistoryTabProps {
   history: DownloadHistoryItem[];
@@ -25,6 +26,8 @@ export const DownloadHistoryTab: React.FC<DownloadHistoryTabProps> = ({
   onClearHistory,
   onDeleteItem,
 }) => {
+  const { language } = useTranslation();
+  const isEn = language === "en";
   const [searchQuery, setSearchQuery] = useState("");
   const [playingItem, setPlayingItem] = useState<DownloadHistoryItem | null>(null);
 
@@ -42,7 +45,7 @@ export const DownloadHistoryTab: React.FC<DownloadHistoryTabProps> = ({
 
   const formatDate = (ts: number): string => {
     const d = new Date(ts);
-    return d.toLocaleDateString("id-ID", {
+    return d.toLocaleDateString(isEn ? "en-US" : "id-ID", {
       day: "numeric",
       month: "short",
       hour: "2-digit",
@@ -56,7 +59,7 @@ export const DownloadHistoryTab: React.FC<DownloadHistoryTabProps> = ({
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-white">
           <History size={16} className="text-cyan-400" />
-          <span>Riwayat Unduhan ({history.length})</span>
+          <span>{isEn ? `Download History (${history.length})` : `Riwayat Unduhan (${history.length})`}</span>
         </div>
 
         <div className="flex items-center gap-2">

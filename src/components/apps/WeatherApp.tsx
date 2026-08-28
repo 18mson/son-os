@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Sun, Cloud, CloudRain, CloudLightning, Snowflake, Wind, Droplets, MapPin, Loader2 } from "lucide-react";
+import { useTranslation } from "@/i18n";
 
 interface CityPreset {
   name: string;
@@ -35,6 +36,8 @@ interface WeatherData {
 }
 
 export const WeatherApp: React.FC = () => {
+  const { language } = useTranslation();
+  const isEn = language === "en";
   const [selectedCity, setSelectedCity] = useState<CityPreset>(CITIES[0]);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -90,14 +93,14 @@ export const WeatherApp: React.FC = () => {
   };
 
   const getWeatherDesc = (code: number) => {
-    if (code === 0) return "Cerah";
-    if (code === 1 || code === 2) return "Cerah Berawan";
-    if (code === 3) return "Berawan";
-    if (code >= 51 && code <= 67) return "Hujan Ringan";
-    if (code >= 80 && code <= 82) return "Hujan Lebat";
-    if (code >= 95) return "Badai Petir";
-    if (code >= 71) return "Salju";
-    return "Cerah";
+    if (code === 0) return isEn ? "Clear Sky" : "Cerah";
+    if (code === 1 || code === 2) return isEn ? "Partly Cloudy" : "Cerah Berawan";
+    if (code === 3) return isEn ? "Overcast" : "Berawan";
+    if (code >= 51 && code <= 67) return isEn ? "Light Rain" : "Hujan Ringan";
+    if (code >= 80 && code <= 82) return isEn ? "Heavy Rain" : "Hujan Lebat";
+    if (code >= 95) return isEn ? "Thunderstorm" : "Badai Petir";
+    if (code >= 71) return isEn ? "Snow" : "Salju";
+    return isEn ? "Clear" : "Cerah";
   };
 
   return (
@@ -130,7 +133,7 @@ export const WeatherApp: React.FC = () => {
       {loading ? (
         <div className="flex flex-col items-center justify-center flex-1 py-12 text-zinc-400 gap-2">
           <Loader2 className="animate-spin text-blue-400" size={32} />
-          <span className="text-xs font-medium">Memuat Cuaca...</span>
+          <span className="text-xs font-medium">{isEn ? "Loading Weather..." : "Memuat Cuaca..."}</span>
         </div>
       ) : weather ? (
         <div className="flex-1 flex flex-col justify-center my-3 space-y-4">
@@ -143,7 +146,7 @@ export const WeatherApp: React.FC = () => {
                 {getWeatherDesc(weather.weatherCode)}
               </p>
               <p className="text-[10px] text-zinc-400 mt-0.5">
-                Terasa seperti {weather.feelsLike}°C
+                {isEn ? "Feels like" : "Terasa seperti"} {weather.feelsLike}°C
               </p>
             </div>
 
@@ -157,7 +160,9 @@ export const WeatherApp: React.FC = () => {
             <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
               <Droplets className="text-blue-400 shrink-0" size={20} />
               <div>
-                <span className="text-[10px] text-zinc-400 uppercase font-mono block">Kelembapan</span>
+                <span className="text-[10px] text-zinc-400 uppercase font-mono block">
+                  {isEn ? "Humidity" : "Kelembapan"}
+                </span>
                 <span className="text-sm font-bold text-white font-mono">{weather.humidity}%</span>
               </div>
             </div>
@@ -165,7 +170,9 @@ export const WeatherApp: React.FC = () => {
             <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
               <Wind className="text-cyan-400 shrink-0" size={20} />
               <div>
-                <span className="text-[10px] text-zinc-400 uppercase font-mono block">Angin</span>
+                <span className="text-[10px] text-zinc-400 uppercase font-mono block">
+                  {isEn ? "Wind" : "Angin"}
+                </span>
                 <span className="text-sm font-bold text-white font-mono">{weather.windSpeed} km/h</span>
               </div>
             </div>
@@ -174,12 +181,17 @@ export const WeatherApp: React.FC = () => {
           {/* 5-Day Forecast Grid */}
           <div>
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-2">
-              Prakiraan 5 Hari
+              {isEn ? "5-Day Forecast" : "Prakiraan 5 Hari"}
             </span>
             <div className="grid grid-cols-5 gap-1 sm:gap-2">
               {weather.daily.map((d, idx) => {
                 const dateObj = new Date(d.date);
-                const dayName = idx === 0 ? "Hari Ini" : dateObj.toLocaleDateString("id-ID", { weekday: "short" });
+                const dayName =
+                  idx === 0
+                    ? isEn
+                      ? "Today"
+                      : "Hari Ini"
+                    : dateObj.toLocaleDateString(isEn ? "en-US" : "id-ID", { weekday: "short" });
                 return (
                   <div
                     key={d.date}
@@ -196,7 +208,9 @@ export const WeatherApp: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="text-center py-12 text-zinc-500 text-xs">Gagal memuat data cuaca.</div>
+        <div className="text-center py-12 text-zinc-500 text-xs">
+          {isEn ? "Failed to load weather data." : "Gagal memuat data cuaca."}
+        </div>
       )}
     </div>
   );

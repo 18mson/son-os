@@ -217,7 +217,7 @@ export const APPS: AppDefinition[] = [
     title: "PDF Studio",
     icon: "FileText",
     accentColor: "bg-linear-to-br from-rose-600 to-red-700",
-    description: "PDF Reader, Watermark editor, Page rotation, deletion & Merger",
+    description: "PDF Reader, Watermark editor, Page rotation, deletion, Split/Merger & Convert to JPG dengan Resize",
     type: "static",
     category: ["utility"],
     isSystemApp: false,

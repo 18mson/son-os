@@ -666,7 +666,7 @@ export const id: TranslationSchema = {
     },
     pdf: {
       title: "PDF Studio",
-      description: "Pembaca PDF, editor watermark, rotasi halaman, penghapusan & penggabung dokumen",
+      description: "Pembaca PDF, konversi ke JPG dengan resize, watermark, rotasi, hapus, split & gabung dokumen",
     },
     "file-manager": {
       title: "File Manager",

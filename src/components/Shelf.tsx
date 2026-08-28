@@ -83,15 +83,16 @@ export const Shelf: React.FC = () => {
     const updateTime = () => {
       const now = new Date();
       const is12h = clockFormat === "12h";
+      const localeCode = language === "en" ? "en-US" : "id-ID";
       setTime(
-        now.toLocaleTimeString([], {
+        now.toLocaleTimeString(localeCode, {
           hour: "2-digit",
           minute: "2-digit",
           hour12: is12h,
         })
       );
       setDateStr(
-        now.toLocaleDateString([], {
+        now.toLocaleDateString(localeCode, {
           weekday: "short",
           month: "short",
           day: "numeric",
@@ -102,7 +103,7 @@ export const Shelf: React.FC = () => {
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
-  }, [clockFormat]);
+  }, [clockFormat, language]);
 
   const pinnedAppDefs = effectivePinnedApps
     .map((id) => APPS.find((a) => a.id === id))

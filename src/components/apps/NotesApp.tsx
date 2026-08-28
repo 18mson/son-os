@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Plus, Trash2, StickyNote, Search, Clock, CheckCircle2, ChevronLeft } from "lucide-react";
+import { useTranslation } from "@/i18n";
 
 interface Note {
   id: string;
@@ -61,16 +62,22 @@ export const NotesApp: React.FC = () => {
     return DEFAULT_NOTES;
   });
 
+  const { language } = useTranslation();
   const [activeNoteId, setActiveNoteId] = useState<string>(notes[0]?.id || "");
   const [searchQuery, setSearchQuery] = useState("");
-  const [savedBadge, setSavedBadge] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"saved" | "saving">("saved");
   const [mobileView, setMobileView] = useState<"list" | "editor">("list");
 
-  const activeNote = notes.find((n) => n.id === activeNoteId) || notes[0];
-
+  // Save to localStorage
   useEffect(() => {
-    localStorage.setItem("sonos_notes", JSON.stringify(notes));
+    try {
+      localStorage.setItem("sonos_notes_data", JSON.stringify(notes));
+    } catch {
+      // ignore
+    }
   }, [notes]);
+
+  const activeNote = notes.find((n) => n.id === activeNoteId) || notes[0];
 
   const handleCreateNote = () => {
     const newNote: Note = {
@@ -78,34 +85,36 @@ export const NotesApp: React.FC = () => {
       title: "Catatan Baru",
       content: "",
       updatedAt: Date.now(),
-      color: "from-amber-500/20 to-orange-500/10 border-amber-500/30",
+      color: "from-blue-500/20 to-indigo-500/10 border-blue-500/30",
     };
     setNotes([newNote, ...notes]);
     setActiveNoteId(newNote.id);
     setMobileView("editor");
   };
 
-  const handleDeleteNote = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDeleteNote = (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     const updated = notes.filter((n) => n.id !== id);
     setNotes(updated);
     if (activeNoteId === id) {
       setActiveNoteId(updated[0]?.id || "");
-      if (updated.length === 0) setMobileView("list");
     }
   };
 
   const handleUpdateActiveNote = (field: "title" | "content" | "color", value: string) => {
     if (!activeNote) return;
-    setNotes((prev) =>
-      prev.map((n) =>
-        n.id === activeNote.id
-          ? { ...n, [field]: value, updatedAt: Date.now() }
-          : n
-      )
+    setSaveStatus("saving");
+    const updated = notes.map((n) =>
+      n.id === activeNote.id
+        ? {
+            ...n,
+            [field]: value,
+            updatedAt: Date.now(),
+          }
+        : n
     );
-    setSavedBadge(true);
-    setTimeout(() => setSavedBadge(false), 1500);
+    setNotes(updated);
+    setTimeout(() => setSaveStatus("saved"), 300);
   };
 
   const filteredNotes = notes.filter(
@@ -116,7 +125,8 @@ export const NotesApp: React.FC = () => {
 
   const formatTimestamp = (ts: number) => {
     const d = new Date(ts);
-    return `${d.toLocaleDateString([], { month: "short", day: "numeric" })} ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+    const localeCode = language === "en" ? "en-US" : "id-ID";
+    return `${d.toLocaleDateString(localeCode, { month: "short", day: "numeric" })} ${d.toLocaleTimeString(localeCode, { hour: "2-digit", minute: "2-digit" })}`;
   };
 
   return (
@@ -229,9 +239,9 @@ export const NotesApp: React.FC = () => {
 
             {/* Saved Indicator Badge */}
             <div className="flex items-center gap-2 text-[10px] text-zinc-400">
-              {savedBadge ? (
+              {saveStatus === "saved" ? (
                 <span className="text-emerald-400 flex items-center gap-1 font-medium">
-                  <CheckCircle2 size={12} /> Tersimpan
+                  <CheckCircle2 size={12} /> {language === "en" ? "Saved" : "Tersimpan"}
                 </span>
               ) : (
                 <span className="flex items-center gap-1">

@@ -8,11 +8,12 @@ import {
   ZoomOut,
   AlertCircle,
 } from "lucide-react";
+import { useTranslation } from "@/i18n";
 
 interface PdfHeaderToolbarProps {
   isLight: boolean;
-  activeTab: "viewer" | "watermark" | "merge" | "tools" | "split";
-  setActiveTab: (tab: "viewer" | "watermark" | "merge" | "tools" | "split") => void;
+  activeTab: "viewer" | "watermark" | "merge" | "tools" | "split" | "jpg" | "compress";
+  setActiveTab: (tab: "viewer" | "watermark" | "merge" | "tools" | "split" | "jpg" | "compress") => void;
   pdfBuffer: ArrayBuffer | null;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -45,6 +46,9 @@ export const PdfHeaderToolbar: React.FC<PdfHeaderToolbarProps> = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   numPagesTotal,
 }) => {
+  const { language } = useTranslation();
+  const isEn = language === "en";
+
   return (
     <>
       {/* Compact Header Bar */}
@@ -59,7 +63,7 @@ export const PdfHeaderToolbar: React.FC<PdfHeaderToolbarProps> = ({
             isLight ? "bg-slate-300/60 border-slate-300" : "bg-white/5 border-white/10"
           }`}
         >
-          {(["viewer", "watermark", "tools", "merge", "split"] as const).map((tab) => (
+          {(["viewer", "watermark", "tools", "merge", "split", "jpg", "compress"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -71,7 +75,17 @@ export const PdfHeaderToolbar: React.FC<PdfHeaderToolbarProps> = ({
                   : "text-zinc-400 hover:text-white"
               }`}
             >
-              {tab === "tools" ? "Rotate/Delete" : tab === "merge" ? "Merge" : tab === "split" ? "Split" : tab}
+              {tab === "tools"
+                ? "Rotate/Delete"
+                : tab === "merge"
+                ? "Merge"
+                : tab === "split"
+                ? "Split"
+                : tab === "jpg"
+                ? "Export JPG"
+                : tab === "compress"
+                ? isEn ? "Compress PDF" : "Kompres PDF"
+                : tab}
             </button>
           ))}
         </div>
@@ -91,20 +105,24 @@ export const PdfHeaderToolbar: React.FC<PdfHeaderToolbarProps> = ({
               isLight ? "bg-slate-300 hover:bg-slate-400 text-slate-800" : "bg-white/10 hover:bg-white/20 text-white"
             }`}
           >
-            <Upload size={14} /> Buka PDF
+            <Upload size={14} /> {isEn ? "Open PDF" : "Buka PDF"}
           </button>
+
           {pdfBuffer && (
-            <button
-              onClick={handleDownloadPdf}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-md shadow-rose-600/30 transition-all cursor-pointer"
-            >
-              <Download size={14} /> Export PDF
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleDownloadPdf}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-md shadow-rose-600/30 transition-all cursor-pointer"
+                title={isEn ? "Download complete PDF document" : "Download seluruh dokumen PDF"}
+              >
+                <Download size={14} /> {isEn ? "Export All (.pdf)" : "Export Semua (.pdf)"}
+              </button>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Persistent Page & Zoom Control Bar (hidden in split tab as split view has its own grid density controls) */}
+      {/* Persistent Page & Zoom Control Bar */}
       {pdfBuffer && activeTab !== "split" && (
         <div
           className={`px-4 py-2 border-b flex flex-wrap items-center justify-between gap-3 text-xs shrink-0 ${
@@ -113,7 +131,7 @@ export const PdfHeaderToolbar: React.FC<PdfHeaderToolbarProps> = ({
         >
           {/* Page Navigation */}
           <div className="flex items-center gap-2">
-            <span className="font-medium text-[11px] opacity-75">Halaman:</span>
+            <span className="font-medium text-[11px] opacity-75">{isEn ? "Page:" : "Halaman:"}</span>
             <div
               className={`flex items-center gap-1.5 border px-2 py-1 rounded-xl ${
                 isLight ? "bg-white border-slate-300" : "bg-white/5 border-white/10"

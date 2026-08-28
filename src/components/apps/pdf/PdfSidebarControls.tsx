@@ -1,5 +1,5 @@
 import React from "react";
-import { Plus, Minus, Trash2, RotateCw, Combine, Scissors, X } from "lucide-react";
+import { Plus, Minus, Trash2, RotateCw, Combine, Scissors, X, Image as ImageIcon, Download, Sparkles, FileText } from "lucide-react";
 
 interface SplitRange {
   start: number;
@@ -9,7 +9,7 @@ interface SplitRange {
 
 interface PdfSidebarControlsProps {
   isLight: boolean;
-  activeTab: "viewer" | "watermark" | "merge" | "tools" | "split";
+  activeTab: "viewer" | "watermark" | "merge" | "tools" | "split" | "jpg" | "compress";
   pdfFile: File | null;
   numPages: number;
   currentPage: number;
@@ -29,6 +29,31 @@ interface PdfSidebarControlsProps {
   splitRanges: SplitRange[];
   setSplitRanges: React.Dispatch<React.SetStateAction<SplitRange[]>>;
   handleSplitPdf: () => void;
+  // JPG Export props
+  jpgScale?: number;
+  setJpgScale?: (scale: number) => void;
+  jpgQuality?: number;
+  setJpgQuality?: (q: number) => void;
+  jpgResizeMode?: "scale" | "width" | "height";
+  setJpgResizeMode?: (m: "scale" | "width" | "height") => void;
+  jpgCustomWidth?: number;
+  setJpgCustomWidth?: (w: number) => void;
+  jpgPageScope?: "current" | "all" | "range";
+  setJpgPageScope?: (s: "current" | "all" | "range") => void;
+  jpgPageRange?: string;
+  setJpgPageRange?: (r: string) => void;
+  handleDownloadCurrentPageJpg?: () => void;
+  handleDownloadCurrentPagePdf?: () => void;
+  handleBatchExportJpg?: () => void;
+  isJpgConverting?: boolean;
+  // Compress PDF props
+  pdfCompressScale?: number;
+  setPdfCompressScale?: (v: number) => void;
+  pdfCompressQuality?: number;
+  setPdfCompressQuality?: (v: number) => void;
+  handleCompressPdf?: () => void;
+  isPdfCompressing?: boolean;
+  pdfCompressProgress?: number;
 }
 
 export const PdfSidebarControls: React.FC<PdfSidebarControlsProps> = ({
@@ -52,6 +77,29 @@ export const PdfSidebarControls: React.FC<PdfSidebarControlsProps> = ({
   splitRanges,
   setSplitRanges,
   handleSplitPdf,
+  jpgScale,
+  setJpgScale,
+  jpgQuality,
+  setJpgQuality,
+  jpgResizeMode,
+  setJpgResizeMode,
+  jpgCustomWidth,
+  setJpgCustomWidth,
+  jpgPageScope,
+  setJpgPageScope,
+  jpgPageRange,
+  setJpgPageRange,
+  handleDownloadCurrentPageJpg,
+  handleDownloadCurrentPagePdf,
+  handleBatchExportJpg,
+  isJpgConverting,
+  pdfCompressScale,
+  setPdfCompressScale,
+  pdfCompressQuality,
+  setPdfCompressQuality,
+  handleCompressPdf,
+  isPdfCompressing,
+  pdfCompressProgress,
 }) => {
   const addSplitRange = () => {
     setSplitRanges((prev) => [
@@ -408,6 +456,522 @@ export const PdfSidebarControls: React.FC<PdfSidebarControlsProps> = ({
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {activeTab === "jpg" && (
+        <div className="flex-1 flex flex-col h-full overflow-hidden space-y-3">
+          <div className="shrink-0 space-y-1">
+            <div className="flex items-center justify-between">
+              <h3 className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-700" : "text-zinc-300"} flex items-center gap-1.5`}>
+                <ImageIcon size={14} className="text-rose-500" /> Export ke JPG
+              </h3>
+              {pdfFile && (
+                <span className="text-[10px] px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-500 font-semibold">
+                  Hal {currentPage}/{numPages}
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] opacity-75">
+              Ubah ukuran (resize) dan atur kompresi kualitas gambar agar ukuran file kecil.
+            </p>
+          </div>
+
+          {!pdfFile ? (
+            <p className="text-xs opacity-75">Buka file PDF terlebih dahulu untuk mengonversi ke JPG.</p>
+          ) : (
+            <div className="flex-1 overflow-y-auto pr-0.5 space-y-3.5 min-h-0 text-xs">
+              {/* Page Scope Selection */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold block opacity-80">Pilihan Halaman</label>
+                <div
+                  className={`grid grid-cols-3 gap-1 p-1 rounded-xl border ${
+                    isLight ? "bg-slate-200/80 border-slate-300" : "bg-white/5 border-white/10"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setJpgPageScope?.("current")}
+                    className={`py-1 rounded-lg text-[10px] font-semibold transition-all cursor-pointer ${
+                      jpgPageScope === "current"
+                        ? "bg-rose-600 text-white shadow-xs"
+                        : isLight
+                        ? "text-slate-700 hover:text-slate-900"
+                        : "text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    Hal Ini ({currentPage})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setJpgPageScope?.("all")}
+                    className={`py-1 rounded-lg text-[10px] font-semibold transition-all cursor-pointer ${
+                      jpgPageScope === "all"
+                        ? "bg-rose-600 text-white shadow-xs"
+                        : isLight
+                        ? "text-slate-700 hover:text-slate-900"
+                        : "text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    Semua ({numPages})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setJpgPageScope?.("range")}
+                    className={`py-1 rounded-lg text-[10px] font-semibold transition-all cursor-pointer ${
+                      jpgPageScope === "range"
+                        ? "bg-rose-600 text-white shadow-xs"
+                        : isLight
+                        ? "text-slate-700 hover:text-slate-900"
+                        : "text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    Rentang
+                  </button>
+                </div>
+
+                {jpgPageScope === "range" && (
+                  <div className="pt-1">
+                    <input
+                      type="text"
+                      placeholder="Contoh: 1-3, 5, 7-10"
+                      value={jpgPageRange || ""}
+                      onChange={(e) => setJpgPageRange?.(e.target.value)}
+                      className={`w-full px-2.5 py-1.5 rounded-xl border text-xs outline-hidden focus:border-rose-500 font-mono ${
+                        isLight ? "bg-white border-slate-300 text-slate-900" : "bg-white/8 border-white/10 text-white"
+                      }`}
+                    />
+                    <span className="text-[10px] opacity-60 mt-0.5 block">
+                      Pisahkan dengan koma atau tanda minus (-)
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Resize & Resolution Settings */}
+              <div
+                className={`p-3 rounded-2xl border space-y-2.5 ${
+                  isLight ? "bg-white border-slate-200 shadow-xs" : "bg-white/5 border-white/10"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold opacity-90 flex items-center gap-1">
+                    <Sparkles size={12} className="text-rose-500" /> Resolusi / Resize
+                  </label>
+                  <span className="text-[10px] font-mono font-bold text-rose-500">
+                    {Math.round((jpgScale || 1.0) * 100)}% ({((jpgScale || 1.0)).toFixed(2)}x)
+                  </span>
+                </div>
+
+                {/* Mode Selector */}
+                <div
+                  className={`grid grid-cols-2 gap-1 p-0.5 rounded-xl border ${
+                    isLight ? "bg-slate-100 border-slate-200" : "bg-black/20 border-white/10"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setJpgResizeMode?.("scale")}
+                    className={`py-1 rounded-lg text-[10px] font-semibold transition-all cursor-pointer ${
+                      (jpgResizeMode || "scale") === "scale"
+                        ? "bg-rose-600 text-white shadow-xs"
+                        : isLight
+                        ? "text-slate-700"
+                        : "text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    Skala Persen (%)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setJpgResizeMode?.("width")}
+                    className={`py-1 rounded-lg text-[10px] font-semibold transition-all cursor-pointer ${
+                      jpgResizeMode === "width"
+                        ? "bg-rose-600 text-white shadow-xs"
+                        : isLight
+                        ? "text-slate-700"
+                        : "text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    Lebar Pixel (px)
+                  </button>
+                </div>
+
+                {(jpgResizeMode || "scale") === "scale" ? (
+                  <>
+                    {/* Preset Scale Badges */}
+                    <div className="grid grid-cols-4 gap-1">
+                      {[
+                        { label: "50%", scale: 0.5, desc: "Kecil" },
+                        { label: "75%", scale: 0.75, desc: "Sedang" },
+                        { label: "100%", scale: 1.0, desc: "Standar" },
+                        { label: "150%", scale: 1.5, desc: "HD" },
+                      ].map((p) => {
+                        const isSelected = Math.abs((jpgScale || 1.0) - p.scale) < 0.05;
+                        return (
+                          <button
+                            key={p.label}
+                            type="button"
+                            onClick={() => {
+                              setJpgResizeMode?.("scale");
+                              setJpgScale?.(p.scale);
+                            }}
+                            className={`px-1.5 py-1.5 rounded-lg border text-center transition-all cursor-pointer ${
+                              isSelected
+                                ? "bg-rose-500/15 border-rose-500 text-rose-500 font-bold"
+                                : isLight
+                                ? "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                                : "bg-white/5 border-white/10 text-zinc-300 hover:bg-white/10"
+                            }`}
+                          >
+                            <div className="text-[10px] font-bold leading-tight">{p.label}</div>
+                            <div className="text-[8px] opacity-60 leading-tight">{p.desc}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Custom Scale Range Slider */}
+                    <div>
+                      <div className="flex justify-between text-[10px] opacity-75 mb-1">
+                        <span>Skala Kustom (25% - 200%)</span>
+                        <span className="font-mono">{Math.round((jpgScale || 1.0) * 100)}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min={25}
+                        max={200}
+                        step={5}
+                        value={Math.round((jpgScale || 1.0) * 100)}
+                        onChange={(e) => {
+                          setJpgResizeMode?.("scale");
+                          setJpgScale?.(Number(e.target.value) / 100);
+                        }}
+                        className="w-full accent-rose-500 cursor-pointer h-1.5"
+                      />
+                      <div className="flex justify-between text-[9px] opacity-50 font-mono mt-0.5">
+                        <span>Hemat (25%)</span>
+                        <span>100%</span>
+                        <span>HD (200%)</span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="text-[10px] opacity-75 block">Lebar Target (Pixel)</label>
+                    <div className="grid grid-cols-3 gap-1">
+                      {[600, 1000, 1600].map((w) => (
+                        <button
+                          key={w}
+                          type="button"
+                          onClick={() => setJpgCustomWidth?.(w)}
+                          className={`py-1 rounded-lg border text-[10px] font-mono font-semibold cursor-pointer transition-all ${
+                            jpgCustomWidth === w
+                              ? "bg-rose-500/15 border-rose-500 text-rose-500"
+                              : isLight
+                              ? "bg-slate-50 border-slate-200"
+                              : "bg-white/5 border-white/10 text-zinc-300"
+                          }`}
+                        >
+                          {w}px
+                        </button>
+                      ))}
+                    </div>
+                    <input
+                      type="number"
+                      min={200}
+                      max={4000}
+                      step={50}
+                      value={jpgCustomWidth || 1200}
+                      onChange={(e) => setJpgCustomWidth?.(Number(e.target.value))}
+                      className={`w-full px-2.5 py-1.5 rounded-xl border text-xs outline-hidden focus:border-rose-500 font-mono ${
+                        isLight ? "bg-white border-slate-300 text-slate-900" : "bg-white/8 border-white/10 text-white"
+                      }`}
+                      placeholder="Lebar (px)"
+                    />
+                  </div>
+                )}
+
+                {/* Estimated Dimension badge */}
+                <div
+                  className={`px-2.5 py-1.5 rounded-xl text-[10px] flex items-center justify-between ${
+                    isLight ? "bg-slate-100 text-slate-700" : "bg-black/20 text-zinc-300"
+                  }`}
+                >
+                  <span className="opacity-75">Target Dimensi:</span>
+                  <span className="font-mono font-bold text-rose-500">
+                    {jpgResizeMode === "width"
+                      ? `± ${jpgCustomWidth || 1200} × ${Math.round((jpgCustomWidth || 1200) * 1.414)} px`
+                      : `± ${Math.round(595 * (jpgScale || 1.0))} × ${Math.round(842 * (jpgScale || 1.0))} px`}
+                  </span>
+                </div>
+              </div>
+
+              {/* Compression & Quality Settings */}
+              <div
+                className={`p-3 rounded-2xl border space-y-2.5 ${
+                  isLight ? "bg-white border-slate-200 shadow-xs" : "bg-white/5 border-white/10"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold opacity-90">Kualitas Kompresi JPG</label>
+                  <span className="text-[10px] font-mono font-bold text-amber-500">
+                    {Math.round((jpgQuality || 0.8) * 100)}%
+                  </span>
+                </div>
+
+                {/* Quality Presets */}
+                <div className="grid grid-cols-4 gap-1">
+                  {[
+                    { label: "35%", val: 0.35, text: "Kecil" },
+                    { label: "65%", val: 0.65, text: "Sedang" },
+                    { label: "85%", val: 0.85, text: "Jernih" },
+                    { label: "95%", val: 0.95, text: "Maks" },
+                  ].map((q) => {
+                    const isSelected = Math.abs((jpgQuality || 0.8) - q.val) < 0.05;
+                    return (
+                      <button
+                        key={q.label}
+                        type="button"
+                        onClick={() => setJpgQuality?.(q.val)}
+                        className={`px-1.5 py-1.5 rounded-lg border text-center transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-amber-500/15 border-amber-500 text-amber-500 font-bold"
+                            : isLight
+                            ? "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                            : "bg-white/5 border-white/10 text-zinc-300 hover:bg-white/10"
+                        }`}
+                      >
+                        <div className="text-[10px] font-bold leading-tight">{q.label}</div>
+                        <div className="text-[8px] opacity-60 leading-tight">{q.text}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Quality Slider */}
+                <div>
+                  <input
+                    type="range"
+                    min={15}
+                    max={100}
+                    step={5}
+                    value={Math.round((jpgQuality || 0.8) * 100)}
+                    onChange={(e) => setJpgQuality?.(Number(e.target.value) / 100)}
+                    className="w-full accent-amber-500 cursor-pointer h-1.5"
+                  />
+                  <div className="flex justify-between text-[9px] opacity-50 font-mono mt-0.5">
+                    <span>File Super Ringan</span>
+                    <span>Kualitas Tinggi</span>
+                  </div>
+                </div>
+
+                <p className="text-[10px] opacity-70 leading-relaxed">
+                  💡 Gunakan kualitas <strong>35%–65%</strong> dan skala <strong>50%–75%</strong> untuk menghasilkan ukuran file JPG yang sangat kecil & hemat memori.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-2 pt-1 border-t border-white/5">
+                {jpgPageScope === "current" ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleDownloadCurrentPageJpg}
+                      disabled={isJpgConverting}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white text-xs font-bold shadow-md shadow-rose-600/30 transition-all cursor-pointer"
+                    >
+                      <Download size={14} /> Unduh Halaman {currentPage} (.jpg)
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleDownloadCurrentPagePdf}
+                      disabled={isJpgConverting}
+                      className={`w-full flex items-center justify-center gap-2 py-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                        isLight
+                          ? "bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800"
+                          : "bg-white/5 hover:bg-white/10 border-white/10 text-white"
+                      }`}
+                    >
+                      <FileText size={14} className="text-rose-400" /> Unduh Halaman {currentPage} (.pdf)
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleBatchExportJpg}
+                      disabled={isJpgConverting}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white text-xs font-bold shadow-md shadow-rose-600/30 transition-all cursor-pointer"
+                    >
+                      <Download size={14} />{" "}
+                      {jpgPageScope === "all"
+                        ? `Unduh Semua ${numPages} Halaman (.jpg)`
+                        : `Unduh Rentang Halaman (.jpg)`}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleDownloadCurrentPageJpg}
+                      disabled={isJpgConverting}
+                      className={`w-full flex items-center justify-center gap-2 py-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                        isLight
+                          ? "bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800"
+                          : "bg-white/5 hover:bg-white/10 border-white/10 text-white"
+                      }`}
+                    >
+                      <Download size={13} /> Hanya Halaman Ini ({currentPage}) (.jpg)
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      {activeTab === "compress" && (
+        <div className="flex-1 flex flex-col h-full overflow-hidden space-y-3">
+          <div className="shrink-0 space-y-1">
+            <h3 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${isLight ? "text-slate-700" : "text-zinc-300"}`}>
+              <Sparkles size={12} className="text-rose-500" /> Kompres Ukuran PDF
+            </h3>
+            <p className={`text-[10px] leading-relaxed ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+              Kecilkan ukuran file (misal 100MB menjadi ~10MB). Output tetap dalam format <strong>.pdf</strong>.
+            </p>
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-3">
+            {/* Compression Presets */}
+            <div className={`p-3 rounded-2xl border space-y-2.5 ${isLight ? "bg-white border-slate-200 shadow-xs" : "bg-white/5 border-white/10"}`}>
+              <label className="text-[11px] font-bold opacity-90 block">Level Kompresi</label>
+              <div className="space-y-1.5">
+                {[
+                  {
+                    label: "Ekstrem (Ukuran Sangat Kecil)",
+                    desc: "Hemat s/d 85-90% • Cocok untuk upload cepat / email",
+                    scale: 0.7,
+                    quality: 0.45,
+                  },
+                  {
+                    label: "Sedang (Rekomendasi)",
+                    desc: "Hemat s/d 60-75% • Teks & gambar tetap tajam",
+                    scale: 0.85,
+                    quality: 0.7,
+                  },
+                  {
+                    label: "Ringan (Kualitas Maksimal)",
+                    desc: "Hemat s/d 30-50% • Kualitas gambar mendekati asli",
+                    scale: 1.0,
+                    quality: 0.85,
+                  },
+                ].map((p) => {
+                  const isSelected =
+                    Math.abs((pdfCompressScale || 0.85) - p.scale) < 0.05 &&
+                    Math.abs((pdfCompressQuality || 0.7) - p.quality) < 0.05;
+                  return (
+                    <button
+                      key={p.label}
+                      type="button"
+                      onClick={() => {
+                        setPdfCompressScale?.(p.scale);
+                        setPdfCompressQuality?.(p.quality);
+                      }}
+                      className={`w-full p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-rose-500/15 border-rose-500 text-rose-500"
+                          : isLight
+                          ? "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                          : "bg-white/5 border-white/10 text-zinc-300 hover:bg-white/10"
+                      }`}
+                    >
+                      <div className="text-[11px] font-bold leading-tight">{p.label}</div>
+                      <div className="text-[9px] opacity-60 leading-tight mt-0.5">{p.desc}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Custom Sliders */}
+            <div className={`p-3 rounded-2xl border space-y-3 ${isLight ? "bg-white border-slate-200 shadow-xs" : "bg-white/5 border-white/10"}`}>
+              <label className="text-[11px] font-bold opacity-90 block">Kustomisasi Manual</label>
+
+              {/* Resolution / Scale Slider */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-[10px] opacity-75">
+                  <span>Skala Resolusi Halaman</span>
+                  <span className="font-mono font-bold text-rose-500">{Math.round((pdfCompressScale || 0.85) * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={50}
+                  max={120}
+                  step={5}
+                  value={Math.round((pdfCompressScale || 0.85) * 100)}
+                  onChange={(e) => setPdfCompressScale?.(Number(e.target.value) / 100)}
+                  className="w-full accent-rose-500 cursor-pointer h-1.5"
+                />
+                <div className="flex justify-between text-[9px] opacity-50 font-mono">
+                  <span>50% (Kecil)</span>
+                  <span>100% (Asli)</span>
+                </div>
+              </div>
+
+              {/* Quality Slider */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-[10px] opacity-75">
+                  <span>Kualitas Gambar (JPEG Quality)</span>
+                  <span className="font-mono font-bold text-rose-500">{Math.round((pdfCompressQuality || 0.7) * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={20}
+                  max={95}
+                  step={5}
+                  value={Math.round((pdfCompressQuality || 0.7) * 100)}
+                  onChange={(e) => setPdfCompressQuality?.(Number(e.target.value) / 100)}
+                  className="w-full accent-rose-500 cursor-pointer h-1.5"
+                />
+                <div className="flex justify-between text-[9px] opacity-50 font-mono">
+                  <span>20% (Kecil)</span>
+                  <span>95% (HD)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Progress indicator during compression */}
+            {isPdfCompressing && (
+              <div className={`p-3 rounded-2xl border space-y-2 ${isLight ? "bg-amber-50 border-amber-200" : "bg-amber-500/10 border-amber-500/20"}`}>
+                <div className="flex items-center justify-between text-[11px] font-bold text-amber-500">
+                  <span>Mengompresi PDF...</span>
+                  <span className="font-mono">{pdfCompressProgress || 0}%</span>
+                </div>
+                <div className="w-full h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+                  <div
+                    className="h-full bg-linear-to-r from-rose-500 to-amber-500 transition-all duration-200 rounded-full"
+                    style={{ width: `${pdfCompressProgress || 0}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Action Button */}
+          <div className="shrink-0 pt-2 border-t border-white/5">
+            <button
+              type="button"
+              onClick={handleCompressPdf}
+              disabled={isPdfCompressing}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white text-xs font-semibold shadow-md transition-all cursor-pointer"
+            >
+              {isPdfCompressing ? (
+                <>Memproses ({pdfCompressProgress || 0}%)...</>
+              ) : (
+                <><Download size={14} /> Kompres &amp; Unduh PDF</>
+              )}
+            </button>
+          </div>
         </div>
       )}
     </div>

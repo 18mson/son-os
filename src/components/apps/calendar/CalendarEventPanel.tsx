@@ -1,6 +1,7 @@
 import React from "react";
 import { Sparkles, Clock, Trash2, Plus } from "lucide-react";
 import { CalendarEvent } from "./indonesianHolidays";
+import { useTranslation } from "@/i18n";
 
 interface CalendarEventPanelProps {
   isLight: boolean;
@@ -27,6 +28,9 @@ export const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
   newEventTime,
   setNewEventTime,
 }) => {
+  const { language } = useTranslation();
+  const isEn = language === "en";
+
   return (
     <div
       className={`w-full md:w-80 p-4 border-t md:border-t-0 md:border-l flex flex-col justify-between ${
@@ -36,7 +40,7 @@ export const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
       <div>
         <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
           <h3 className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-700" : "text-zinc-400"}`}>
-            {selectedDate.toLocaleDateString("id-ID", {
+            {selectedDate.toLocaleDateString(isEn ? "en-US" : "id-ID", {
               weekday: "long",
               day: "numeric",
               month: "long",
@@ -53,7 +57,15 @@ export const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
           >
             <div className={`flex items-center gap-1.5 font-bold ${selectedHoliday.isCuti ? "text-amber-400" : "text-rose-400"}`}>
               <Sparkles size={14} />
-              <span>{selectedHoliday.isCuti ? "Cuti Bersama Indonesia" : "Hari Libur Nasional Indonesia"}</span>
+              <span>
+                {selectedHoliday.isCuti
+                  ? isEn
+                    ? "Indonesian Collective Leave"
+                    : "Cuti Bersama Indonesia"
+                  : isEn
+                  ? "Indonesian National Holiday"
+                  : "Hari Libur Nasional Indonesia"}
+              </span>
             </div>
             <p className={`font-semibold leading-snug ${isLight ? "text-slate-900" : "text-white"}`}>
               {selectedHoliday.description}
@@ -69,7 +81,7 @@ export const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
         {/* Custom Events List */}
         <div className="space-y-2 max-h-40 md:max-h-56 overflow-y-auto pr-1">
           <span className={`text-[10px] font-bold uppercase tracking-wider block mb-1 ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
-            Acara Pribadi ({selectedEvents.length})
+            {isEn ? `Personal Events (${selectedEvents.length})` : `Acara Pribadi (${selectedEvents.length})`}
           </span>
 
           {selectedEvents.map((evt) => (
@@ -90,7 +102,7 @@ export const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
               <button
                 onClick={() => handleDeleteEvent(evt.id)}
                 className="p-1 text-zinc-400 hover:text-rose-400 transition-colors cursor-pointer"
-                title="Hapus Acara"
+                title={isEn ? "Delete Event" : "Hapus Acara"}
               >
                 <Trash2 size={13} />
               </button>
@@ -98,7 +110,9 @@ export const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
           ))}
 
           {selectedEvents.length === 0 && !selectedHoliday && (
-            <p className="text-center text-xs opacity-60 py-4">Tidak ada acara pribadi untuk tanggal ini.</p>
+            <p className="text-center text-xs opacity-60 py-4">
+              {isEn ? "No personal events for this date." : "Tidak ada acara pribadi untuk tanggal ini."}
+            </p>
           )}
         </div>
       </div>
@@ -107,7 +121,7 @@ export const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
       <form onSubmit={handleAddEvent} className="pt-3 border-t border-white/10 space-y-2 mt-3">
         <input
           type="text"
-          placeholder="Tambah nama acara..."
+          placeholder={isEn ? "Add event title..." : "Tambah nama acara..."}
           value={newEventTitle}
           onChange={(e) => setNewEventTitle(e.target.value)}
           className={`w-full px-3 py-1.5 rounded-lg border text-xs outline-hidden focus:border-blue-500 ${
@@ -127,7 +141,7 @@ export const CalendarEventPanel: React.FC<CalendarEventPanelProps> = ({
             type="submit"
             className="flex-1 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs flex items-center justify-center gap-1 shadow-md transition-colors cursor-pointer min-h-9"
           >
-            <Plus size={14} /> Tambah
+            <Plus size={14} /> {isEn ? "Add" : "Tambah"}
           </button>
         </div>
       </form>

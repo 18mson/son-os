@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Clock as ClockIcon, Timer as TimerIcon, Watch } from "lucide-react";
 import { useWindowStore } from "@/store/windowStore";
 import { useSettingsStore } from "@/store/settingsStore";
+import { useTranslation } from "@/i18n";
 import { StopwatchPanel } from "./clock/StopwatchPanel";
 import { TimerPanel } from "./clock/TimerPanel";
 
@@ -17,6 +18,7 @@ interface Lap {
 
 export const ClockApp: React.FC = () => {
   const { theme } = useWindowStore();
+  const { language } = useTranslation();
   const clockFormat = useSettingsStore((s) => s.clockFormat);
   const isLight = theme === "light";
   const [activeTab, setActiveTab] = useState<ClockTab>("clock");
@@ -168,7 +170,7 @@ export const ClockApp: React.FC = () => {
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="text-6xl font-mono font-bold tracking-tight text-blue-500">
               {time ? (
-                time.toLocaleTimeString([], {
+                time.toLocaleTimeString(language === "en" ? "en-US" : "id-ID", {
                   hour: "2-digit",
                   minute: "2-digit",
                   second: "2-digit",
@@ -180,7 +182,7 @@ export const ClockApp: React.FC = () => {
             </div>
             <p className={`text-sm font-medium ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
               {time ? (
-                time.toLocaleDateString([], {
+                time.toLocaleDateString(language === "en" ? "en-US" : "id-ID", {
                   weekday: "long",
                   year: "numeric",
                   month: "long",
@@ -191,7 +193,8 @@ export const ClockApp: React.FC = () => {
               )}
             </p>
             <div className="pt-4 flex items-center gap-2 text-xs font-semibold text-zinc-500">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Waktu Lokal (WIB / GMT+7)
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />{" "}
+              {language === "en" ? "Local Time (GMT+7)" : "Waktu Lokal (WIB / GMT+7)"}
             </div>
           </div>
         )}

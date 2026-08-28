@@ -666,7 +666,7 @@ export const en: TranslationSchema = {
     },
     pdf: {
       title: "PDF Studio",
-      description: "PDF Reader, Watermark editor, page rotation, deletion & document merger",
+      description: "PDF Reader, convert to JPG with resize, watermark, rotation, deletion, split & document merger",
     },
     "file-manager": {
       title: "File Manager",
