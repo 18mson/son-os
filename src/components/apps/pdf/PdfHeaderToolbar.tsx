@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  FileText,
   Upload,
   Download,
   ChevronLeft,
@@ -48,26 +47,12 @@ export const PdfHeaderToolbar: React.FC<PdfHeaderToolbarProps> = ({
 }) => {
   return (
     <>
-      {/* Header Bar */}
+      {/* Compact Header Bar */}
       <div
-        className={`px-4 py-3 border-b flex flex-wrap items-center justify-between gap-3 shrink-0 ${
+        className={`px-3 py-2 border-b flex flex-wrap items-center justify-between gap-2 shrink-0 ${
           isLight ? "bg-slate-200/90 border-slate-300" : "bg-zinc-900/90 border-white/10"
         }`}
       >
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-rose-600 flex items-center justify-center text-white shadow-md shadow-rose-600/30">
-            <FileText size={18} />
-          </div>
-          <div>
-            <h1 className={`text-sm font-bold leading-tight ${isLight ? "text-slate-900" : "text-white"}`}>
-              PDF Editor Pro
-            </h1>
-            <p className={`text-[11px] ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
-              Viewer, Watermark, & Tools
-            </p>
-          </div>
-        </div>
-
         {/* Tab Navigation */}
         <div
           className={`flex items-center gap-1 p-1 border rounded-xl overflow-x-auto no-scrollbar max-w-full ${
