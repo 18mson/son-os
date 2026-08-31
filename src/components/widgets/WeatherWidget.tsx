@@ -1,27 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Sun, CloudSun, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { useWindowStore } from "@/store/windowStore";
 import { APPS } from "@/config/appsConfig";
 import { useTranslation, getAppTranslation } from "@/i18n";
-
-const getWeatherDesc = (code: number, isEn: boolean) => {
-  if (code === 0) return isEn ? "Clear Sky" : "Cerah";
-  if (code === 1 || code === 2) return isEn ? "Partly Cloudy" : "Cerah Berawan";
-  if (code === 3) return isEn ? "Overcast" : "Berawan";
-  if (code >= 51 && code <= 67) return isEn ? "Light Rain" : "Hujan Ringan";
-  if (code >= 80 && code <= 82) return isEn ? "Heavy Rain" : "Hujan Lebat";
-  if (code >= 95) return isEn ? "Thunderstorm" : "Badai Petir";
-  if (code >= 71) return isEn ? "Snow" : "Salju";
-  return isEn ? "Clear" : "Cerah";
-};
+import { getWeatherTheme, getWeatherDescription, renderWeatherIcon } from "@/config/weatherTheme";
 
 export const WeatherWidget: React.FC = () => {
   const { t, language } = useTranslation();
   const { openWindow, theme } = useWindowStore();
   const isLight = theme === "light";
-  const [temp, setTemp] = useState<number>(29);
+  const isEn = language === "en";
+  const [temp, setTemp] = useState<number>(32);
   const [weatherCode, setWeatherCode] = useState<number>(1);
 
   useEffect(() => {
@@ -41,7 +32,8 @@ export const WeatherWidget: React.FC = () => {
       });
   }, []);
 
-  const condition = getWeatherDesc(weatherCode, language === "en");
+  const condition = getWeatherDescription(weatherCode, isEn);
+  const palette = getWeatherTheme(weatherCode, temp);
 
   const handleClick = () => {
     const weatherApp = APPS.find((a) => a.id === "weather");
@@ -56,48 +48,50 @@ export const WeatherWidget: React.FC = () => {
       data-widget
       onClick={handleClick}
       title={t.widgets.weather.openTooltip}
-      className={`group relative p-5 rounded-3xl overflow-hidden [clip-path:inset(0_round_1.5rem)] backdrop-blur-xl transition-colors duration-300 cursor-pointer select-none flex flex-col justify-between w-64 h-36 shadow-none ${
+      className={`group relative p-5 rounded-3xl overflow-hidden [clip-path:inset(0_round_1.5rem)] backdrop-blur-xl transition-all duration-300 cursor-pointer select-none flex flex-col justify-between w-64 h-36 bg-linear-to-br ${
         isLight
-          ? "bg-white/45 hover:bg-white/55 border border-white/70 text-slate-900"
-          : "bg-zinc-950/45 hover:bg-zinc-950/55 border border-white/15 text-zinc-100"
+          ? `${palette.widgetLightGradient} hover:bg-white/60 text-slate-900 shadow-sm`
+          : `${palette.widgetDarkGradient} hover:bg-zinc-950/65 text-zinc-100 shadow-lg`
       }`}
     >
-      <div className={`flex items-center justify-between transition-colors ${
-        isLight ? "text-slate-600 group-hover:text-slate-900" : "text-zinc-400 group-hover:text-white"
-      }`}>
-        <span className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${
-          isLight ? "text-amber-600" : "text-amber-400"
-        }`}>
+      <div
+        className={`flex items-center justify-between transition-colors ${
+          isLight ? "text-slate-600 group-hover:text-slate-900" : "text-zinc-400 group-hover:text-white"
+        }`}
+      >
+        <span
+          className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${palette.accentText}`}
+        >
           <MapPin size={13} /> Jakarta, ID
         </span>
-        <div className={`p-1 rounded-xl ${
-          isLight ? "bg-amber-100 text-amber-600" : "bg-amber-500/20 text-amber-400"
-        }`}>
-          <Sun size={16} className="animate-spin-slow" />
+        <div className={`p-1.5 rounded-xl transition-colors ${palette.badgeBg}`}>
+          {renderWeatherIcon(weatherCode, 16, isLight)}
         </div>
       </div>
 
       <div className="flex items-baseline justify-between">
         <div>
           <div className="flex items-start">
-            <span className={`text-4xl font-black tracking-tight leading-none transition-colors ${
-              isLight ? "text-slate-900 group-hover:text-amber-700" : "text-white group-hover:text-amber-200"
-            }`}>
+            <span
+              className={`text-4xl font-black tracking-tight leading-none transition-colors ${
+                isLight ? "text-slate-900" : "text-white"
+              }`}
+            >
               {temp}
             </span>
-            <span className={`text-xl font-bold ml-0.5 ${isLight ? "text-amber-600" : "text-amber-400"}`}>°C</span>
+            <span className={`text-xl font-bold ml-0.5 ${palette.accentText}`}>°C</span>
           </div>
-          <span className={`text-xs font-medium mt-1 block transition-colors ${
-            isLight ? "text-slate-600 group-hover:text-slate-800" : "text-zinc-400 group-hover:text-zinc-300"
-          }`}>
+          <span
+            className={`text-xs font-semibold mt-1 block transition-colors ${
+              isLight ? "text-slate-700" : "text-zinc-300"
+            }`}
+          >
             {condition}
           </span>
         </div>
 
-        <div className={`flex items-center gap-1 text-[11px] font-medium ${
-          isLight ? "text-slate-600" : "text-zinc-400"
-        }`}>
-          <CloudSun size={18} className={isLight ? "text-amber-500" : "text-amber-300"} />
+        <div className="flex items-center gap-1">
+          {renderWeatherIcon(weatherCode, 26, isLight)}
         </div>
       </div>
     </div>

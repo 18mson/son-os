@@ -112,12 +112,12 @@ export const CalendarApp: React.FC = () => {
     : ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
   return (
-    <div className={`flex flex-col h-full w-full select-none font-sans overflow-hidden ${
-      isLight ? "bg-slate-50 text-slate-900" : "bg-zinc-950 text-zinc-100"
+    <div className={`flex flex-col h-full w-full select-none font-sans overflow-hidden transition-colors ${
+      isLight ? "bg-slate-100 text-slate-900" : "bg-zinc-950 text-zinc-100"
     }`}>
       {/* Top Bar */}
-      <div className={`px-4 py-3 border-b flex items-center justify-between gap-3 shrink-0 ${
-        isLight ? "bg-slate-200/90 border-slate-300" : "bg-zinc-900/90 border-white/10"
+      <div className={`px-4 py-2.5 border-b flex items-center justify-between gap-3 shrink-0 backdrop-blur-md transition-colors ${
+        isLight ? "bg-white/80 border-slate-200" : "bg-zinc-900/90 border-white/10"
       }`}>
         <div className="flex items-center gap-2.5">
           <div className="p-2 rounded-xl bg-blue-600 text-white shadow-md">
@@ -127,7 +127,7 @@ export const CalendarApp: React.FC = () => {
             <h1 className={`text-sm font-bold tracking-wide ${isLight ? "text-slate-900" : "text-white"}`}>
               {viewMode === "year" ? `${isEn ? "Year" : "Tahun"} ${currentYear}` : `${monthNames[currentMonth]} ${currentYear}`}
             </h1>
-            <p className={`text-[10px] ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+            <p className={`text-[10px] ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
               {isEn ? "Calendar & Events" : "Kalender & Agenda Indonesia"}
             </p>
           </div>
@@ -136,7 +136,7 @@ export const CalendarApp: React.FC = () => {
         <div className="flex items-center gap-2">
           {/* View Mode Toggle: Month vs Year */}
           <div className={`flex items-center rounded-xl border p-0.5 ${
-            isLight ? "bg-slate-300/60 border-slate-300" : "bg-white/5 border-white/10"
+            isLight ? "bg-slate-100 border-slate-200" : "bg-white/5 border-white/10"
           }`}>
             <button
               type="button"
@@ -145,7 +145,7 @@ export const CalendarApp: React.FC = () => {
                 viewMode === "month"
                   ? "bg-blue-600 text-white shadow-xs"
                   : isLight
-                  ? "text-slate-700 hover:text-slate-900"
+                  ? "text-slate-600 hover:text-slate-900"
                   : "text-zinc-400 hover:text-white"
               }`}
             >
@@ -158,7 +158,7 @@ export const CalendarApp: React.FC = () => {
                 viewMode === "year"
                   ? "bg-blue-600 text-white shadow-xs"
                   : isLight
-                  ? "text-slate-700 hover:text-slate-900"
+                  ? "text-slate-600 hover:text-slate-900"
                   : "text-zinc-400 hover:text-white"
               }`}
             >
@@ -169,14 +169,14 @@ export const CalendarApp: React.FC = () => {
           <button
             type="button"
             onClick={goToToday}
-            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-              isLight ? "bg-white text-slate-800 border border-slate-300 hover:bg-slate-100" : "bg-white/10 text-white hover:bg-white/20"
+            className={`px-3 py-1 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
+              isLight ? "bg-white text-slate-800 border border-slate-200 hover:bg-slate-100 shadow-xs" : "bg-white/10 text-white hover:bg-white/20"
             }`}
           >
             {isEn ? "Today" : "Hari Ini"}
           </button>
-          <div className={`flex items-center rounded-lg border p-0.5 ${
-            isLight ? "bg-white border-slate-300" : "bg-white/5 border-white/10"
+          <div className={`flex items-center rounded-xl border p-0.5 ${
+            isLight ? "bg-white border-slate-200 shadow-xs" : "bg-white/5 border-white/10"
           }`}>
             <button
               type="button"

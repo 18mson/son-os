@@ -4,6 +4,7 @@
 import React, { useState } from "react";
 import { ZoomIn, ZoomOut, RotateCw, Download, ChevronLeft, ChevronRight, X, Monitor } from "lucide-react";
 import { useWindowStore } from "@/store/windowStore";
+import { useTranslation } from "@/i18n";
 
 interface GalleryItem {
   id: string;
@@ -60,16 +61,15 @@ const GALLERY_ITEMS: GalleryItem[] = [
 
 const CATEGORIES = ["Semua", "UI/UX", "Web Dev", "Wallpapers", "Photography"];
 
-import { useTranslation } from "@/i18n";
-
 export const GalleryApp: React.FC = () => {
   const { t } = useTranslation();
+  const { theme, setWallpaper, showNotification } = useWindowStore();
+  const isLight = theme === "light";
+
   const [selectedCategory, setSelectedCategory] = useState<string>("Semua");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [rotation, setRotation] = useState<number>(0);
-
-  const { setWallpaper, showNotification } = useWindowStore();
 
   const filteredItems = GALLERY_ITEMS.filter(
     (item) => selectedCategory === "Semua" || item.category === selectedCategory
@@ -113,16 +113,22 @@ export const GalleryApp: React.FC = () => {
   const currentItem = lightboxIndex !== null ? filteredItems[lightboxIndex] : null;
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950 text-zinc-100 select-none p-4 sm:p-5 relative">
+    <div className={`flex flex-col h-full select-none p-4 sm:p-5 relative font-sans transition-colors ${
+      isLight ? "bg-slate-100 text-slate-900" : "bg-zinc-950 text-zinc-100"
+    }`}>
       {/* Category Pill Navigation Header (ChromeOS Media / Gallery Tab Style) */}
-      <div className="flex items-center gap-1.5 border-b border-white/10 pb-3 overflow-x-auto shrink-0">
+      <div className={`flex items-center gap-1.5 border-b pb-3 overflow-x-auto shrink-0 ${
+        isLight ? "border-slate-200" : "border-white/10"
+      }`}>
         {CATEGORIES.map((cat) => (
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer ${
               selectedCategory === cat
                 ? "bg-blue-600 text-white shadow-md"
+                : isLight
+                ? "bg-white text-slate-600 hover:bg-slate-200 border border-slate-200"
                 : "bg-white/5 text-zinc-400 hover:text-zinc-200 hover:bg-white/10"
             }`}
           >
@@ -132,14 +138,17 @@ export const GalleryApp: React.FC = () => {
       </div>
 
       {/* Gallery Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 my-4 overflow-y-auto flex-1 pr-1">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 my-4 overflow-y-auto flex-1 pr-1 no-scrollbar">
         {filteredItems.map((item, idx) => (
           <div
             key={item.id}
             onClick={() => openLightbox(idx)}
-            className="group relative rounded-2xl overflow-hidden border border-white/10 bg-zinc-900 aspect-video cursor-pointer"
+            className={`group relative rounded-2xl overflow-hidden border aspect-video cursor-pointer shadow-xs transition-all ${
+              isLight
+                ? "border-slate-200 bg-white hover:border-slate-300"
+                : "border-white/10 bg-zinc-900 hover:border-white/20"
+            }`}
           >
-            {/* eslint-disable-next-html-element-suppression */}
             <img
               src={item.url}
               alt={item.title}
@@ -150,7 +159,7 @@ export const GalleryApp: React.FC = () => {
               <div className="flex justify-end">
                 <button
                   onClick={(e) => handleSetWallpaper(item.url, item.title, e)}
-                  className="px-2.5 py-1 rounded-lg bg-black/70 hover:bg-blue-600 text-[10px] text-white font-medium flex items-center gap-1.5 backdrop-blur-md transition-colors border border-white/20 shadow-md"
+                  className="px-2.5 py-1 rounded-lg bg-black/70 hover:bg-blue-600 text-[10px] text-white font-medium flex items-center gap-1.5 backdrop-blur-md transition-colors border border-white/20 shadow-md cursor-pointer"
                   title="Jadikan Wallpaper Desktop"
                 >
                   <Monitor size={12} /> Set Wallpaper
@@ -184,7 +193,7 @@ export const GalleryApp: React.FC = () => {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleSetWallpaper(currentItem.url, currentItem.title)}
-                className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md"
+                className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md cursor-pointer"
                 title="Jadikan Wallpaper Desktop"
               >
                 <Monitor size={14} /> Set as Wallpaper
@@ -192,21 +201,21 @@ export const GalleryApp: React.FC = () => {
 
               <button
                 onClick={() => setZoomLevel((z) => Math.min(z + 0.25, 2.5))}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-zinc-200"
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-zinc-200 cursor-pointer"
                 title="Zoom In"
               >
                 <ZoomIn size={16} />
               </button>
               <button
                 onClick={() => setZoomLevel((z) => Math.max(z - 0.25, 0.75))}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-zinc-200"
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-zinc-200 cursor-pointer"
                 title="Zoom Out"
               >
                 <ZoomOut size={16} />
               </button>
               <button
                 onClick={() => setRotation((r) => (r + 90) % 360)}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-zinc-200"
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-zinc-200 cursor-pointer"
                 title="Rotate"
               >
                 <RotateCw size={16} />
@@ -215,14 +224,14 @@ export const GalleryApp: React.FC = () => {
                 href={currentItem.url}
                 target="_blank"
                 rel="noreferrer"
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-zinc-200"
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-zinc-200 cursor-pointer"
                 title="Download / Open Original"
               >
                 <Download size={16} />
               </a>
               <button
                 onClick={closeLightbox}
-                className="p-1.5 rounded-lg bg-rose-600/80 hover:bg-rose-500 text-white"
+                className="p-1.5 rounded-lg bg-rose-600/80 hover:bg-rose-500 text-white cursor-pointer"
                 title="Close"
               >
                 <X size={16} />
@@ -234,13 +243,12 @@ export const GalleryApp: React.FC = () => {
           <div className="flex-1 flex items-center justify-between relative overflow-hidden my-4">
             <button
               onClick={handlePrev}
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white z-10 min-h-11 min-w-11 flex items-center justify-center"
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white z-10 min-h-11 min-w-11 flex items-center justify-center cursor-pointer"
             >
               <ChevronLeft size={24} />
             </button>
 
             <div className="flex-1 flex items-center justify-center overflow-hidden h-full">
-              {/* eslint-disable-next-html-element-suppression */}
               <img
                 src={currentItem.url}
                 alt={currentItem.title}
@@ -253,7 +261,7 @@ export const GalleryApp: React.FC = () => {
 
             <button
               onClick={handleNext}
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white z-10 min-h-11 min-w-11 flex items-center justify-center"
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white z-10 min-h-11 min-w-11 flex items-center justify-center cursor-pointer"
             >
               <ChevronRight size={24} />
             </button>

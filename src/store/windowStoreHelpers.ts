@@ -17,7 +17,7 @@ export const DEFAULT_DESKTOP_WIDGETS: DesktopWidgetConfig[] = [
 export const getInitialDesktopWidgets = (): DesktopWidgetConfig[] => DEFAULT_DESKTOP_WIDGETS;
 export const getInitialPinnedApps = (): string[] => DEFAULT_PINNED_APPS;
 export const getInitialDesktopShortcuts = (): DesktopShortcutItem[] => DEFAULT_DESKTOP_SHORTCUTS;
-export const getInitialWallpaper = (): string => "default";
+export const getInitialWallpaper = (): string => "fractal-cyber";
 export const getInitialSoundEnabled = (): boolean => true;
 export const getInitialMediaVolume = (): number => 80;
 export const getInitialWindows = (): WindowState[] => [];

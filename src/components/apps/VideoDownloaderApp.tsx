@@ -10,6 +10,7 @@ import {
   History,
   AlertCircle,
 } from "lucide-react";
+import { useWindowStore } from "@/store/windowStore";
 import { VideoStreamInfo, DownloadHistoryItem } from "./videoDownloader/types";
 import { UrlInspector } from "./videoDownloader/UrlInspector";
 import { VideoPreviewCard } from "./videoDownloader/VideoPreviewCard";
@@ -22,6 +23,9 @@ type ActiveTab = "quick" | "batch" | "extractor" | "history";
 const STORAGE_KEY = "sonos_video_downloader_history";
 
 export const VideoDownloaderApp: React.FC = () => {
+  const { theme } = useWindowStore();
+  const isLight = theme === "light";
+
   const [activeTab, setActiveTab] = useState<ActiveTab>("quick");
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -63,31 +67,35 @@ export const VideoDownloaderApp: React.FC = () => {
 
       const data = await res.json();
 
-      if (data.success && data.data) {
-        setCurrentStream(data.data);
-      } else {
-        setError(data.error || "Gagal menemukan video stream pada URL tersebut.");
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Gagal memproses URL video ini.");
       }
+
+      setCurrentStream(data.data);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Terjadi kesalahan jaringan.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Terjadi kesalahan saat memeriksa tautan video."
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDownloadStarted = (stream: VideoStreamInfo) => {
-    const newItem: DownloadHistoryItem = {
-      id: `dl-${Date.now()}`,
-      title: stream.title,
-      url: stream.url,
-      filename: stream.filename,
-      format: stream.mimeType.split("/")[1] || "mp4",
-      sizeBytes: stream.sizeBytes,
+  const handleDownloadStarted = (item: VideoStreamInfo) => {
+    const historyItem: DownloadHistoryItem = {
+      id: `hist-${Date.now()}`,
+      title: item.title,
+      url: item.url || item.proxyUrl,
+      filename: item.filename,
+      thumbnailUrl: item.thumbnailUrl,
+      format: item.mimeType?.includes("audio") ? "mp3" : "mp4",
+      sizeBytes: item.sizeBytes,
       downloadedAt: Date.now(),
       status: "completed",
     };
-
-    const updated = [newItem, ...history.filter((h) => h.url !== stream.url)].slice(0, 50);
+    const updated = [historyItem, ...history.filter((h) => h.id !== historyItem.id)];
     saveHistory(updated);
   };
 
@@ -105,30 +113,42 @@ export const VideoDownloaderApp: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-zinc-950 text-zinc-100 select-none overflow-hidden font-sans relative">
+    <div className={`flex flex-col h-full w-full select-none overflow-hidden font-sans relative transition-colors ${
+      isLight ? "bg-slate-100 text-slate-900" : "bg-zinc-950 text-zinc-100"
+    }`}>
       {/* Top Header Bar */}
-      <div className="px-3 sm:px-4 py-2 sm:py-2.5 border-b border-white/10 bg-zinc-900/90 flex items-center justify-between shrink-0 z-20 backdrop-blur-md">
+      <div className={`px-3 sm:px-4 py-2 sm:py-2.5 border-b flex items-center justify-between shrink-0 z-20 backdrop-blur-md transition-colors ${
+        isLight ? "bg-slate-200/90 border-slate-300" : "bg-zinc-900/90 border-white/10"
+      }`}>
         <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
           <div className="p-1.5 sm:p-2 rounded-xl bg-linear-to-br from-cyan-500 via-blue-600 to-indigo-600 text-white shadow-md shrink-0">
             <DownloadCloud size={17} className="sm:w-5 sm:h-5" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-xs sm:text-sm font-bold text-white tracking-wide truncate">
+            <h1 className={`text-xs sm:text-sm font-bold tracking-wide truncate ${
+              isLight ? "text-slate-900" : "text-white"
+            }`}>
               Video Downloader
             </h1>
-            <p className="text-[9px] sm:text-[10px] text-zinc-400 truncate">
+            <p className={`text-[9px] sm:text-[10px] truncate ${
+              isLight ? "text-slate-600" : "text-zinc-400"
+            }`}>
               Unduh video langsung dari URL, proxy stream, & ekstrak audio MP3
             </p>
           </div>
         </div>
 
         {/* Tab Switcher Pills */}
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-black/40 border border-white/5 shrink-0 overflow-x-auto">
+        <div className={`flex items-center gap-1 p-1 rounded-xl shrink-0 overflow-x-auto border ${
+          isLight ? "bg-slate-100 border-slate-300" : "bg-black/40 border-white/5"
+        }`}>
           <button
             onClick={() => setActiveTab("quick")}
             className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === "quick"
                 ? "bg-cyan-500 text-zinc-950 shadow-md font-bold"
+                : isLight
+                ? "text-slate-600 hover:text-slate-900"
                 : "text-zinc-400 hover:text-white"
             }`}
           >
@@ -141,6 +161,8 @@ export const VideoDownloaderApp: React.FC = () => {
             className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === "batch"
                 ? "bg-cyan-500 text-zinc-950 shadow-md font-bold"
+                : isLight
+                ? "text-slate-600 hover:text-slate-900"
                 : "text-zinc-400 hover:text-white"
             }`}
           >
@@ -153,6 +175,8 @@ export const VideoDownloaderApp: React.FC = () => {
             className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === "extractor"
                 ? "bg-cyan-500 text-zinc-950 shadow-md font-bold"
+                : isLight
+                ? "text-slate-600 hover:text-slate-900"
                 : "text-zinc-400 hover:text-white"
             }`}
           >
@@ -165,13 +189,17 @@ export const VideoDownloaderApp: React.FC = () => {
             className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === "history"
                 ? "bg-cyan-500 text-zinc-950 shadow-md font-bold"
+                : isLight
+                ? "text-slate-600 hover:text-slate-900"
                 : "text-zinc-400 hover:text-white"
             }`}
           >
             <History size={13} />
             <span className="hidden xs:inline">Riwayat</span>
             {history.length > 0 && (
-              <span className="w-4 h-4 rounded-full bg-white/20 text-[9px] flex items-center justify-center font-mono">
+              <span className={`w-4 h-4 rounded-full text-[9px] flex items-center justify-center font-mono ${
+                isLight ? "bg-slate-300 text-slate-800" : "bg-white/20 text-white"
+              }`}>
                 {history.length}
               </span>
             )}
@@ -180,7 +208,7 @@ export const VideoDownloaderApp: React.FC = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-5 flex flex-col gap-4">
+      <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-5 flex flex-col gap-4 no-scrollbar">
         {/* Tab 1: Quick Downloader */}
         {activeTab === "quick" && (
           <div className="flex flex-col gap-4 max-w-4xl mx-auto w-full">

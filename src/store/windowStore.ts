@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { playUiClickSound } from '@/utils/audio';
 import { PLAYLIST } from '@/config/musicConfig';
+import { WALLPAPERS_CYCLE_IDS } from '@/config/wallpaperConfig';
 import { WindowStore } from './windowStoreTypes';
 import {
   getInitialWindows,
@@ -27,8 +28,9 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
   nightLightEnabled: false,
   volume: 80,
   brightness: 100,
+  themeMode: "auto",
   theme: "dark",
-  wallpaper: "default",
+  wallpaper: "fractal-cyber",
   booted: false,
   notification: null,
   pinnedApps: getInitialPinnedApps(),
@@ -93,38 +95,50 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
 
   toggleTheme: () => {
     if (get().soundEnabled) playUiClickSound();
-    const nextTheme = get().theme === 'dark' ? 'light' : 'dark';
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("sonos_theme", nextTheme);
-      } catch {}
-    }
-    set({ theme: nextTheme });
-    // Keep settingsStore in sync
-    import('./settingsStore').then(({ useSettingsStore }) => {
-      useSettingsStore.getState().setTheme(nextTheme);
-    });
+    const currentMode = get().themeMode;
+    // Cycle: dark -> light -> auto -> dark
+    const nextMode: 'dark' | 'light' | 'auto' =
+      currentMode === 'dark' ? 'light' : currentMode === 'light' ? 'auto' : 'dark';
+
+    get().setThemeMode(nextMode);
   },
 
-  setTheme: (theme: 'dark' | 'light') => {
+  setTheme: (theme: 'dark' | 'light' | 'auto') => {
+    get().setThemeMode(theme);
+  },
+
+  setThemeMode: (mode: 'dark' | 'light' | 'auto') => {
     if (get().soundEnabled) playUiClickSound();
+    let resolved: 'dark' | 'light' = 'dark';
+    if (mode === 'auto') {
+      if (typeof window !== "undefined" && window.matchMedia) {
+        resolved = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+    } else {
+      resolved = mode;
+    }
+
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("sonos_theme", theme);
+        localStorage.setItem("sonos_theme_mode", mode);
+        localStorage.setItem("sonos_theme", resolved);
       } catch {}
     }
-    set({ theme });
-    // Keep settingsStore in sync
-    import('./settingsStore').then(({ useSettingsStore }) => {
-      useSettingsStore.getState().setTheme(theme);
+
+    set({ themeMode: mode, theme: resolved });
+
+    // Sync settingsStore & DOM
+    import('./settingsStore').then(({ useSettingsStore, applyThemeDOM }) => {
+      applyThemeDOM(resolved, mode);
+      useSettingsStore.getState().setThemeMode(mode);
     });
   },
 
   cycleWallpaper: () => {
     if (get().soundEnabled) playUiClickSound();
-    const wallpapers = ['default', 'sunset', 'ocean', 'cyberpunk', 'abstract'];
+    const wallpapers = WALLPAPERS_CYCLE_IDS;
     const currentIndex = wallpapers.indexOf(get().wallpaper);
-    const next = wallpapers[(currentIndex + 1) % wallpapers.length];
+    const next = currentIndex >= 0 ? wallpapers[(currentIndex + 1) % wallpapers.length] : wallpapers[0];
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem("sonos_wallpaper", next);
@@ -262,7 +276,7 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
   hydrateFromStorage: () => {
     if (typeof window === "undefined") return;
     try {
-      const savedTheme = localStorage.getItem("sonos_theme") as "dark" | "light" | null;
+      const savedThemeMode = localStorage.getItem("sonos_theme_mode") as "dark" | "light" | "auto" | null;
       const savedLanguage = localStorage.getItem("sonos_language");
       const savedWallpaper = localStorage.getItem("sonos_wallpaper");
       const savedWidgets = localStorage.getItem("sonos_desktop_widgets");
@@ -279,7 +293,15 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
 
       const updates: Partial<WindowStore> = {};
 
-      if (savedTheme === "dark" || savedTheme === "light") updates.theme = savedTheme;
+      const mode: "dark" | "light" | "auto" = savedThemeMode || "auto";
+      updates.themeMode = mode;
+      if (mode === "auto") {
+        const sysTheme = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        updates.theme = sysTheme;
+      } else {
+        updates.theme = mode;
+      }
+
       if (savedLanguage) updates.language = savedLanguage;
       if (savedWallpaper) updates.wallpaper = savedWallpaper;
       if (savedWidgets) {

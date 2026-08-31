@@ -237,7 +237,15 @@ export interface TranslationSchema {
       themeMode: string;
       themeDark: string;
       themeLight: string;
+      themeAuto: string;
+      themeAutoDesc: string;
+      themeAutoActive: string;
       wallpaper: string;
+      wallpaperAll: string;
+      wallpaperFractal: string;
+      wallpaperClassic: string;
+      wallpaperFractalBadge: string;
+      wallpaperClassicBadge: string;
       textScale: string;
       textSmall: string;
       textNormal: string;

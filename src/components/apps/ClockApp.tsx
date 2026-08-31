@@ -123,52 +123,60 @@ export const ClockApp: React.FC = () => {
   };
 
   return (
-    <div className={`flex flex-col h-full w-full select-none font-sans overflow-hidden ${
-      isLight ? "bg-slate-50 text-slate-900" : "bg-zinc-950 text-zinc-100"
-    }`}>
-      {/* Top Tab Bar */}
-      <div className={`px-4 py-2 border-b flex items-center justify-center gap-2 shrink-0 ${
-        isLight ? "bg-slate-200/90 border-slate-300" : "bg-zinc-900/90 border-white/10"
+    <div className={`flex flex-col h-full w-full select-none font-sans p-4 sm:p-5 overflow-hidden rounded-lg transition-colors ${isLight ? "bg-slate-100 text-slate-900" : "bg-zinc-950 text-zinc-100"
       }`}>
-        <button
-          onClick={() => setActiveTab("clock")}
-          className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === "clock"
-              ? "bg-blue-600 text-white shadow-sm"
-              : isLight ? "hover:bg-slate-300 text-slate-700" : "hover:bg-white/10 text-zinc-300"
-          }`}
-        >
-          <ClockIcon size={15} /> Jam Dunia
-        </button>
+      {/* Floating Modern Rounded Segmented Tab Pill */}
+      <div className="flex justify-center shrink-0 mb-4">
+        <div className={`flex items-center gap-1 p-1 rounded-2xl border transition-all ${isLight
+          ? "bg-slate-200/80 border-slate-300/80 shadow-xs"
+          : "bg-white/5 border-white/10 shadow-lg"
+          }`}>
+          <button
+            onClick={() => setActiveTab("clock")}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === "clock"
+              ? "bg-blue-600 text-white shadow-md font-bold"
+              : isLight
+                ? "text-slate-600 hover:text-slate-900 hover:bg-slate-300/50"
+                : "text-zinc-400 hover:text-white hover:bg-white/10"
+              }`}
+          >
+            <ClockIcon size={14} /> Jam Dunia
+          </button>
 
-        <button
-          onClick={() => setActiveTab("stopwatch")}
-          className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === "stopwatch"
-              ? "bg-blue-600 text-white shadow-sm"
-              : isLight ? "hover:bg-slate-300 text-slate-700" : "hover:bg-white/10 text-zinc-300"
-          }`}
-        >
-          <Watch size={15} /> Stopwatch
-        </button>
+          <button
+            onClick={() => setActiveTab("stopwatch")}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === "stopwatch"
+              ? "bg-blue-600 text-white shadow-md font-bold"
+              : isLight
+                ? "text-slate-600 hover:text-slate-900 hover:bg-slate-300/50"
+                : "text-zinc-400 hover:text-white hover:bg-white/10"
+              }`}
+          >
+            <Watch size={14} /> Stopwatch
+          </button>
 
-        <button
-          onClick={() => setActiveTab("timer")}
-          className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === "timer"
-              ? "bg-blue-600 text-white shadow-sm"
-              : isLight ? "hover:bg-slate-300 text-slate-700" : "hover:bg-white/10 text-zinc-300"
-          }`}
-        >
-          <TimerIcon size={15} /> Timer
-        </button>
+          <button
+            onClick={() => setActiveTab("timer")}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === "timer"
+              ? "bg-blue-600 text-white shadow-md font-bold"
+              : isLight
+                ? "text-slate-600 hover:text-slate-900 hover:bg-slate-300/50"
+                : "text-zinc-400 hover:text-white hover:bg-white/10"
+              }`}
+          >
+            <TimerIcon size={14} /> Timer
+          </button>
+        </div>
       </div>
 
-      {/* Main Tab Content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 overflow-y-auto">
+      {/* Main Tab Content inside a Soft Rounded Card */}
+      <div className={`flex-1 flex flex-col items-center justify-center p-6 rounded-3xl border transition-all ${isLight
+        ? "bg-white border-slate-200/90 shadow-sm"
+        : "bg-zinc-900/60 border-white/10 shadow-xl"
+        }`}>
         {activeTab === "clock" && (
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
-            <div className="text-6xl font-mono font-bold tracking-tight text-blue-500">
+            <div className="text-5xl sm:text-6xl font-mono font-bold tracking-tight text-blue-600 dark:text-blue-400">
               {time ? (
                 time.toLocaleTimeString(language === "en" ? "en-US" : "id-ID", {
                   hour: "2-digit",
@@ -180,7 +188,7 @@ export const ClockApp: React.FC = () => {
                 "00:00:00"
               )}
             </div>
-            <p className={`text-sm font-medium ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
+            <p className={`text-sm font-semibold ${isLight ? "text-slate-700" : "text-zinc-300"}`}>
               {time ? (
                 time.toLocaleDateString(language === "en" ? "en-US" : "id-ID", {
                   weekday: "long",
@@ -192,7 +200,7 @@ export const ClockApp: React.FC = () => {
                 ""
               )}
             </p>
-            <div className="pt-4 flex items-center gap-2 text-xs font-semibold text-zinc-500">
+            <div className="pt-2 flex items-center gap-2 text-xs font-semibold text-zinc-500">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />{" "}
               {language === "en" ? "Local Time (GMT+7)" : "Waktu Lokal (WIB / GMT+7)"}
             </div>

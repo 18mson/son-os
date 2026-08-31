@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Sun, Cloud, CloudRain, CloudLightning, Snowflake, Wind, Droplets, MapPin, Loader2 } from "lucide-react";
+import { Wind, Droplets, MapPin, Loader2 } from "lucide-react";
 import { useTranslation } from "@/i18n";
+import { useWindowStore } from "@/store/windowStore";
+import { getWeatherTheme, getWeatherDescription, renderWeatherIcon } from "@/config/weatherTheme";
 
 interface CityPreset {
   name: string;
@@ -37,7 +39,10 @@ interface WeatherData {
 
 export const WeatherApp: React.FC = () => {
   const { language } = useTranslation();
+  const { theme } = useWindowStore();
+  const isLight = theme === "light";
   const isEn = language === "en";
+
   const [selectedCity, setSelectedCity] = useState<CityPreset>(CITIES[0]);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -82,34 +87,25 @@ export const WeatherApp: React.FC = () => {
     };
   }, [selectedCity]);
 
-  const getWeatherIcon = (code: number, size: number = 24) => {
-    if (code === 0 || code === 1) return <Sun size={size} className="text-amber-400" />;
-    if (code === 2 || code === 3) return <Cloud size={size} className="text-zinc-300" />;
-    if (code >= 51 && code <= 67) return <CloudRain size={size} className="text-blue-400" />;
-    if (code >= 80 && code <= 82) return <CloudRain size={size} className="text-cyan-400" />;
-    if (code >= 95) return <CloudLightning size={size} className="text-yellow-400" />;
-    if (code >= 71) return <Snowflake size={size} className="text-cyan-200" />;
-    return <Sun size={size} className="text-amber-400" />;
-  };
-
-  const getWeatherDesc = (code: number) => {
-    if (code === 0) return isEn ? "Clear Sky" : "Cerah";
-    if (code === 1 || code === 2) return isEn ? "Partly Cloudy" : "Cerah Berawan";
-    if (code === 3) return isEn ? "Overcast" : "Berawan";
-    if (code >= 51 && code <= 67) return isEn ? "Light Rain" : "Hujan Ringan";
-    if (code >= 80 && code <= 82) return isEn ? "Heavy Rain" : "Hujan Lebat";
-    if (code >= 95) return isEn ? "Thunderstorm" : "Badai Petir";
-    if (code >= 71) return isEn ? "Snow" : "Salju";
-    return isEn ? "Clear" : "Cerah";
-  };
+  const palette = getWeatherTheme(weather?.weatherCode ?? 1, weather?.temp);
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950 text-zinc-100 select-none p-4 sm:p-5 justify-between">
+    <div
+      className={`flex flex-col h-full select-none p-4 sm:p-5 justify-between font-sans transition-colors rounded-lg ${
+        isLight ? "bg-slate-100 text-slate-900" : "bg-zinc-950 text-zinc-100"
+      }`}
+    >
       {/* Header & City Selection Pill */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-3 gap-2 shrink-0">
-        <div className="flex items-center gap-1.5 text-blue-400 font-bold text-xs sm:text-sm">
+      <div
+        className={`flex items-center justify-between border-b pb-3 gap-2 shrink-0 ${
+          isLight ? "border-slate-200" : "border-white/10"
+        }`}
+      >
+        <div className={`flex items-center gap-1.5 font-bold text-xs sm:text-sm ${palette.accentText}`}>
           <MapPin size={16} />
-          <span>{selectedCity.name}, {selectedCity.country}</span>
+          <span>
+            {selectedCity.name}, {selectedCity.country}
+          </span>
         </div>
 
         {/* City Select Pill */}
@@ -119,10 +115,18 @@ export const WeatherApp: React.FC = () => {
             const found = CITIES.find((c) => c.name === e.target.value);
             if (found) setSelectedCity(found);
           }}
-          className="px-3 py-1.5 rounded-xl bg-white/10 border border-white/10 text-xs text-white focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden cursor-pointer font-medium"
+          className={`px-3 py-1.5 rounded-xl text-xs font-semibold focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-hidden cursor-pointer transition-colors ${
+            isLight
+              ? "bg-white border border-slate-300 text-slate-800 shadow-xs"
+              : "bg-white/10 border border-white/10 text-white"
+          }`}
         >
           {CITIES.map((c) => (
-            <option key={c.name} value={c.name} className="bg-zinc-900 text-white">
+            <option
+              key={c.name}
+              value={c.name}
+              className={isLight ? "bg-white text-slate-900" : "bg-zinc-900 text-white"}
+            >
               {c.name} ({c.country})
             </option>
           ))}
@@ -131,56 +135,103 @@ export const WeatherApp: React.FC = () => {
 
       {/* Main Weather Card */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center flex-1 py-12 text-zinc-400 gap-2">
-          <Loader2 className="animate-spin text-blue-400" size={32} />
+        <div
+          className={`flex flex-col items-center justify-center flex-1 py-12 gap-2 ${
+            isLight ? "text-slate-500" : "text-zinc-400"
+          }`}
+        >
+          <Loader2 className={`animate-spin ${palette.accentText}`} size={32} />
           <span className="text-xs font-medium">{isEn ? "Loading Weather..." : "Memuat Cuaca..."}</span>
         </div>
       ) : weather ? (
         <div className="flex-1 flex flex-col justify-center my-3 space-y-4">
-          <div className="flex items-center justify-between bg-linear-to-br from-blue-900/40 via-indigo-900/30 to-zinc-900 p-5 sm:p-6 rounded-2xl border border-white/10 shadow-lg">
+          <div
+            className={`flex items-center justify-between p-5 sm:p-6 rounded-3xl border shadow-lg transition-all ${
+              isLight ? palette.cardLightGradient : palette.cardDarkGradient
+            }`}
+          >
             <div>
-              <span className="text-4xl sm:text-5xl font-bold font-mono tracking-tight text-white">
-                {weather.temp}°C
-              </span>
-              <p className="text-xs font-medium text-zinc-300 mt-1">
-                {getWeatherDesc(weather.weatherCode)}
+              <div className="flex items-start">
+                <span
+                  className={`text-4xl sm:text-5xl font-black font-mono tracking-tight ${
+                    isLight ? "text-slate-900" : "text-white"
+                  }`}
+                >
+                  {weather.temp}
+                </span>
+                <span className={`text-2xl font-bold ml-0.5 ${palette.accentText}`}>°C</span>
+              </div>
+              <p className={`text-xs font-bold mt-1 ${isLight ? "text-slate-800" : "text-zinc-200"}`}>
+                {getWeatherDescription(weather.weatherCode, isEn)}
               </p>
-              <p className="text-[10px] text-zinc-400 mt-0.5">
+              <p className={`text-[10px] mt-0.5 ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
                 {isEn ? "Feels like" : "Terasa seperti"} {weather.feelsLike}°C
               </p>
             </div>
 
             <div className="flex flex-col items-center p-2">
-              {getWeatherIcon(weather.weatherCode, 52)}
+              {renderWeatherIcon(weather.weatherCode, 52, isLight)}
             </div>
           </div>
 
           {/* Quick Metrics */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
-              <Droplets className="text-blue-400 shrink-0" size={20} />
+            <div
+              className={`flex items-center gap-3 p-3 rounded-2xl border transition-colors ${
+                isLight ? "bg-white border-slate-200 shadow-xs" : "bg-white/5 border-white/10"
+              }`}
+            >
+              <Droplets className="text-blue-500 shrink-0" size={20} />
               <div>
-                <span className="text-[10px] text-zinc-400 uppercase font-mono block">
+                <span
+                  className={`text-[10px] uppercase font-mono block ${
+                    isLight ? "text-slate-500 font-semibold" : "text-zinc-400"
+                  }`}
+                >
                   {isEn ? "Humidity" : "Kelembapan"}
                 </span>
-                <span className="text-sm font-bold text-white font-mono">{weather.humidity}%</span>
+                <span
+                  className={`text-sm font-bold font-mono ${
+                    isLight ? "text-slate-900" : "text-white"
+                  }`}
+                >
+                  {weather.humidity}%
+                </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
-              <Wind className="text-cyan-400 shrink-0" size={20} />
+            <div
+              className={`flex items-center gap-3 p-3 rounded-2xl border transition-colors ${
+                isLight ? "bg-white border-slate-200 shadow-xs" : "bg-white/5 border-white/10"
+              }`}
+            >
+              <Wind className="text-cyan-500 shrink-0" size={20} />
               <div>
-                <span className="text-[10px] text-zinc-400 uppercase font-mono block">
+                <span
+                  className={`text-[10px] uppercase font-mono block ${
+                    isLight ? "text-slate-500 font-semibold" : "text-zinc-400"
+                  }`}
+                >
                   {isEn ? "Wind" : "Angin"}
                 </span>
-                <span className="text-sm font-bold text-white font-mono">{weather.windSpeed} km/h</span>
+                <span
+                  className={`text-sm font-bold font-mono ${
+                    isLight ? "text-slate-900" : "text-white"
+                  }`}
+                >
+                  {weather.windSpeed} km/h
+                </span>
               </div>
             </div>
           </div>
 
           {/* 5-Day Forecast Grid */}
           <div>
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-2">
+            <span
+              className={`text-[10px] font-bold uppercase tracking-wider block mb-2 ${
+                isLight ? "text-slate-600" : "text-zinc-400"
+              }`}
+            >
               {isEn ? "5-Day Forecast" : "Prakiraan 5 Hari"}
             </span>
             <div className="grid grid-cols-5 gap-1 sm:gap-2">
@@ -195,12 +246,34 @@ export const WeatherApp: React.FC = () => {
                 return (
                   <div
                     key={d.date}
-                    className="flex flex-col items-center p-1 sm:p-2 rounded-2xl bg-white/5 border border-white/5 text-center"
+                    className={`flex flex-col items-center p-1.5 sm:p-2.5 rounded-2xl border text-center transition-colors ${
+                      isLight
+                        ? "bg-white border-slate-200 shadow-xs"
+                        : "bg-white/5 border-white/5"
+                    }`}
                   >
-                    <span className="text-[10px] text-zinc-400 font-medium truncate w-full">{dayName}</span>
-                    <div className="my-1 sm:my-1.5">{getWeatherIcon(d.code, 18)}</div>
-                    <span className="text-xs font-bold text-white font-mono">{d.maxTemp}°</span>
-                    <span className="text-[9px] text-zinc-500 font-mono">{d.minTemp}°</span>
+                    <span
+                      className={`text-[10px] font-semibold truncate w-full ${
+                        isLight ? "text-slate-600" : "text-zinc-400"
+                      }`}
+                    >
+                      {dayName}
+                    </span>
+                    <div className="my-1 sm:my-1.5">{renderWeatherIcon(d.code, 18, isLight)}</div>
+                    <span
+                      className={`text-xs font-bold font-mono ${
+                        isLight ? "text-slate-900" : "text-white"
+                      }`}
+                    >
+                      {d.maxTemp}°
+                    </span>
+                    <span
+                      className={`text-[9px] font-mono ${
+                        isLight ? "text-slate-400" : "text-zinc-500"
+                      }`}
+                    >
+                      {d.minTemp}°
+                    </span>
                   </div>
                 );
               })}
@@ -208,7 +281,7 @@ export const WeatherApp: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="text-center py-12 text-zinc-500 text-xs">
+        <div className={`text-center py-12 text-xs ${isLight ? "text-slate-500" : "text-zinc-500"}`}>
           {isEn ? "Failed to load weather data." : "Gagal memuat data cuaca."}
         </div>
       )}

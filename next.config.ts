@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
     "localhost",
     "127.0.0.1",
   ],
+  images: {
+    qualities: [75, 100],
+  },
   serverExternalPackages: ["ffmpeg-static", "youtube-dl-exec"],
   outputFileTracingIncludes: {
     "/api/video-downloader/**": [

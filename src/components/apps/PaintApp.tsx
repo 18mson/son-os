@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { Paintbrush, Eraser, Trash2, Download, Undo2 } from "lucide-react";
+import { useWindowStore } from "@/store/windowStore";
 
 const COLORS = [
   "#ffffff",
@@ -19,6 +20,9 @@ const COLORS = [
 const BRUSH_SIZES = [2, 5, 10, 20, 30];
 
 export const PaintApp: React.FC = () => {
+  const { theme } = useWindowStore();
+  const isLight = theme === "light";
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -45,53 +49,49 @@ export const PaintApp: React.FC = () => {
       canvas.width = width;
       canvas.height = height;
 
-      // Set default dark canvas background
-      ctx.fillStyle = "#09090b";
+      // Set canvas background
+      ctx.fillStyle = isLight ? "#ffffff" : "#09090b";
       ctx.fillRect(0, 0, width, height);
 
       // Save initial canvas state
       const initialData = ctx.getImageData(0, 0, width, height);
       setHistory([initialData]);
     }
-  }, []);
+  }, [isLight]);
 
   const saveCanvasState = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const currentData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    setHistory((prev) => [...prev.slice(-15), currentData]); // Keep last 15 states
+    const state = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    setHistory((prev) => [...prev.slice(-15), state]); // Keep last 15 states
   };
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    setIsDrawing(true);
     const rect = canvas.getBoundingClientRect();
     const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
     const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
 
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
-
     ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.strokeStyle = tool === "eraser" ? "#09090b" : color;
-    ctx.lineWidth = brushSize;
-
-    setIsDrawing(true);
+    ctx.moveTo(clientX - rect.left, clientY - rect.top);
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
@@ -99,10 +99,17 @@ export const PaintApp: React.FC = () => {
     const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
     const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
 
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = brushSize;
 
-    ctx.lineTo(x, y);
+    if (tool === "eraser") {
+      ctx.strokeStyle = isLight ? "#ffffff" : "#09090b";
+    } else {
+      ctx.strokeStyle = color;
+    }
+
+    ctx.lineTo(clientX - rect.left, clientY - rect.top);
     ctx.stroke();
   };
 
@@ -116,18 +123,21 @@ export const PaintApp: React.FC = () => {
   const handleClear = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.fillStyle = "#09090b";
+    ctx.fillStyle = isLight ? "#ffffff" : "#09090b";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     saveCanvasState();
   };
 
   const handleUndo = () => {
     if (history.length <= 1) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
@@ -135,8 +145,10 @@ export const PaintApp: React.FC = () => {
     newHistory.pop(); // Remove current state
     const previousState = newHistory[newHistory.length - 1];
 
-    ctx.putImageData(previousState, 0, 0);
-    setHistory(newHistory);
+    if (previousState) {
+      ctx.putImageData(previousState, 0, 0);
+      setHistory(newHistory);
+    }
   };
 
   const handleDownload = () => {
@@ -150,15 +162,23 @@ export const PaintApp: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950 text-zinc-100 select-none p-3 sm:p-4 gap-3">
+    <div className={`flex flex-col h-full select-none p-3 sm:p-4 gap-3 font-sans transition-colors ${
+      isLight ? "bg-slate-100 text-slate-900" : "bg-zinc-950 text-zinc-100"
+    }`}>
       {/* Toolbar Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3 shrink-0">
+      <div className={`flex flex-wrap items-center justify-between gap-3 border-b pb-3 shrink-0 ${
+        isLight ? "border-slate-200" : "border-white/10"
+      }`}>
         {/* Tools & Size */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setTool("brush")}
-            className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              tool === "brush" ? "bg-blue-600 text-white shadow-md" : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
+            className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+              tool === "brush"
+                ? "bg-blue-600 text-white shadow-md"
+                : isLight
+                ? "bg-white text-slate-700 hover:bg-slate-200 border border-slate-200"
+                : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
             }`}
             title="Kuas"
           >
@@ -167,8 +187,12 @@ export const PaintApp: React.FC = () => {
 
           <button
             onClick={() => setTool("eraser")}
-            className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              tool === "eraser" ? "bg-amber-600 text-white shadow-md" : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
+            className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+              tool === "eraser"
+                ? "bg-amber-600 text-white shadow-md"
+                : isLight
+                ? "bg-white text-slate-700 hover:bg-slate-200 border border-slate-200"
+                : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
             }`}
             title="Penghapus"
           >
@@ -176,15 +200,21 @@ export const PaintApp: React.FC = () => {
           </button>
 
           {/* Brush Sizes */}
-          <div className="h-5 w-px bg-white/15 mx-1 hidden sm:block" />
+          <div className={`h-5 w-px mx-1 hidden sm:block ${isLight ? "bg-slate-300" : "bg-white/15"}`} />
 
           <div className="flex items-center gap-1">
             {BRUSH_SIZES.map((sz) => (
               <button
                 key={sz}
                 onClick={() => setBrushSize(sz)}
-                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
-                  brushSize === sz ? "bg-white/20 text-white ring-2 ring-blue-400" : "text-zinc-400 hover:bg-white/10"
+                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+                  brushSize === sz
+                    ? isLight
+                      ? "bg-slate-200 text-slate-900 ring-2 ring-blue-500"
+                      : "bg-white/20 text-white ring-2 ring-blue-400"
+                    : isLight
+                    ? "text-slate-500 hover:bg-slate-200"
+                    : "text-zinc-400 hover:bg-white/10"
                 }`}
                 title={`Ukuran ${sz}px`}
               >
@@ -204,8 +234,12 @@ export const PaintApp: React.FC = () => {
               <button
                 key={c}
                 onClick={() => setColor(c)}
-                className={`w-6 h-6 rounded-full transition-transform border border-white/20 ${
-                  color === c ? "scale-125 ring-2 ring-blue-400 ring-offset-2 ring-offset-zinc-950" : "hover:scale-110"
+                className={`w-6 h-6 rounded-full transition-transform border cursor-pointer ${
+                  isLight ? "border-slate-300" : "border-white/20"
+                } ${
+                  color === c
+                    ? "scale-125 ring-2 ring-blue-500 ring-offset-2 " + (isLight ? "ring-offset-slate-100" : "ring-offset-zinc-950")
+                    : "hover:scale-110"
                 }`}
                 style={{ backgroundColor: c }}
                 title={c}
@@ -226,7 +260,11 @@ export const PaintApp: React.FC = () => {
           <button
             onClick={handleUndo}
             disabled={history.length <= 1}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 text-zinc-300 transition-colors"
+            className={`p-2 rounded-xl disabled:opacity-40 transition-colors cursor-pointer ${
+              isLight
+                ? "bg-white hover:bg-slate-200 text-slate-700 border border-slate-200"
+                : "bg-white/5 hover:bg-white/10 text-zinc-300"
+            }`}
             title="Urungkan (Undo)"
           >
             <Undo2 size={16} />
@@ -234,7 +272,11 @@ export const PaintApp: React.FC = () => {
 
           <button
             onClick={handleClear}
-            className="p-2 rounded-xl bg-white/5 hover:bg-rose-600/30 text-rose-400 hover:text-rose-200 transition-colors"
+            className={`p-2 rounded-xl transition-colors cursor-pointer ${
+              isLight
+                ? "bg-white hover:bg-rose-100 text-rose-600 border border-rose-200"
+                : "bg-white/5 hover:bg-rose-600/30 text-rose-400 hover:text-rose-200"
+            }`}
             title="Bersihkan Canvas"
           >
             <Trash2 size={16} />
@@ -242,7 +284,7 @@ export const PaintApp: React.FC = () => {
 
           <button
             onClick={handleDownload}
-            className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md"
+            className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md cursor-pointer"
             title="Unduh Gambar PNG"
           >
             <Download size={16} /> Unduh
@@ -251,7 +293,9 @@ export const PaintApp: React.FC = () => {
       </div>
 
       {/* Drawing Canvas Area */}
-      <div ref={containerRef} className="flex-1 w-full h-full rounded-2xl overflow-hidden border border-white/10 bg-zinc-950 relative cursor-crosshair touch-none">
+      <div ref={containerRef} className={`flex-1 w-full h-full rounded-2xl overflow-hidden border relative cursor-crosshair touch-none shadow-sm ${
+        isLight ? "bg-white border-slate-300" : "bg-zinc-950 border-white/10"
+      }`}>
         <canvas
           ref={canvasRef}
           onMouseDown={startDrawing}

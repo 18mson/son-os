@@ -216,17 +216,15 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
           height: isMobile ? "100dvh" : isMaximized ? "calc(100vh - 72px)" : size.h,
           zIndex: zIndex,
         }}
-        className={`flex flex-col ${
-          isMobile ? "rounded-none border-0" : "rounded-t-xl md:rounded-xl border"
-        } overflow-hidden shadow-2xl transition-colors duration-200 select-none ${
-          isLight
+        className={`flex flex-col ${isMobile ? "rounded-none border-0" : "rounded-t-xl md:rounded-xl border"
+          } overflow-hidden shadow-2xl transition-colors duration-200 select-none ${isLight
             ? isActive
               ? "border-slate-300/80 shadow-slate-900/25 bg-slate-100/95 backdrop-blur-2xl ring-1 ring-black/5"
               : "border-slate-300/60 shadow-slate-900/15 bg-slate-100/85 backdrop-blur-xl opacity-95"
             : isActive
               ? "border-white/20 shadow-black/70 bg-zinc-950/90 backdrop-blur-2xl ring-1 ring-white/10"
               : "border-white/10 shadow-black/40 bg-zinc-950/75 backdrop-blur-xl opacity-95"
-        } ${globalCursor}`}
+          } ${globalCursor}`}
         data-window-chrome
       >
         {/* Title bar */}
@@ -234,11 +232,10 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
           data-window-titlebar
           onMouseDown={handleMouseDownTitleBar}
           onDoubleClick={() => !isMobile && toggleMaximizeWindow(id)}
-          className={`h-11 px-3.5 flex items-center justify-between border-b shrink-0 ${
-            isLight
+          className={`h-11 px-3.5 flex items-center justify-between border-b shrink-0 ${isLight
               ? "bg-slate-200/80 border-slate-300/70 text-slate-800"
               : "bg-zinc-900/70 border-white/10 text-zinc-200"
-          } ${isDragging ? "cursor-grabbing" : effectiveMaximized ? "cursor-default" : "cursor-grab"}`}
+            } ${isDragging ? "cursor-grabbing" : effectiveMaximized ? "cursor-default" : "cursor-grab"}`}
         >
           <div className="flex items-center gap-2.5 min-w-0">
             <div className={`p-1.5 rounded-lg text-white ${accentColor || "bg-blue-600"} shadow-sm`}>
@@ -256,9 +253,8 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
               onClick={() => minimizeWindow(id)}
               title="Minimize"
               aria-label="Minimize Window"
-              className={`p-2 sm:p-1.5 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden transition-colors min-w-9 min-h-9 flex items-center justify-center ${
-                isLight ? "hover:bg-slate-300/60 hover:text-slate-900" : "hover:bg-white/10 hover:text-white"
-              }`}
+              className={`p-2 sm:p-1.5 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden transition-colors min-w-9 min-h-9 flex items-center justify-center ${isLight ? "hover:bg-slate-300/60 hover:text-slate-900" : "hover:bg-white/10 hover:text-white"
+                }`}
             >
               <Minus size={14} />
             </button>
@@ -267,9 +263,8 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
                 onClick={() => toggleMaximizeWindow(id)}
                 title={isMaximized ? "Restore" : "Maximize"}
                 aria-label={isMaximized ? "Restore Window" : "Maximize Window"}
-                className={`p-2 sm:p-1.5 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden transition-colors min-w-9 min-h-9 flex items-center justify-center ${
-                  isLight ? "hover:bg-slate-300/60 hover:text-slate-900" : "hover:bg-white/10 hover:text-white"
-                }`}
+                className={`p-2 sm:p-1.5 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-hidden transition-colors min-w-9 min-h-9 flex items-center justify-center ${isLight ? "hover:bg-slate-300/60 hover:text-slate-900" : "hover:bg-white/10 hover:text-white"
+                  }`}
               >
                 {isMaximized ? <Copy size={13} /> : <Square size={13} />}
               </button>
@@ -286,9 +281,8 @@ export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, ch
         </div>
 
         {/* Window Body Content Area */}
-        <div data-window-body className={`flex-1 overflow-auto font-sans select-text ${
-          isLight ? "text-slate-900 bg-white/40" : "text-zinc-100 bg-transparent"
-        } ${FULL_BLEED_APPS.includes(id) ? "p-0 flex flex-col h-full" : "p-3 sm:p-6"
+        <div data-window-body className={`flex-1 overflow-auto font-sans select-text ${isLight ? "text-slate-900 bg-white/40" : "text-zinc-100 bg-transparent"
+          } ${FULL_BLEED_APPS.includes(id) ? "p-0 flex flex-col h-full" : "p-3 sm:p-6"
           }`}>
           {children}
         </div>

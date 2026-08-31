@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Play, Pause, RotateCcw, Trophy, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from "lucide-react";
+import { useWindowStore } from "@/store/windowStore";
 
 const GRID_SIZE = 20; // 20x20 grid
 const SPEED = 120; // ms per tick
@@ -10,6 +11,9 @@ type Direction = "UP" | "DOWN" | "LEFT" | "RIGHT";
 type Position = { x: number; y: number };
 
 export const SnakeGameApp: React.FC = () => {
+  const { theme } = useWindowStore();
+  const isLight = theme === "light";
+
   const [snake, setSnake] = useState<Position[]>([
     { x: 10, y: 10 },
     { x: 10, y: 11 },
@@ -62,64 +66,58 @@ export const SnakeGameApp: React.FC = () => {
   };
 
   const changeDirection = useCallback((newDir: Direction) => {
-    const current = directionRef.current;
-    if (newDir === "UP" && current !== "DOWN") nextDirectionRef.current = "UP";
-    if (newDir === "DOWN" && current !== "UP") nextDirectionRef.current = "DOWN";
-    if (newDir === "LEFT" && current !== "RIGHT") nextDirectionRef.current = "LEFT";
-    if (newDir === "RIGHT" && current !== "LEFT") nextDirectionRef.current = "RIGHT";
+    const currentDir = directionRef.current;
+    if (newDir === "UP" && currentDir !== "DOWN") nextDirectionRef.current = "UP";
+    if (newDir === "DOWN" && currentDir !== "UP") nextDirectionRef.current = "DOWN";
+    if (newDir === "LEFT" && currentDir !== "RIGHT") nextDirectionRef.current = "LEFT";
+    if (newDir === "RIGHT" && currentDir !== "LEFT") nextDirectionRef.current = "RIGHT";
   }, []);
 
-  // Keyboard Event Listener
+  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isPlaying) return;
-      if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
+      if (!isPlaying || isGameOver) return;
+      if (["ArrowUp", "KeyW"].includes(e.code)) {
         e.preventDefault();
         changeDirection("UP");
       }
-      if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
+      if (["ArrowDown", "KeyS"].includes(e.code)) {
         e.preventDefault();
         changeDirection("DOWN");
       }
-      if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
+      if (["ArrowLeft", "KeyA"].includes(e.code)) {
         e.preventDefault();
         changeDirection("LEFT");
       }
-      if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
+      if (["ArrowRight", "KeyD"].includes(e.code)) {
         e.preventDefault();
         changeDirection("RIGHT");
+      }
+      if (e.code === "Space") {
+        e.preventDefault();
+        setIsPlaying((prev) => !prev);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isPlaying, changeDirection]);
+  }, [isPlaying, isGameOver, changeDirection]);
 
-  // Main Game Loop Tick
+  // Main Game Loop
   useEffect(() => {
     if (!isPlaying || isGameOver) return;
 
     const timer = setInterval(() => {
-      const currentDir = nextDirectionRef.current;
-      directionRef.current = currentDir;
+      directionRef.current = nextDirectionRef.current;
+      const dir = directionRef.current;
 
       setSnake((prevSnake) => {
         const head = { ...prevSnake[0] };
 
-        switch (currentDir) {
-          case "UP":
-            head.y -= 1;
-            break;
-          case "DOWN":
-            head.y += 1;
-            break;
-          case "LEFT":
-            head.x -= 1;
-            break;
-          case "RIGHT":
-            head.x += 1;
-            break;
-        }
+        if (dir === "UP") head.y -= 1;
+        if (dir === "DOWN") head.y += 1;
+        if (dir === "LEFT") head.x -= 1;
+        if (dir === "RIGHT") head.x += 1;
 
         // Wall collision check
         if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
@@ -137,15 +135,17 @@ export const SnakeGameApp: React.FC = () => {
 
         const newSnake = [head, ...prevSnake];
 
-        // Food collision check
+        // Food eaten check
         if (head.x === food.x && head.y === food.y) {
-          setScore((s) => {
-            const newScore = s + 10;
-            if (newScore > highScore) {
-              setHighScore(newScore);
-              localStorage.setItem("son-os-snake-highscore", newScore.toString());
+          setScore((prev) => {
+            const nextScore = prev + 10;
+            if (nextScore > highScore) {
+              setHighScore(nextScore);
+              try {
+                localStorage.setItem("son-os-snake-highscore", nextScore.toString());
+              } catch {}
             }
-            return newScore;
+            return nextScore;
           });
 
           setFood(generateFood(newSnake));
@@ -161,20 +161,26 @@ export const SnakeGameApp: React.FC = () => {
   }, [isPlaying, isGameOver, food, highScore, generateFood]);
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950 text-zinc-100 select-none p-4 items-center justify-between font-mono">
+    <div className={`flex flex-col h-full select-none p-4 items-center justify-between font-mono transition-colors ${
+      isLight ? "bg-slate-100 text-slate-900" : "bg-zinc-950 text-zinc-100"
+    }`}>
       {/* Top Header & Score Dashboard */}
-      <div className="w-full flex items-center justify-between border-b border-white/10 pb-3 gap-2 shrink-0">
-        <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+      <div className={`w-full flex items-center justify-between border-b pb-3 gap-2 shrink-0 ${
+        isLight ? "border-slate-200" : "border-white/10"
+      }`}>
+        <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
           <span>🎮 Snake Game</span>
         </div>
 
         <div className="flex items-center gap-4 text-xs font-semibold">
-          <div className="flex items-center gap-1.5 text-amber-400">
+          <div className="flex items-center gap-1.5 text-amber-500">
             <Trophy size={15} />
             <span>High: {highScore}</span>
           </div>
 
-          <div className="bg-white/10 px-3 py-1 rounded-xl text-white font-bold">
+          <div className={`px-3 py-1 rounded-xl font-bold transition-colors ${
+            isLight ? "bg-white border border-slate-300 text-slate-900 shadow-xs" : "bg-white/10 text-white"
+          }`}>
             Skor: {score}
           </div>
         </div>
@@ -183,7 +189,9 @@ export const SnakeGameApp: React.FC = () => {
       {/* Game Board Container */}
       <div
         ref={containerRef}
-        className="relative w-full max-w-85 aspect-square bg-zinc-900 border border-white/15 rounded-2xl overflow-hidden my-auto shadow-2xl flex items-center justify-center"
+        className={`relative w-full max-w-85 aspect-square rounded-2xl overflow-hidden my-auto shadow-2xl flex items-center justify-center border ${
+          isLight ? "bg-zinc-950 border-slate-300 shadow-slate-300/60" : "bg-zinc-900 border-white/15 shadow-black/60"
+        }`}
       >
         {/* Grid cells matrix */}
         <div className="grid grid-cols-20 grid-rows-20 w-full h-full p-1 gap-0.5">
@@ -245,11 +253,17 @@ export const SnakeGameApp: React.FC = () => {
       </div>
 
       {/* On-Screen Mobile & Touch D-Pad Controls */}
-      <div className="w-full flex items-center justify-between pt-2 border-t border-white/10 shrink-0">
+      <div className={`w-full flex items-center justify-between pt-2 border-t shrink-0 ${
+        isLight ? "border-slate-200" : "border-white/10"
+      }`}>
         <button
           onClick={() => setIsPlaying(!isPlaying)}
           disabled={isGameOver}
-          className="p-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-zinc-200 disabled:opacity-30 text-xs font-semibold flex items-center gap-1.5"
+          className={`p-2.5 rounded-xl disabled:opacity-30 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors ${
+            isLight
+              ? "bg-white hover:bg-slate-200 text-slate-800 border border-slate-300 shadow-xs"
+              : "bg-white/10 hover:bg-white/15 text-zinc-200"
+          }`}
         >
           {isPlaying ? <Pause size={16} /> : <Play size={16} />}
           <span>{isPlaying ? "Jeda" : "Lanjut"}</span>
@@ -261,7 +275,11 @@ export const SnakeGameApp: React.FC = () => {
           <button
             onClick={() => changeDirection("UP")}
             aria-label="Panah Atas"
-            className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:bg-emerald-600 text-white flex items-center justify-center min-h-10 cursor-pointer"
+            className={`p-2.5 rounded-xl active:bg-emerald-600 flex items-center justify-center min-h-10 cursor-pointer transition-colors ${
+              isLight
+                ? "bg-white hover:bg-slate-200 text-slate-800 border border-slate-300 shadow-xs"
+                : "bg-white/10 hover:bg-white/20 text-white"
+            }`}
           >
             <ArrowUp size={18} />
           </button>
@@ -270,21 +288,33 @@ export const SnakeGameApp: React.FC = () => {
           <button
             onClick={() => changeDirection("LEFT")}
             aria-label="Panah Kiri"
-            className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:bg-emerald-600 text-white flex items-center justify-center min-h-10 cursor-pointer"
+            className={`p-2.5 rounded-xl active:bg-emerald-600 flex items-center justify-center min-h-10 cursor-pointer transition-colors ${
+              isLight
+                ? "bg-white hover:bg-slate-200 text-slate-800 border border-slate-300 shadow-xs"
+                : "bg-white/10 hover:bg-white/20 text-white"
+            }`}
           >
             <ArrowLeft size={18} />
           </button>
           <button
             onClick={() => changeDirection("DOWN")}
             aria-label="Panah Bawah"
-            className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:bg-emerald-600 text-white flex items-center justify-center min-h-10 cursor-pointer"
+            className={`p-2.5 rounded-xl active:bg-emerald-600 flex items-center justify-center min-h-10 cursor-pointer transition-colors ${
+              isLight
+                ? "bg-white hover:bg-slate-200 text-slate-800 border border-slate-300 shadow-xs"
+                : "bg-white/10 hover:bg-white/20 text-white"
+            }`}
           >
             <ArrowDown size={18} />
           </button>
           <button
             onClick={() => changeDirection("RIGHT")}
             aria-label="Panah Kanan"
-            className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:bg-emerald-600 text-white flex items-center justify-center min-h-10 cursor-pointer"
+            className={`p-2.5 rounded-xl active:bg-emerald-600 flex items-center justify-center min-h-10 cursor-pointer transition-colors ${
+              isLight
+                ? "bg-white hover:bg-slate-200 text-slate-800 border border-slate-300 shadow-xs"
+                : "bg-white/10 hover:bg-white/20 text-white"
+            }`}
           >
             <ArrowRight size={18} />
           </button>

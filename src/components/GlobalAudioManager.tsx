@@ -9,6 +9,7 @@ export const GlobalAudioManager: React.FC = () => {
   const {
     mediaTrackIndex,
     mediaIsPlaying,
+    mediaCurrentTime,
     mediaVolume,
     mediaIsMuted,
     mediaIsRepeat,
@@ -22,6 +23,7 @@ export const GlobalAudioManager: React.FC = () => {
   const soundEnabled = useSettingsStore((s) => s.soundEnabled);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const isSeekingRef = useRef<boolean>(false);
   const playlist = [...PLAYLIST, ...customTracks];
   const currentTrack = playlist[mediaTrackIndex] || playlist[0] || PLAYLIST[0];
 
@@ -33,6 +35,16 @@ export const GlobalAudioManager: React.FC = () => {
       audioRef.current.volume = effectiveVolume;
     }
   }, [mediaVolume, mediaIsMuted, soundEnabled, effectiveVolume, currentTrack.youtubeId]);
+
+  // Synchronize user seek from UI (MusicPlayerApp or QuickSettings) to Audio Element
+  useEffect(() => {
+    if (audioRef.current && !currentTrack.youtubeId) {
+      const diff = Math.abs(audioRef.current.currentTime - mediaCurrentTime);
+      if (diff > 1.5 && !isSeekingRef.current) {
+        audioRef.current.currentTime = mediaCurrentTime;
+      }
+    }
+  }, [mediaCurrentTime, currentTrack.youtubeId]);
 
   // Synchronize audio play / pause state for HTML5 Audio
   useEffect(() => {
@@ -55,7 +67,7 @@ export const GlobalAudioManager: React.FC = () => {
     } else {
       audioRef.current.pause();
     }
-  }, [mediaIsPlaying, mediaTrackIndex, toggleMediaPlay, currentTrack.youtubeId]);
+  }, [mediaIsPlaying, mediaTrackIndex, toggleMediaPlay, currentTrack.youtubeId, currentTrack.audioUrl]);
 
   const handleTimeUpdate = () => {
     if (audioRef.current && !currentTrack.youtubeId) {

@@ -28,19 +28,23 @@ export const TimerPanel: React.FC<TimerPanelProps> = ({
     <div className="flex flex-col items-center justify-center space-y-6 w-full max-w-sm">
       {timerDone ? (
         <div className="text-center space-y-2 animate-bounce">
-          <div className="text-5xl font-extrabold text-amber-500">Waktu Habis!</div>
-          <p className="text-xs text-zinc-400">Timer telah selesai.</p>
+          <div className="text-4xl sm:text-5xl font-black text-amber-500">Waktu Habis!</div>
+          <p className={`text-xs ${isLight ? "text-slate-600" : "text-zinc-400"}`}>Timer telah selesai.</p>
         </div>
       ) : (
-        <div className="text-5xl font-mono font-bold tracking-tight py-4">
+        <div className={`text-5xl sm:text-6xl font-mono font-bold tracking-tight py-2 ${
+          isLight ? "text-slate-900" : "text-white"
+        }`}>
           {formatTimer(timerLeft)}
         </div>
       )}
 
       {!timerRunning && !timerDone && (
-        <div className="flex items-center gap-3 text-xs font-semibold">
+        <div className={`flex items-center gap-3 text-xs font-semibold p-3.5 rounded-2xl border transition-all ${
+          isLight ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/10"
+        }`}>
           <div className="flex flex-col items-center gap-1">
-            <span className={isLight ? "text-slate-500" : "text-zinc-400"}>Menit</span>
+            <span className={isLight ? "text-slate-500 font-bold" : "text-zinc-400"}>Menit</span>
             <input
               type="number"
               min={0}
@@ -52,14 +56,14 @@ export const TimerPanel: React.FC<TimerPanelProps> = ({
                   m: Math.max(0, parseInt(e.target.value) || 0),
                 })
               }
-              className={`w-16 p-2 rounded-xl text-center font-bold text-sm border outline-hidden ${
-                isLight ? "bg-white border-slate-300 text-slate-900" : "bg-white/10 border-white/15 text-white"
+              className={`w-16 p-2 rounded-xl text-center font-bold text-base border outline-hidden transition-colors ${
+                isLight ? "bg-white border-slate-300 text-slate-900 shadow-xs" : "bg-white/10 border-white/15 text-white"
               }`}
             />
           </div>
-          <span className="text-xl pt-4">:</span>
+          <span className="text-2xl pt-4 text-slate-400 font-bold">:</span>
           <div className="flex flex-col items-center gap-1">
-            <span className={isLight ? "text-slate-500" : "text-zinc-400"}>Detik</span>
+            <span className={isLight ? "text-slate-500 font-bold" : "text-zinc-400"}>Detik</span>
             <input
               type="number"
               min={0}
@@ -71,15 +75,15 @@ export const TimerPanel: React.FC<TimerPanelProps> = ({
                   s: Math.max(0, parseInt(e.target.value) || 0),
                 })
               }
-              className={`w-16 p-2 rounded-xl text-center font-bold text-sm border outline-hidden ${
-                isLight ? "bg-white border-slate-300 text-slate-900" : "bg-white/10 border-white/15 text-white"
+              className={`w-16 p-2 rounded-xl text-center font-bold text-base border outline-hidden transition-colors ${
+                isLight ? "bg-white border-slate-300 text-slate-900 shadow-xs" : "bg-white/10 border-white/15 text-white"
               }`}
             />
           </div>
         </div>
       )}
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <button
           onClick={() => setTimerRunning(!timerRunning)}
           disabled={timerLeft <= 0}
@@ -97,9 +101,10 @@ export const TimerPanel: React.FC<TimerPanelProps> = ({
           onClick={resetTimer}
           className={`p-2.5 rounded-2xl border transition-all cursor-pointer ${
             isLight
-              ? "bg-white border-slate-300 hover:bg-slate-100 text-slate-700"
+              ? "bg-white border-slate-300 hover:bg-slate-100 text-slate-700 shadow-xs"
               : "bg-white/10 border-white/10 hover:bg-white/20 text-zinc-300"
           }`}
+          title="Reset"
         >
           <RotateCcw size={18} />
         </button>

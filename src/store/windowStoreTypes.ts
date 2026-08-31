@@ -72,6 +72,7 @@ export interface WindowStore {
   nightLightEnabled: boolean;
   volume: number;
   brightness: number;
+  themeMode: 'dark' | 'light' | 'auto';
   theme: 'dark' | 'light';
   activeWindowId: string | null;
   highestZIndex: number;
@@ -120,7 +121,8 @@ export interface WindowStore {
   setVolume: (volume: number) => void;
   setBrightness: (brightness: number) => void;
   toggleTheme: () => void;
-  setTheme: (theme: 'dark' | 'light') => void;
+  setTheme: (theme: 'dark' | 'light' | 'auto') => void;
+  setThemeMode: (themeMode: 'dark' | 'light' | 'auto') => void;
   cycleWallpaper: () => void;
   setWallpaper: (wallpaper: string) => void;
   setBooted: (booted: boolean) => void;

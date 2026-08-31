@@ -15,18 +15,11 @@ import {
 import { useWindowStore } from "@/store/windowStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useTranslation } from "@/i18n";
+import { WALLPAPERS_LIST } from "@/config/wallpaperConfig";
 import { AppearanceTab } from "./settings/AppearanceTab";
 import { SoundTab } from "./settings/SoundTab";
 import { SystemTab } from "./settings/SystemTab";
 import { AppsTab } from "./settings/AppsTab";
-
-const WALLPAPERS = [
-  { id: "default", name: "SonOS Mesh", url: "bg-linear-to-br from-indigo-900 via-slate-950 to-blue-950" },
-  { id: "sunset", name: "Sunset Horizon", url: "bg-linear-to-tr from-amber-600 via-rose-700 to-purple-900" },
-  { id: "ocean", name: "Pacific Deep", url: "bg-linear-to-b from-cyan-900 via-blue-950 to-slate-950" },
-  { id: "cyberpunk", name: "Neon Matrix", url: "bg-linear-to-r from-fuchsia-900 via-purple-950 to-slate-950" },
-  { id: "abstract", name: "Minimal Glass", url: "bg-linear-to-br from-slate-900 via-zinc-900 to-stone-950" },
-];
 
 export const SettingsApp: React.FC = () => {
   const { t } = useTranslation();
@@ -36,6 +29,8 @@ export const SettingsApp: React.FC = () => {
     showNotification,
     toggleSound,
     theme,
+    themeMode,
+    setThemeMode,
     toggleTheme,
     toggleWidgetGallery,
     desktopWidgets,
@@ -156,10 +151,12 @@ export const SettingsApp: React.FC = () => {
           <AppearanceTab
             isLight={isLight}
             theme={theme}
+            themeMode={themeMode}
+            setThemeMode={setThemeMode}
             toggleTheme={toggleTheme}
             wallpaper={wallpaper}
             setWallpaper={setWallpaper}
-            WALLPAPERS={WALLPAPERS}
+            WALLPAPERS={WALLPAPERS_LIST}
             highContrast={highContrast}
             toggleHighContrast={() => toggleHighContrast()}
             textScale={textScale}

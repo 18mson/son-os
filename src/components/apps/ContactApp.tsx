@@ -3,9 +3,13 @@
 import React, { useState } from "react";
 import { MessageSquare, Mail, Send, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "@/i18n";
+import { useWindowStore } from "@/store/windowStore";
 
 export const ContactApp: React.FC = () => {
   const { t, language } = useTranslation();
+  const { theme } = useWindowStore();
+  const isLight = theme === "light";
+
   const [formData, setFormData] = useState({ name: "", message: "" });
   const [copied, setCopied] = useState(false);
 
@@ -41,24 +45,32 @@ export const ContactApp: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full w-full p-6 bg-zinc-950 text-zinc-100 select-none overflow-y-auto font-sans no-scrollbar">
+    <div className={`flex flex-col h-full w-full p-6 select-none overflow-y-auto font-sans no-scrollbar transition-colors ${
+      isLight ? "bg-slate-100 text-slate-900" : "bg-zinc-950 text-zinc-100"
+    }`}>
       <div className="max-w-md mx-auto w-full space-y-6">
         {/* Header */}
         <div className="text-center space-y-1.5">
           <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white mx-auto shadow-lg shadow-amber-500/20">
             <Mail size={24} />
           </div>
-          <h2 className="text-lg font-bold text-white tracking-wide">{t.contactApp.title}</h2>
-          <p className="text-xs text-zinc-400">
+          <h2 className={`text-lg font-bold tracking-wide ${isLight ? "text-slate-900" : "text-white"}`}>
+            {t.contactApp.title}
+          </h2>
+          <p className={`text-xs ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
             {t.contactApp.subtitle}
           </p>
         </div>
 
         {/* Input Form */}
-        <form className="space-y-4 bg-zinc-900/60 border border-white/10 p-5 rounded-2xl shadow-xl">
+        <form className={`space-y-4 border p-5 rounded-2xl shadow-xl transition-colors ${
+          isLight ? "bg-white border-slate-200 shadow-slate-200/50" : "bg-zinc-900/60 border-white/10"
+        }`}>
           <div>
-            <label className="text-xs font-semibold text-zinc-300 block mb-1.5">
-              {t.contactApp.nameLabel} <span className="text-amber-400">*</span>
+            <label className={`text-xs font-semibold block mb-1.5 ${
+              isLight ? "text-slate-700" : "text-zinc-300"
+            }`}>
+              {t.contactApp.nameLabel} <span className="text-amber-500">*</span>
             </label>
             <input
               type="text"
@@ -66,13 +78,19 @@ export const ContactApp: React.FC = () => {
               placeholder={t.contactApp.namePlaceholder}
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white/8 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-hidden focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400/50 transition-all"
+              className={`w-full px-3.5 py-2.5 rounded-xl text-xs border focus:outline-hidden focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400/50 transition-all ${
+                isLight
+                  ? "bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400"
+                  : "bg-white/8 border-white/10 text-white placeholder-zinc-500"
+              }`}
             />
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-zinc-300 block mb-1.5">
-              {t.contactApp.messageLabel} <span className="text-amber-400">*</span>
+            <label className={`text-xs font-semibold block mb-1.5 ${
+              isLight ? "text-slate-700" : "text-zinc-300"
+            }`}>
+              {t.contactApp.messageLabel} <span className="text-amber-500">*</span>
             </label>
             <textarea
               rows={4}
@@ -80,12 +98,16 @@ export const ContactApp: React.FC = () => {
               placeholder={t.contactApp.messagePlaceholder}
               value={formData.message}
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white/8 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-hidden focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400/50 transition-all resize-none"
+              className={`w-full px-3.5 py-2.5 rounded-xl text-xs border focus:outline-hidden focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400/50 transition-all resize-none ${
+                isLight
+                  ? "bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400"
+                  : "bg-white/8 border-white/10 text-white placeholder-zinc-500"
+              }`}
             />
           </div>
 
           {copied && (
-            <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2 justify-center font-medium">
+            <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2 justify-center font-medium">
               <CheckCircle2 size={16} />
               <span>{t.contactApp.successMessage}</span>
             </div>
@@ -116,9 +138,15 @@ export const ContactApp: React.FC = () => {
         </form>
 
         {/* Info Footer */}
-        <div className="p-4 rounded-2xl bg-white/5 border border-white/5 text-center text-[11px] text-zinc-400 space-y-1">
-          <p className="font-mono text-zinc-300">WA: {waNumber} | Email: {contactEmail}</p>
-          <p className="text-[10px] text-zinc-500">{t.contactApp.footerNote}</p>
+        <div className={`p-4 rounded-2xl border text-center text-[11px] space-y-1 transition-colors ${
+          isLight ? "bg-white border-slate-200 text-slate-600 shadow-xs" : "bg-white/5 border-white/5 text-zinc-400"
+        }`}>
+          <p className={`font-mono ${isLight ? "text-slate-800" : "text-zinc-300"}`}>
+            WA: {waNumber} | Email: {contactEmail}
+          </p>
+          <p className={`text-[10px] ${isLight ? "text-slate-500" : "text-zinc-500"}`}>
+            {t.contactApp.footerNote}
+          </p>
         </div>
       </div>
     </div>

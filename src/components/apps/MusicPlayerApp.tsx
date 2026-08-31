@@ -59,7 +59,10 @@ export const MusicPlayerApp: React.FC = () => {
     toggleMediaRepeat,
     addCustomTrack,
     showNotification,
+    theme,
   } = useWindowStore();
+
+  const isLight = theme === "light";
 
   const [showVideo, setShowVideo] = useState<boolean>(true);
   const [showYouTubeModal, setShowYouTubeModal] = useState<boolean>(false);
@@ -143,7 +146,9 @@ export const MusicPlayerApp: React.FC = () => {
   const currentYtId = extractYouTubeId(youtubeInput);
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950 text-zinc-100 rounded-xl overflow-hidden border border-white/10 select-none p-4 sm:p-5 justify-between font-sans relative">
+    <div className={`flex flex-col h-full rounded-xl overflow-hidden select-none p-4 sm:p-5 justify-between font-sans relative transition-colors ${
+      isLight ? "bg-slate-100 text-slate-900 border border-slate-200" : "bg-zinc-950 text-zinc-100 border border-white/10"
+    }`}>
       {/* Hidden File Input */}
       <input
         ref={fileInputRef}
@@ -157,15 +162,23 @@ export const MusicPlayerApp: React.FC = () => {
       {/* Modal Add YouTube URL */}
       {showYouTubeModal && (
         <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-white/15 rounded-3xl p-5 w-full max-w-md space-y-4 shadow-2xl animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+          <div className={`border rounded-3xl p-5 w-full max-w-md space-y-4 shadow-2xl animate-in zoom-in-95 duration-150 ${
+            isLight ? "bg-white border-slate-300 text-slate-900" : "bg-zinc-900 border-white/15 text-white"
+          }`}>
+            <div className={`flex items-center justify-between border-b pb-3 ${
+              isLight ? "border-slate-200" : "border-white/10"
+            }`}>
               <div className="flex items-center gap-2">
                 <YoutubeIcon className="text-red-500" size={20} />
-                <h3 className="text-sm font-bold text-white">Tambah Lagu dari YouTube</h3>
+                <h3 className={`text-sm font-bold ${isLight ? "text-slate-900" : "text-white"}`}>
+                  Tambah Lagu dari YouTube
+                </h3>
               </div>
               <button
                 onClick={() => setShowYouTubeModal(false)}
-                className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 cursor-pointer"
+                className={`p-1 rounded-lg transition-colors cursor-pointer ${
+                  isLight ? "text-slate-400 hover:text-slate-900 hover:bg-slate-100" : "text-zinc-400 hover:text-white hover:bg-white/10"
+                }`}
               >
                 <X size={16} />
               </button>
@@ -173,41 +186,61 @@ export const MusicPlayerApp: React.FC = () => {
 
             <form onSubmit={handleAddYouTubeTrack} className="space-y-3">
               <div>
-                <label className="text-xs font-semibold text-zinc-300 block mb-1">URL atau ID YouTube</label>
+                <label className={`text-xs font-semibold block mb-1 ${
+                  isLight ? "text-slate-700" : "text-zinc-300"
+                }`}>URL atau ID YouTube</label>
                 <div className="relative">
-                  <LinkIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                  <LinkIcon size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 ${
+                    isLight ? "text-slate-400" : "text-zinc-500"
+                  }`} />
                   <input
                     type="text"
                     required
                     value={youtubeInput}
                     onChange={(e) => setYoutubeInput(e.target.value)}
                     placeholder="https://www.youtube.com/watch?v=... atau ID"
-                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 outline-hidden focus:border-red-500 transition-all"
+                    className={`w-full pl-9 pr-3 py-2 text-xs rounded-xl border outline-hidden focus:border-red-500 transition-all ${
+                      isLight
+                        ? "bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400"
+                        : "bg-white/5 border-white/10 text-white placeholder-zinc-500"
+                    }`}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-zinc-300 block mb-1">Judul Lagu (Opsional)</label>
+                <label className={`text-xs font-semibold block mb-1 ${
+                  isLight ? "text-slate-700" : "text-zinc-300"
+                }`}>Judul Lagu (Opsional)</label>
                 <input
                   type="text"
                   value={youtubeTitleInput}
                   onChange={(e) => setYoutubeTitleInput(e.target.value)}
                   placeholder="Judul musik..."
-                  className="w-full px-3 py-2 text-xs rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 outline-hidden focus:border-red-500 transition-all"
+                  className={`w-full px-3 py-2 text-xs rounded-xl border outline-hidden focus:border-red-500 transition-all ${
+                    isLight
+                      ? "bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400"
+                      : "bg-white/5 border-white/10 text-white placeholder-zinc-500"
+                  }`}
                 />
               </div>
 
               {currentYtId && (
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
+                <div className={`p-3 rounded-xl border flex items-center gap-3 ${
+                  isLight ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/10"
+                }`}>
                   <img
                     src={`https://img.youtube.com/vi/${currentYtId}/hqdefault.jpg`}
                     alt="Preview"
                     className="w-16 h-10 object-cover rounded-lg border border-white/10 shrink-0"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-bold text-white truncate">Video ID: {currentYtId}</p>
-                    <p className="text-[10px] text-emerald-400 font-medium">Ready to import stream</p>
+                    <p className={`text-[11px] font-bold truncate ${isLight ? "text-slate-900" : "text-white"}`}>
+                      Video ID: {currentYtId}
+                    </p>
+                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                      Ready to import stream
+                    </p>
                   </div>
                 </div>
               )}
@@ -216,7 +249,9 @@ export const MusicPlayerApp: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowYouTubeModal(false)}
-                  className="px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 text-xs font-semibold cursor-pointer"
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold cursor-pointer ${
+                    isLight ? "bg-slate-100 hover:bg-slate-200 text-slate-700" : "bg-white/5 hover:bg-white/10 text-zinc-300"
+                  }`}
                 >
                   Batal
                 </button>
@@ -233,14 +268,20 @@ export const MusicPlayerApp: React.FC = () => {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-3 shrink-0">
+      <div className={`flex items-center justify-between border-b pb-3 shrink-0 ${
+        isLight ? "border-slate-200" : "border-white/10"
+      }`}>
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-purple-600/20 text-purple-400">
+          <div className="p-1.5 rounded-lg bg-purple-600/20 text-purple-600 dark:text-purple-400">
             <Music size={16} />
           </div>
           <div>
-            <h2 className="text-xs font-bold tracking-wide">Son-OS Music Player</h2>
-            <p className="text-[10px] text-zinc-400">Pemutar Musik Desktop &amp; Stream Manager</p>
+            <h2 className={`text-xs font-bold tracking-wide ${isLight ? "text-slate-900" : "text-white"}`}>
+              Son-OS Music Player
+            </h2>
+            <p className={`text-[10px] ${isLight ? "text-slate-500" : "text-zinc-400"}`}>
+              Pemutar Musik Desktop &amp; Stream Manager
+            </p>
           </div>
         </div>
 
@@ -263,7 +304,9 @@ export const MusicPlayerApp: React.FC = () => {
       {/* Main Track Display */}
       <div className="flex flex-col md:flex-row items-center gap-4 py-3 shrink-0">
         {/* Cover Art / YouTube Video Player Container */}
-        <div className="relative w-44 h-32 sm:w-52 sm:h-36 rounded-2xl overflow-hidden shadow-2xl shrink-0 group border border-white/10 bg-zinc-900 flex items-center justify-center">
+        <div className={`relative w-44 h-32 sm:w-52 sm:h-36 rounded-2xl overflow-hidden shadow-2xl shrink-0 group border flex items-center justify-center ${
+          isLight ? "border-slate-300 bg-slate-200 shadow-slate-300/60" : "border-white/10 bg-zinc-900 shadow-black/60"
+        }`}>
           {track.youtubeId ? (
             showVideo ? (
               <iframe
@@ -298,7 +341,7 @@ export const MusicPlayerApp: React.FC = () => {
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <Disc className="text-purple-400 animate-spin" size={48} />
+            <Disc className="text-purple-500 animate-spin" size={48} />
           )}
 
           {/* Toggle Video On/Off Badge for YouTube Tracks */}
@@ -324,15 +367,21 @@ export const MusicPlayerApp: React.FC = () => {
         {/* Track Details & Seek Bar */}
         <div className="flex flex-col text-center md:text-left min-w-0 flex-1 space-y-1">
           <div className="flex items-center justify-center md:justify-between gap-2">
-            <h3 className="text-sm font-bold truncate text-white tracking-tight">{track.title}</h3>
+            <h3 className={`text-sm font-bold truncate tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
+              {track.title}
+            </h3>
             {track.youtubeId && (
-              <span className="px-2 py-0.5 rounded-full bg-red-600/20 text-red-400 border border-red-500/30 text-[9px] font-bold shrink-0">
+              <span className="px-2 py-0.5 rounded-full bg-red-600/20 text-red-500 border border-red-500/30 text-[9px] font-bold shrink-0">
                 YouTube
               </span>
             )}
           </div>
-          <p className="text-xs font-medium text-purple-300/80 truncate">{track.artist}</p>
-          <p className="text-[10px] text-zinc-500 truncate">{track.album}</p>
+          <p className={`text-xs font-semibold truncate ${isLight ? "text-purple-600" : "text-purple-300/80"}`}>
+            {track.artist}
+          </p>
+          <p className={`text-[10px] truncate ${isLight ? "text-slate-500" : "text-zinc-500"}`}>
+            {track.album}
+          </p>
 
           <div className="pt-2">
             <input
@@ -341,9 +390,13 @@ export const MusicPlayerApp: React.FC = () => {
               max={mediaDuration || track.duration || 100}
               value={mediaCurrentTime || 0}
               onChange={handleSeek}
-              className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-purple-500"
+              className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-purple-600 ${
+                isLight ? "bg-slate-200" : "bg-white/10"
+              }`}
             />
-            <div className="flex justify-between text-[10px] text-zinc-400 font-mono mt-1">
+            <div className={`flex justify-between text-[10px] font-mono mt-1 ${
+              isLight ? "text-slate-500" : "text-zinc-400"
+            }`}>
               <span>{formatTime(mediaCurrentTime)}</span>
               <span>{formatTime(mediaDuration || track.duration)}</span>
             </div>
@@ -352,21 +405,31 @@ export const MusicPlayerApp: React.FC = () => {
       </div>
 
       {/* Playlist Selector */}
-      <div className="flex-1 overflow-y-auto max-h-36 my-2 bg-white/5 rounded-xl p-2 border border-white/5 no-scrollbar">
-        <div className="flex items-center justify-between px-2 pb-1 mb-1 border-b border-white/5">
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+      <div className={`flex-1 overflow-y-auto max-h-36 my-2 rounded-2xl p-2 border no-scrollbar transition-colors ${
+        isLight ? "bg-white border-slate-200 shadow-xs" : "bg-white/5 border-white/5"
+      }`}>
+        <div className={`flex items-center justify-between px-2 pb-1.5 mb-1 border-b ${
+          isLight ? "border-slate-100" : "border-white/5"
+        }`}>
+          <span className={`text-[10px] font-bold uppercase tracking-wider ${
+            isLight ? "text-slate-500" : "text-zinc-400"
+          }`}>
             Playlist ({playlist.length})
           </span>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowYouTubeModal(true)}
-              className="hover:text-red-400 flex items-center gap-0.5 text-[9px] cursor-pointer text-zinc-300 font-medium"
+              className={`hover:text-red-500 flex items-center gap-0.5 text-[9px] cursor-pointer font-medium ${
+                isLight ? "text-slate-600" : "text-zinc-300"
+              }`}
             >
               <Plus size={10} /> YouTube
             </button>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="hover:text-purple-400 flex items-center gap-0.5 text-[9px] cursor-pointer text-zinc-300 font-medium"
+              className={`hover:text-purple-600 flex items-center gap-0.5 text-[9px] cursor-pointer font-medium ${
+                isLight ? "text-slate-600" : "text-zinc-300"
+              }`}
             >
               <Plus size={10} /> MP3
             </button>
@@ -379,7 +442,11 @@ export const MusicPlayerApp: React.FC = () => {
               onClick={() => selectTrack(idx)}
               className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs text-left transition-colors cursor-pointer ${
                 mediaTrackIndex === idx
-                  ? "bg-purple-600/30 text-purple-300 font-semibold"
+                  ? isLight
+                    ? "bg-purple-100 text-purple-900 font-bold"
+                    : "bg-purple-600/30 text-purple-300 font-semibold"
+                  : isLight
+                  ? "hover:bg-slate-100 text-slate-700"
                   : "hover:bg-white/5 text-zinc-300"
               }`}
             >
@@ -387,14 +454,14 @@ export const MusicPlayerApp: React.FC = () => {
                 {t.youtubeId ? (
                   <YoutubeIcon size={13} className="text-red-500 shrink-0" />
                 ) : (
-                  <Music size={13} className="text-purple-400 shrink-0" />
+                  <Music size={13} className={isLight ? "text-purple-600 shrink-0" : "text-purple-400 shrink-0"} />
                 )}
                 <span className="truncate">
                   {t.title} - <span className="opacity-60 text-[10px]">{t.artist}</span>
                 </span>
               </div>
               {mediaTrackIndex === idx && mediaIsPlaying && (
-                <span className="w-2 h-2 rounded-full bg-purple-400 animate-ping ml-2 shrink-0" />
+                <span className="w-2 h-2 rounded-full bg-purple-500 animate-ping ml-2 shrink-0" />
               )}
             </button>
           ))}
@@ -402,12 +469,18 @@ export const MusicPlayerApp: React.FC = () => {
       </div>
 
       {/* Audio Controls Bar */}
-      <div className="flex items-center justify-between pt-3 border-t border-white/10 shrink-0 gap-2">
+      <div className={`flex items-center justify-between pt-3 border-t shrink-0 gap-2 ${
+        isLight ? "border-slate-200" : "border-white/10"
+      }`}>
         <div className="flex items-center gap-1">
           <button
             onClick={toggleMediaShuffle}
             className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-              mediaIsShuffle ? "text-purple-400 bg-purple-500/20" : "text-zinc-400 hover:text-white"
+              mediaIsShuffle
+                ? "text-purple-600 bg-purple-100 dark:text-purple-400 dark:bg-purple-500/20"
+                : isLight
+                ? "text-slate-500 hover:text-slate-900 hover:bg-slate-200"
+                : "text-zinc-400 hover:text-white"
             }`}
             title="Shuffle"
           >
@@ -416,7 +489,11 @@ export const MusicPlayerApp: React.FC = () => {
           <button
             onClick={toggleMediaRepeat}
             className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-              mediaIsRepeat ? "text-purple-400 bg-purple-500/20" : "text-zinc-400 hover:text-white"
+              mediaIsRepeat
+                ? "text-purple-600 bg-purple-100 dark:text-purple-400 dark:bg-purple-500/20"
+                : isLight
+                ? "text-slate-500 hover:text-slate-900 hover:bg-slate-200"
+                : "text-zinc-400 hover:text-white"
             }`}
             title="Repeat"
           >
@@ -427,7 +504,9 @@ export const MusicPlayerApp: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={playPrevTrack}
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/15 text-white transition-colors min-h-9 min-w-9 flex items-center justify-center cursor-pointer"
+            className={`p-2 rounded-xl transition-colors min-h-9 min-w-9 flex items-center justify-center cursor-pointer ${
+              isLight ? "bg-white hover:bg-slate-200 text-slate-800 border border-slate-200 shadow-xs" : "bg-white/10 hover:bg-white/15 text-white"
+            }`}
             title="Previous Track"
           >
             <SkipBack size={17} />
@@ -441,7 +520,9 @@ export const MusicPlayerApp: React.FC = () => {
           </button>
           <button
             onClick={playNextTrack}
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/15 text-white transition-colors min-h-9 min-w-9 flex items-center justify-center cursor-pointer"
+            className={`p-2 rounded-xl transition-colors min-h-9 min-w-9 flex items-center justify-center cursor-pointer ${
+              isLight ? "bg-white hover:bg-slate-200 text-slate-800 border border-slate-200 shadow-xs" : "bg-white/10 hover:bg-white/15 text-white"
+            }`}
             title="Next Track"
           >
             <SkipForward size={17} />
@@ -451,7 +532,9 @@ export const MusicPlayerApp: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={toggleMediaMute}
-            className="text-zinc-400 hover:text-white transition-colors cursor-pointer"
+            className={`transition-colors cursor-pointer ${
+              isLight ? "text-slate-500 hover:text-slate-900" : "text-zinc-400 hover:text-white"
+            }`}
             title={mediaIsMuted || mediaVolume === 0 ? "Unmute" : "Mute"}
           >
             {mediaIsMuted || mediaVolume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
@@ -464,7 +547,9 @@ export const MusicPlayerApp: React.FC = () => {
             onChange={(e) => {
               setMediaVolume(Number(e.target.value));
             }}
-            className="w-16 h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-purple-500 hidden sm:block"
+            className={`w-16 h-1.5 rounded-lg appearance-none cursor-pointer accent-purple-600 hidden sm:block ${
+              isLight ? "bg-slate-200" : "bg-white/10"
+            }`}
           />
         </div>
       </div>

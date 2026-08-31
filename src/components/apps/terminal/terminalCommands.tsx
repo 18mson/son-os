@@ -6,7 +6,7 @@ import { getAppTranslation } from "@/i18n";
 interface CommandContext {
   openWindow: (app: AppDefinition) => void;
   toggleTheme: () => void;
-  setSettingsTheme: (theme: "light" | "dark") => void;
+  setSettingsTheme: (theme: "light" | "dark" | "auto") => void;
   toggleSettingsTheme: () => void;
   language: string;
   setLanguage: (lang: string) => void;
@@ -132,6 +132,9 @@ export const processTerminalCommand = (
       } else if (sub === "dark") {
         ctx.setSettingsTheme("dark");
         return <p className="text-emerald-400 text-xs">{isEn ? "Theme switched to Dark Mode." : "Tema diubah ke Dark Mode."}</p>;
+      } else if (sub === "auto" || sub === "system") {
+        ctx.setSettingsTheme("auto");
+        return <p className="text-emerald-400 text-xs">{isEn ? "Theme set to Auto (System platform default)." : "Tema diatur ke Otomatis (Mengikuti Sistem OS)."}</p>;
       }
       ctx.toggleTheme();
       ctx.toggleSettingsTheme();

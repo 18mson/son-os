@@ -18,6 +18,8 @@ import { ScreenBrightnessOverlay } from "./ScreenBrightnessOverlay";
 import { Trash2, Plus } from "lucide-react";
 import { DesktopShortcut } from "./DesktopShortcut";
 import { DesktopWidgetsLayer } from "./desktop/DesktopWidgetsLayer";
+import { FractalOverlay } from "./desktop/FractalOverlay";
+import { RealtimeWallpaper } from "./desktop/RealtimeWallpaper";
 import { useContextMenuClose, closeAllContextMenus } from "@/hooks/useContextMenuClose";
 import { useDesktopGlobalHandlers } from "@/hooks/useDesktopGlobalHandlers";
 import { WALLPAPER_CONFIGS, LIGHT_WALLPAPER_CONFIGS } from "@/config/wallpaperConfig";
@@ -69,6 +71,30 @@ export const Desktop: React.FC = () => {
 
     root.setAttribute("data-text-scale", textScale);
   }, [theme, reducedMotion, highContrast, textScale]);
+
+  // System Theme / Platform color-scheme auto detector
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleSystemThemeChange = (e: MediaQueryListEvent) => {
+      const { themeMode, setThemeMode } = useWindowStore.getState();
+      if (themeMode === "auto") {
+        const resolved = e.matches ? "dark" : "light";
+        setThemeMode("auto");
+        const root = document.documentElement;
+        if (resolved === "light") {
+          root.classList.add("light");
+          root.classList.remove("dark");
+        } else {
+          root.classList.add("dark");
+          root.classList.remove("light");
+        }
+      }
+    };
+
+    mediaQuery.addEventListener("change", handleSystemThemeChange);
+    return () => mediaQuery.removeEventListener("change", handleSystemThemeChange);
+  }, []);
 
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [selectionBox, setSelectionBox] = useState<{
@@ -158,6 +184,11 @@ export const Desktop: React.FC = () => {
       {/* Screen Transition Loading Overlay */}
       <ScreenTransitionOverlay isVisible={isTransitioning} modeText={transitionText} />
 
+      {/* Real-time Coastal Dynamic Wallpaper (Sun Arc, Crossfade & Shadows) */}
+      {wallpaper === "realtime-coastal" && (
+        <RealtimeWallpaper />
+      )}
+
       {/* Custom Image Wallpaper */}
       {isCustomUrl && (
         <div
@@ -166,11 +197,16 @@ export const Desktop: React.FC = () => {
         />
       )}
 
-      {/* Dynamic Ambient Glowing Orbs */}
-      {!isCustomUrl && (
+      {/* Dynamic Ambient Glowing Orbs & Fractals (For classic/fractal wallpapers) */}
+      {!isCustomUrl && wallpaper !== "realtime-coastal" && (
         <>
           <div className={`absolute -top-32 -left-32 w-120 h-120 rounded-full blur-[100px] transition-all duration-700 pointer-events-none ${activeConfig.glowTopLeft}`} />
           <div className={`absolute -bottom-32 -right-32 w-120 h-120 rounded-full blur-[100px] transition-all duration-700 pointer-events-none ${activeConfig.glowBottomRight}`} />
+          {/* Fractal & Mesh Vector Overlay */}
+          <FractalOverlay
+            fractalType={activeConfig.fractalType || "none"}
+            isLight={isLight}
+          />
         </>
       )}
 
