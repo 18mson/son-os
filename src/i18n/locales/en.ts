@@ -93,7 +93,7 @@ export const en: TranslationSchema = {
     activeWidgets: "Active on Desktop",
     addWidget: "Add Widget",
     removeWidget: "Remove",
-    clockTitle: "Digital & Analog Clock",
+    clockTitle: "Clock & Time",
     clockDesc: "Display current time, date, and timezone info",
     weatherTitle: "Live Weather Widget",
     weatherDesc: "Real-time atmospheric conditions and local forecasts",

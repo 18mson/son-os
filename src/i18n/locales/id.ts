@@ -93,7 +93,7 @@ export const id: TranslationSchema = {
     activeWidgets: "Aktif di Desktop",
     addWidget: "Tambah Widget",
     removeWidget: "Hapus",
-    clockTitle: "Jam Digital & Analog",
+    clockTitle: "Jam & Waktu",
     clockDesc: "Tampilkan waktu, tanggal, dan informasi zona waktu saat ini",
     weatherTitle: "Widget Cuaca Langsung",
     weatherDesc: "Kondisi atmosfer dan prakiraan cuaca lokal terkini",
