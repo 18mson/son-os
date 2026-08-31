@@ -53,23 +53,16 @@ export const createDesktopActions = (
       return;
     }
 
-    const GRID_W = 96;
-    const GRID_H = 110;
-    const START_X = 28;
-    const START_Y = 28;
-
-    let newX = START_X;
-    let newY = START_Y;
+    let targetCol = 0;
+    let targetRow = 0;
     let found = false;
 
     for (let col = 0; col < 12 && !found; col++) {
-      for (let row = 0; row < 6 && !found; row++) {
-        const testX = START_X + col * GRID_W;
-        const testY = START_Y + row * GRID_H;
-        const occupied = current.some((s) => Math.abs(s.x - testX) < 30 && Math.abs(s.y - testY) < 30);
+      for (let row = 0; row < 8 && !found; row++) {
+        const occupied = current.some((s) => s.col === col && s.row === row);
         if (!occupied) {
-          newX = testX;
-          newY = testY;
+          targetCol = col;
+          targetRow = row;
           found = true;
         }
       }
@@ -78,8 +71,8 @@ export const createDesktopActions = (
     const newShortcut: DesktopShortcutItem = {
       id: `ds-${appId}-${Date.now()}`,
       appId,
-      x: newX,
-      y: newY,
+      col: targetCol,
+      row: targetRow,
     };
 
     const updated = [...current, newShortcut];
@@ -115,8 +108,10 @@ export const createDesktopActions = (
     set({ desktopShortcuts: updated });
   },
 
-  updateDesktopShortcutPos: (id: string, position: { x: number; y: number }) => {
-    const updated = get().desktopShortcuts.map((s) => (s.id === id ? { ...s, x: position.x, y: position.y } : s));
+  updateDesktopShortcutPos: (id: string, position: { col: number; row: number }) => {
+    const updated = get().desktopShortcuts.map((s) =>
+      s.id === id ? { ...s, col: position.col, row: position.row } : s
+    );
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem("sonos_desktop_shortcuts", JSON.stringify(updated));

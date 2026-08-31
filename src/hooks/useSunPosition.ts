@@ -221,61 +221,27 @@ export interface UseSunPositionOptions {
 }
 
 export function useSunPosition(options?: UseSunPositionOptions): SunPositionState {
-  const manualLat = options?.latitude;
-  const manualLng = options?.longitude;
+  const lat = options?.latitude ?? DEFAULT_COORDS.lat;
+  const lng = options?.longitude ?? DEFAULT_COORDS.lng;
   const customDate = options?.customDate;
   const intervalMs = options?.updateIntervalMs ?? 30000;
 
-  const [coords, setCoords] = useState<{ lat: number; lng: number; isManualOrFallback: boolean }>(() => {
-    if (manualLat !== undefined && manualLng !== undefined) {
-      return { lat: manualLat, lng: manualLng, isManualOrFallback: true };
-    }
-    return { ...DEFAULT_COORDS, isManualOrFallback: true };
-  });
-
-  useEffect(() => {
-    if (manualLat !== undefined && manualLng !== undefined) return;
-
-    if (typeof window !== "undefined" && "geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setCoords({
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-            isManualOrFallback: false,
-          });
-        },
-        () => {
-          setCoords({ ...DEFAULT_COORDS, isManualOrFallback: true });
-        },
-        { timeout: 8000, maximumAge: 3600000 }
-      );
-    }
-  }, [manualLat, manualLng]);
-
   const [state, setState] = useState<SunPositionState>(() =>
-    computeSunState(customDate ?? new Date(), coords.lat, coords.lng, coords.isManualOrFallback)
+    computeSunState(customDate ?? new Date(), lat, lng, true)
   );
 
   useEffect(() => {
     if (customDate) return;
 
-    const lat = manualLat !== undefined ? manualLat : coords.lat;
-    const lng = manualLng !== undefined ? manualLng : coords.lng;
-    const isManual = manualLat !== undefined || coords.isManualOrFallback;
-
     const timer = setInterval(() => {
-      setState(computeSunState(new Date(), lat, lng, isManual));
+      setState(computeSunState(new Date(), lat, lng, true));
     }, intervalMs);
 
     return () => clearInterval(timer);
-  }, [coords.lat, coords.lng, coords.isManualOrFallback, manualLat, manualLng, customDate, intervalMs]);
+  }, [lat, lng, customDate, intervalMs]);
 
   if (customDate) {
-    const lat = manualLat !== undefined ? manualLat : coords.lat;
-    const lng = manualLng !== undefined ? manualLng : coords.lng;
-    const isManual = manualLat !== undefined || coords.isManualOrFallback;
-    return computeSunState(customDate, lat, lng, isManual);
+    return computeSunState(customDate, lat, lng, true);
   }
 
   return state;

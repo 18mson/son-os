@@ -3,10 +3,10 @@ import { DesktopShortcutItem, DesktopWidgetConfig, WindowState } from './windowS
 export const DEFAULT_PINNED_APPS = ["japanese-quiz", "lovely-ever", "about", "settings", "file-manager"];
 
 export const DEFAULT_DESKTOP_SHORTCUTS: DesktopShortcutItem[] = [
-  { id: "ds-japanese-quiz", appId: "japanese-quiz", x: 28, y: 28 },
-  { id: "ds-lovely-ever", appId: "lovely-ever", x: 28, y: 138 },
-  { id: "ds-about", appId: "about", x: 28, y: 248 },
-  { id: "ds-terminal", appId: "terminal", x: 28, y: 358 },
+  { id: "ds-japanese-quiz", appId: "japanese-quiz", col: 0, row: 0 },
+  { id: "ds-lovely-ever", appId: "lovely-ever", col: 0, row: 1 },
+  { id: "ds-about", appId: "about", col: 0, row: 2 },
+  { id: "ds-terminal", appId: "terminal", col: 0, row: 3 },
 ];
 
 export const DEFAULT_DESKTOP_WIDGETS: DesktopWidgetConfig[] = [

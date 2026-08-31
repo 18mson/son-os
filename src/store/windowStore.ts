@@ -352,7 +352,31 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
         } catch {}
       }
       if (savedShortcuts) {
-        try { updates.desktopShortcuts = JSON.parse(savedShortcuts); } catch {}
+        try {
+          const parsed = JSON.parse(savedShortcuts);
+          if (Array.isArray(parsed)) {
+            updates.desktopShortcuts = parsed.map((item, idx) => {
+              if (typeof item.col === "number" && typeof item.row === "number") {
+                return {
+                  id: item.id || `ds-${item.appId}-${idx}`,
+                  appId: item.appId,
+                  col: item.col,
+                  row: item.row,
+                };
+              }
+              const rawX = typeof item.x === "number" ? item.x : 28;
+              const rawY = typeof item.y === "number" ? item.y : 28;
+              const col = Math.max(0, Math.round((rawX - 28) / 96));
+              const row = Math.max(0, Math.round((rawY - 28) / 110));
+              return {
+                id: item.id || `ds-${item.appId}-${idx}`,
+                appId: item.appId,
+                col,
+                row,
+              };
+            });
+          }
+        } catch {}
       }
       if (savedCustomTracks) {
         try { updates.customTracks = JSON.parse(savedCustomTracks); } catch {}

@@ -23,6 +23,7 @@ import { RealtimeWallpaper } from "./desktop/RealtimeWallpaper";
 import { useContextMenuClose, closeAllContextMenus } from "@/hooks/useContextMenuClose";
 import { useDesktopGlobalHandlers } from "@/hooks/useDesktopGlobalHandlers";
 import { WALLPAPER_CONFIGS, LIGHT_WALLPAPER_CONFIGS } from "@/config/wallpaperConfig";
+import { gridToPixel } from "@/config/desktopGridConfig";
 import { useTranslation } from "@/i18n";
 
 export const Desktop: React.FC = () => {
@@ -145,10 +146,11 @@ export const Desktop: React.FC = () => {
 
     const selected = desktopShortcuts
       .filter((s) => {
-        const sMinX = s.x;
-        const sMaxX = s.x + 88;
-        const sMinY = s.y;
-        const sMaxY = s.y + 96;
+        const pixelPos = gridToPixel(s.col, s.row);
+        const sMinX = pixelPos.x;
+        const sMaxX = pixelPos.x + 88;
+        const sMinY = pixelPos.y;
+        const sMaxY = pixelPos.y + 96;
         return sMinX < maxX && sMaxX > minX && sMinY < maxY && sMaxY > minY;
       })
       .map((s) => s.id);

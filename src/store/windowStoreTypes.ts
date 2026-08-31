@@ -51,8 +51,11 @@ export interface SystemNotification {
 export interface DesktopShortcutItem {
   id: string;
   appId: string;
-  x: number;
-  y: number;
+  col: number;
+  row: number;
+  // Optional for backward compatibility/migration
+  x?: number;
+  y?: number;
 }
 
 export type DesktopWidgetType = 'clock' | 'weather' | 'calendar' | 'notes' | 'calculator';
@@ -133,7 +136,7 @@ export interface WindowStore {
   isPinnedApp: (appId: string) => boolean;
   addDesktopShortcut: (appId: string) => void;
   removeDesktopShortcut: (id: string) => void;
-  updateDesktopShortcutPos: (id: string, position: { x: number; y: number }) => void;
+  updateDesktopShortcutPos: (id: string, position: { col: number; row: number }) => void;
   toggleWidgetGallery: (open?: boolean) => void;
   addWidget: (type: DesktopWidgetType) => void;
   removeWidget: (id: string) => void;

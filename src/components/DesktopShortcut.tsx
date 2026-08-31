@@ -8,6 +8,7 @@ import { APPS } from "@/config/appsConfig";
 import { AppIcon } from "./AppIcon";
 import { useContextMenuClose, closeAllContextMenus } from "@/hooks/useContextMenuClose";
 import { useTranslation, getAppTranslation } from "@/i18n";
+import { gridToPixel, pixelToGrid } from "@/config/desktopGridConfig";
 
 interface DesktopShortcutProps {
   shortcut: DesktopShortcutItem;
@@ -19,7 +20,7 @@ export const DesktopShortcut: React.FC<DesktopShortcutProps> = ({ shortcut, isSe
   const { language } = useTranslation();
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [dragPreviewPos, setDragPreviewPos] = useState<{ x: number; y: number } | null>(null);
+  const [dragPreviewPos, setDragPreviewPos] = useState<{ x: number; y: number; isOccupied: boolean } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useContextMenuClose(Boolean(menu), () => setMenu(null), menuRef);
@@ -49,39 +50,14 @@ export const DesktopShortcut: React.FC<DesktopShortcutProps> = ({ shortcut, isSe
     setMenu({ x: e.clientX, y: e.clientY });
   };
 
-  const GRID_W = 96;
-  const GRID_H = 110;
-  const START_X = 28;
-  const START_Y = 28;
-
-  const getGridPosition = (rawX: number, rawY: number) => {
-    const col = Math.max(0, Math.round((rawX - START_X) / GRID_W));
-    const row = Math.max(0, Math.round((rawY - START_Y) / GRID_H));
-
-    const screenW = typeof window !== "undefined" ? window.innerWidth : 1280;
-    const screenH = typeof window !== "undefined" ? window.innerHeight : 800;
-
-    const maxCol = Math.max(0, Math.floor((screenW - 120) / GRID_W));
-    const maxRow = Math.max(0, Math.floor((screenH - 160) / GRID_H));
-
-    const clampedCol = Math.min(col, maxCol);
-    const clampedRow = Math.min(row, maxRow);
-
-    return {
-      x: START_X + clampedCol * GRID_W,
-      y: START_Y + clampedRow * GRID_H,
-      col: clampedCol,
-      row: clampedRow,
-      maxCol,
-      maxRow,
-    };
-  };
-
-  const isSlotOccupied = (targetX: number, targetY: number) => {
+  const isSlotOccupied = (targetCol: number, targetRow: number) => {
     return desktopShortcuts.some(
-      (s) => s.id !== shortcut.id && s.x === targetX && s.y === targetY
+      (s) => s.id !== shortcut.id && s.col === targetCol && s.row === targetRow
     );
   };
+
+  // Compute final pixel coordinates based on (col, row)
+  const currentPixelPos = gridToPixel(shortcut.col, shortcut.row);
 
   return (
     <>
@@ -93,59 +69,61 @@ export const DesktopShortcut: React.FC<DesktopShortcutProps> = ({ shortcut, isSe
             left: dragPreviewPos.x,
             top: dragPreviewPos.y,
           }}
-          className="w-22 h-24 rounded-2xl border-2 border-dashed border-blue-400/60 bg-blue-500/10 pointer-events-none z-5 transition-all duration-75"
+          className={`w-22 h-24 rounded-2xl border-2 border-dashed pointer-events-none z-5 transition-all duration-75 ${
+            dragPreviewPos.isOccupied
+              ? "border-rose-400/70 bg-rose-500/15"
+              : "border-blue-400/70 bg-blue-500/15 shadow-md shadow-blue-500/10"
+          }`}
         />
       )}
 
-      {/* Main Drag-enabled Shortcut Item */}
+      {/* Main Drag-enabled Shortcut Item with Spring Grid Snapping */}
       <motion.div
         drag
         dragMomentum={false}
         dragElastic={0.08}
-        animate={{ x: shortcut.x, y: shortcut.y }}
+        animate={{ x: currentPixelPos.x, y: currentPixelPos.y }}
         transition={{ type: "spring", stiffness: 450, damping: 30 }}
         onDragStart={() => setIsDragging(true)}
         onDrag={(_event, info) => {
-          const currentX = shortcut.x + info.offset.x;
-          const currentY = shortcut.y + info.offset.y;
-          const preview = getGridPosition(currentX, currentY);
-          setDragPreviewPos({ x: preview.x, y: preview.y });
+          const screenW = typeof window !== "undefined" ? window.innerWidth : 1280;
+          const screenH = typeof window !== "undefined" ? window.innerHeight : 800;
+          const currentX = currentPixelPos.x + info.offset.x;
+          const currentY = currentPixelPos.y + info.offset.y;
+
+          const preview = pixelToGrid(currentX, currentY, screenW, screenH);
+          const previewPixel = gridToPixel(preview.col, preview.row);
+          const occupied = isSlotOccupied(preview.col, preview.row);
+
+          setDragPreviewPos({
+            x: previewPixel.x,
+            y: previewPixel.y,
+            isOccupied: occupied,
+          });
         }}
         onDragEnd={(_event, info) => {
           setIsDragging(false);
           setDragPreviewPos(null);
 
-          const finalRawX = shortcut.x + info.offset.x;
-          const finalRawY = shortcut.y + info.offset.y;
-          const target = getGridPosition(finalRawX, finalRawY);
+          const screenW = typeof window !== "undefined" ? window.innerWidth : 1280;
+          const screenH = typeof window !== "undefined" ? window.innerHeight : 800;
+          const finalRawX = currentPixelPos.x + info.offset.x;
+          const finalRawY = currentPixelPos.y + info.offset.y;
 
-          let finalX = target.x;
-          let finalY = target.y;
+          const target = pixelToGrid(finalRawX, finalRawY, screenW, screenH);
 
-          if (isSlotOccupied(finalX, finalY)) {
-            let found = false;
-            for (let radius = 1; radius <= 4 && !found; radius++) {
-              for (let dRow = -radius; dRow <= radius && !found; dRow++) {
-                for (let dCol = -radius; dCol <= radius && !found; dCol++) {
-                  const c = Math.max(0, Math.min(target.col + dCol, target.maxCol));
-                  const r = Math.max(0, Math.min(target.row + dRow, target.maxRow));
-                  const testX = START_X + c * GRID_W;
-                  const testY = START_Y + r * GRID_H;
-                  if (!isSlotOccupied(testX, testY)) {
-                    finalX = testX;
-                    finalY = testY;
-                    found = true;
-                  }
-                }
-              }
+          // Option A: Collision handling (reject drop if occupied, spring back to original)
+          if (isSlotOccupied(target.col, target.row)) {
+            // Target is occupied -> Do nothing, Framer Motion will spring back to current (shortcut.col, shortcut.row)
+            return;
+          }
+
+          if (target.col !== shortcut.col || target.row !== shortcut.row) {
+            if (soundEnabled) {
+              import("@/utils/audio").then(({ playUiClickSound }) => playUiClickSound());
             }
+            updateDesktopShortcutPos(shortcut.id, { col: target.col, row: target.row });
           }
-
-          if (soundEnabled) {
-            import("@/utils/audio").then(({ playUiClickSound }) => playUiClickSound());
-          }
-
-          updateDesktopShortcutPos(shortcut.id, { x: finalX, y: finalY });
         }}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
