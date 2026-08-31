@@ -6,10 +6,6 @@ import {
   Volume2,
   Settings,
   Info,
-  RotateCcw,
-  Sparkles,
-  Smartphone,
-  ShieldCheck,
   Package,
 } from "lucide-react";
 import { useWindowStore } from "@/store/windowStore";
@@ -20,6 +16,7 @@ import { AppearanceTab } from "./settings/AppearanceTab";
 import { SoundTab } from "./settings/SoundTab";
 import { SystemTab } from "./settings/SystemTab";
 import { AppsTab } from "./settings/AppsTab";
+import { AboutTab } from "./settings/AboutTab";
 
 export const SettingsApp: React.FC = () => {
   const { t } = useTranslation();
@@ -198,74 +195,7 @@ export const SettingsApp: React.FC = () => {
         )}
 
         {activeTab === "about" && (
-          <div className="space-y-6">
-            <div>
-              <h2 className={`text-base font-bold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
-                {t.settings.about.title}
-              </h2>
-              <p className={`text-xs ${isLight ? "text-slate-600" : "text-zinc-400"}`}>
-                {t.settings.about.subtitle}
-              </p>
-            </div>
-
-            <div className={`p-5 rounded-2xl border space-y-4 ${
-              isLight ? "bg-white border-slate-200 shadow-sm" : "bg-zinc-900/80 border-white/10"
-            }`}>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-linear-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-lg">
-                  S
-                </div>
-                <div>
-                  <h3 className={`text-base font-black ${isLight ? "text-slate-900" : "text-white"}`}>
-                    {t.settings.about.osVersion}
-                  </h3>
-                  <p className="text-xs text-blue-500 font-semibold">{t.settings.about.osBuild}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                <div className={`p-3 rounded-xl border flex items-center gap-2.5 ${
-                  isLight ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/5"
-                }`}>
-                  <Sparkles size={16} className="text-amber-500 shrink-0" />
-                  <div>
-                    <span className="text-[10px] opacity-75 block">{t.settings.about.uiEngine}</span>
-                    <span className="text-xs font-bold">Framer Motion</span>
-                  </div>
-                </div>
-
-                <div className={`p-3 rounded-xl border flex items-center gap-2.5 ${
-                  isLight ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/5"
-                }`}>
-                  <Smartphone size={16} className="text-emerald-500 shrink-0" />
-                  <div>
-                    <span className="text-[10px] opacity-75 block">{t.settings.about.responsive}</span>
-                    <span className="text-xs font-bold">{t.settings.about.responsiveDesc}</span>
-                  </div>
-                </div>
-
-                <div className={`p-3 rounded-xl border flex items-center gap-2.5 ${
-                  isLight ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/5"
-                }`}>
-                  <ShieldCheck size={16} className="text-blue-500 shrink-0" />
-                  <div>
-                    <span className="text-[10px] opacity-75 block">{t.settings.about.security}</span>
-                    <span className="text-xs font-bold">{t.settings.about.securityDesc}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-4 flex justify-end">
-              <button
-                type="button"
-                onClick={handleResetSettings}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20 text-xs font-semibold transition-all cursor-pointer"
-              >
-                <RotateCcw size={14} /> {t.settings.about.resetButton}
-              </button>
-            </div>
-          </div>
+          <AboutTab isLight={isLight} onResetSettings={handleResetSettings} />
         )}
       </div>
     </div>

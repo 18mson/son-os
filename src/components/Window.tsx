@@ -48,6 +48,11 @@ const FULL_BLEED_APPS = [
   "paint",
   "terminal",
   "audio-converter",
+  "calculator",
+  "clock",
+  "weather",
+  "video-downloader",
+  "paper-size",
 ];
 
 export const WindowComponent: React.FC<WindowProps> = ({ window: windowState, children }) => {

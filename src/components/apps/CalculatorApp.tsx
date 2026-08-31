@@ -165,12 +165,12 @@ export const CalculatorApp: React.FC = () => {
   }, [clearAll, deleteLast, handleEquals, inputDigit, inputDot, inputPercent, performOperation]);
 
   return (
-    <div className={`flex flex-col h-full w-full p-4 select-none font-sans overflow-hidden ${
-      isLight ? "bg-slate-100 text-slate-900" : "bg-zinc-950 text-zinc-100"
+    <div className={`flex flex-col h-full w-full p-3.5 sm:p-4 select-none font-sans overflow-hidden ${
+      isLight ? "bg-transparent text-slate-900" : "bg-transparent text-zinc-100"
     }`}>
       {/* Expression & Result Display */}
-      <div className={`p-4 rounded-2xl border mb-3 flex flex-col justify-end items-end h-28 overflow-hidden transition-all ${
-        isLight ? "bg-white border-slate-300 shadow-inner" : "bg-zinc-900/80 border-white/10"
+      <div className={`p-4 rounded-2xl border mb-3 flex flex-col justify-end items-end h-24 shrink-0 overflow-hidden transition-all ${
+        isLight ? "bg-white/90 border-slate-300/80 shadow-xs" : "bg-zinc-900/80 border-white/10"
       }`}>
         <div className={`text-xs font-mono mb-1 truncate max-w-full ${
           isLight ? "text-slate-400" : "text-zinc-500"

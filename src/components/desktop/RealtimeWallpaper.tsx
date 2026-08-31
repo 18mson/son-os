@@ -12,6 +12,33 @@ interface RealtimeWallpaperProps {
   className?: string;
 }
 
+// Color and math helpers for smooth altitude-driven gradients
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * Math.max(0, Math.min(1, t));
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const clean = hex.replace("#", "");
+  const num = parseInt(clean, 16);
+  return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
+  return `#${((1 << 24) + (clamp(r) << 16) + (clamp(g) << 8) + clamp(b)).toString(16).slice(1)}`;
+}
+
+function lerpColor(c1: string, c2: string, t: number): string {
+  const [r1, g1, b1] = hexToRgb(c1);
+  const [r2, g2, b2] = hexToRgb(c2);
+  const factor = Math.max(0, Math.min(1, t));
+  return rgbToHex(
+    r1 + (r2 - r1) * factor,
+    g1 + (g2 - g1) * factor,
+    b1 + (b2 - b1) * factor
+  );
+}
+
 // Fixed deterministic star positions for starry night sky
 const NIGHT_STARS: Array<{ x: number; y: number; r: number; opacity: number; pulseDelay?: string }> = [
   // Upper sky
@@ -98,8 +125,55 @@ export const RealtimeWallpaper: React.FC<RealtimeWallpaperProps> = memo(({
     updateIntervalMs: 3600000, // Update moon phase once per hour
   });
 
-  const isSunset = blendWeights.sunset > 0.15;
   const moonPath = moonPhase.getMoonSvgPath(20, 0, 0);
+
+  // Dynamic Altitude-based Color & Glow Calculations
+  const activeDate = overrideDate ?? new Date();
+  const timeHour = activeDate.getHours() + activeDate.getMinutes() / 60;
+  const isMorning = timeHour < 12.0;
+
+  // Altitude degrees: ~0° (horizon) to ~80° (solar noon zenith in Jakarta)
+  const altDeg = Math.max(0, sun.altitudeDeg);
+  // Noon factor: 0.0 at altitude <= 10°, 1.0 at altitude >= 60° (zenith solar noon)
+  const noonFactor = Math.max(0, Math.min(1, (altDeg - 10) / 50));
+
+  // Color Palettes:
+  // 1. NOON (Midday / solar noon: brilliant pale white-ivory, minimal yellow saturation)
+  const NOON_CORE_MID = "#fffef0";
+  const NOON_CORE_EDGE = "#fff4c4";
+  const NOON_GLOW_INNER = "#fff9db";
+  const NOON_GLOW_OUTER = "#fffef0";
+
+  // 2. MORNING (06:00 - 09:30: crisp warm golden yellow)
+  const MORNING_CORE_MID = "#fff9db";
+  const MORNING_CORE_EDGE = "#ffd97a";
+  const MORNING_GLOW_INNER = "#ffe066";
+  const MORNING_GLOW_OUTER = "#ffb84d";
+
+  // 3. SUNSET / SORE (16:30 - 18:15: fiery coral-red-orange sunset)
+  const SUNSET_CORE_MID = "#ffd8a8";
+  const SUNSET_CORE_EDGE = "#ff6b35";
+  const SUNSET_GLOW_INNER = "#ff4020";
+  const SUNSET_GLOW_OUTER = "#c92a2a";
+
+  const LOW_CORE_MID = isMorning ? MORNING_CORE_MID : SUNSET_CORE_MID;
+  const LOW_CORE_EDGE = isMorning ? MORNING_CORE_EDGE : SUNSET_CORE_EDGE;
+  const LOW_GLOW_INNER = isMorning ? MORNING_GLOW_INNER : SUNSET_GLOW_INNER;
+  const LOW_GLOW_OUTER = isMorning ? MORNING_GLOW_OUTER : SUNSET_GLOW_OUTER;
+
+  const coreMidColor = lerpColor(LOW_CORE_MID, NOON_CORE_MID, noonFactor);
+  const coreEdgeColor = lerpColor(LOW_CORE_EDGE, NOON_CORE_EDGE, noonFactor);
+  const glowInnerColor = lerpColor(LOW_GLOW_INNER, NOON_GLOW_INNER, noonFactor);
+  const glowOuterColor = lerpColor(LOW_GLOW_OUTER, NOON_GLOW_OUTER, noonFactor);
+
+  // Dynamic glow radii adapting to altitude:
+  // Solar noon (high altitude): tight, intense, concentrated glow (105px / 54px / 32px)
+  // Low altitude (morning / sunset): wide, expansive atmospheric haze (150-185px / 82-95px / 35px)
+  const outerGlowRadius = lerp(isMorning ? 150 : 185, 105, noonFactor);
+  const midGlowRadius = lerp(isMorning ? 82 : 95, 54, noonFactor);
+  const coreRadius = lerp(34, 32, noonFactor);
+  const outerGlowOpacity = lerp(0.36, 0.22, noonFactor);
+  const midGlowOpacity = lerp(0.65, 0.45, noonFactor);
 
   return (
     <div
@@ -170,50 +244,29 @@ export const RealtimeWallpaper: React.FC<RealtimeWallpaperProps> = memo(({
             <polygon points="0,0 1920,0 1920,850 640,850 500,720 380,620 260,500 140,410 0,360" />
           </clipPath>
 
-          {/* Smooth Gaussian Blur Filters for Daytime Sun Only */}
-          <filter id="smooth-sun-core-blur" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="6" />
-          </filter>
-
-          <filter id="smooth-sun-haze-blur" x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="30" />
-          </filter>
-
-          {/* Seamless Daytime Sun Radial Gradients */}
-          <radialGradient id="day-sun-gradient" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-            <stop offset="25%" stopColor="#ffffff" stopOpacity="0.95" />
-            <stop offset="45%" stopColor="#fffdf0" stopOpacity="0.8" />
-            <stop offset="65%" stopColor="#fff6d1" stopOpacity="0.45" />
-            <stop offset="85%" stopColor="#ffefab" stopOpacity="0.15" />
-            <stop offset="100%" stopColor="#ffe680" stopOpacity="0" />
+          {/* Dynamic Altitude-driven Sun Gradients */}
+          <radialGradient id="dynamic-sun-core" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="40%" stopColor={coreMidColor} />
+            <stop offset="80%" stopColor={coreEdgeColor} />
+            <stop offset="100%" stopColor={coreEdgeColor} />
           </radialGradient>
 
-          <radialGradient id="day-sun-haze" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.4" />
-            <stop offset="35%" stopColor="#fff9de" stopOpacity="0.25" />
-            <stop offset="70%" stopColor="#ffea9f" stopOpacity="0.08" />
-            <stop offset="100%" stopColor="#ffd875" stopOpacity="0" />
+          <radialGradient id="dynamic-sun-inner-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor={glowInnerColor} stopOpacity={midGlowOpacity} />
+            <stop offset="50%" stopColor={glowInnerColor} stopOpacity={midGlowOpacity * 0.45} />
+            <stop offset="85%" stopColor={glowOuterColor} stopOpacity={midGlowOpacity * 0.12} />
+            <stop offset="100%" stopColor={glowOuterColor} stopOpacity={0} />
           </radialGradient>
 
-          {/* Seamless Sunset Sun Radial Gradients */}
-          <radialGradient id="sunset-sun-gradient" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-            <stop offset="25%" stopColor="#fff8db" stopOpacity="0.95" />
-            <stop offset="50%" stopColor="#ffdd7a" stopOpacity="0.75" />
-            <stop offset="75%" stopColor="#ff9d47" stopOpacity="0.35" />
-            <stop offset="90%" stopColor="#ff6a3d" stopOpacity="0.1" />
-            <stop offset="100%" stopColor="#e83a54" stopOpacity="0" />
+          <radialGradient id="dynamic-sun-outer-haze" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor={glowOuterColor} stopOpacity={outerGlowOpacity} />
+            <stop offset="45%" stopColor={glowOuterColor} stopOpacity={outerGlowOpacity * 0.4} />
+            <stop offset="80%" stopColor={glowOuterColor} stopOpacity={outerGlowOpacity * 0.1} />
+            <stop offset="100%" stopColor={glowOuterColor} stopOpacity={0} />
           </radialGradient>
 
-          <radialGradient id="sunset-sun-haze" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#ffe899" stopOpacity="0.45" />
-            <stop offset="40%" stopColor="#ffa94d" stopOpacity="0.25" />
-            <stop offset="75%" stopColor="#ff6f43" stopOpacity="0.08" />
-            <stop offset="100%" stopColor="#e83a54" stopOpacity="0" />
-          </radialGradient>
-
-          {/* Shadow Filter */}
+          {/* Tree Shadow Filter */}
           <filter id="shadow-blur" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" />
           </filter>
@@ -242,25 +295,31 @@ export const RealtimeWallpaper: React.FC<RealtimeWallpaperProps> = memo(({
             </g>
           )}
 
-          {/* SUN: Rendered during daytime */}
+          {/* SUN: Altitude-Driven Radiant Glowing Vector Sun */}
           {sun.visible && (
             <g
-              className="transition-transform duration-1000 ease-out"
+              className="transition-transform duration-1000 ease-out pointer-events-none"
               transform={`translate(${(sun.x / 100) * 1920}, ${(sun.y / 100) * 1080})`}
-              style={{ mixBlendMode: "screen" }}
             >
-              {/* 1. Large Soft Atmosphere Light Glow */}
+              {/* 1. Large Soft Atmospheric Outer Halo */}
               <circle
-                r={140 + Math.max(0, 1 - sun.y / 100) * 30}
-                fill={isSunset ? "url(#sunset-sun-haze)" : "url(#day-sun-haze)"}
-                filter="url(#smooth-sun-haze-blur)"
+                r={outerGlowRadius}
+                fill="url(#dynamic-sun-outer-haze)"
+                className="transition-all duration-1000 ease-out"
               />
 
-              {/* 2. Seamless Radiant Sun Core */}
+              {/* 2. Mid Warm Glow Halo */}
               <circle
-                r={55}
-                fill={isSunset ? "url(#sunset-sun-gradient)" : "url(#day-sun-gradient)"}
-                filter="url(#smooth-sun-core-blur)"
+                r={midGlowRadius}
+                fill="url(#dynamic-sun-inner-glow)"
+                className="transition-all duration-1000 ease-out"
+              />
+
+              {/* 3. Radiant Core Disc */}
+              <circle
+                r={coreRadius}
+                fill="url(#dynamic-sun-core)"
+                className="transition-all duration-1000 ease-out"
               />
             </g>
           )}

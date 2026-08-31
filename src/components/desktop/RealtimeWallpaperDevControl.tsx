@@ -205,41 +205,41 @@ const DevControlInternal: React.FC<RealtimeWallpaperDevControlProps> = ({
           <div className="grid grid-cols-5 gap-1 pt-1">
             <button
               type="button"
-              onClick={() => handlePresetTime(7, 30)}
+              onClick={() => handlePresetTime(6, 30)}
               className="px-1.5 py-1.5 rounded-xl bg-white/5 hover:bg-amber-500/20 hover:border-amber-400/40 border border-white/10 text-center transition-all cursor-pointer text-[10px]"
-              title="Pagi Cerah (Wallpaper terang, matahari belum muncul)"
+              title="Pagi Sunrise (06:30)"
             >
-              🌅 07:30
-            </button>
-            <button
-              type="button"
-              onClick={() => handlePresetTime(9, 30)}
-              className="px-1.5 py-1.5 rounded-xl bg-white/5 hover:bg-amber-500/20 hover:border-amber-400/40 border border-white/10 text-center transition-all cursor-pointer text-[10px]"
-              title="Matahari Masuk dari Kiri Atas"
-            >
-              🌤️ 09:30
+              🌅 06:30
             </button>
             <button
               type="button"
               onClick={() => handlePresetTime(12, 0)}
               className="px-1.5 py-1.5 rounded-xl bg-white/5 hover:bg-amber-500/20 hover:border-amber-400/40 border border-white/10 text-center transition-all cursor-pointer text-[10px]"
-              title="Siang Terik (Langit tengah atas)"
+              title="Siang Terik / Solar Noon (12:00)"
             >
               ☀️ 12:00
             </button>
             <button
               type="button"
-              onClick={() => handlePresetTime(17, 45)}
+              onClick={() => handlePresetTime(16, 0)}
               className="px-1.5 py-1.5 rounded-xl bg-white/5 hover:bg-amber-500/20 hover:border-amber-400/40 border border-white/10 text-center transition-all cursor-pointer text-[10px]"
-              title="Matahari Terbenam (Kanan atas laut)"
+              title="Sore / Wallpaper Senja (16:00)"
             >
-              🌇 17:45
+              🌇 16:00
+            </button>
+            <button
+              type="button"
+              onClick={() => handlePresetTime(17, 30)}
+              className="px-1.5 py-1.5 rounded-xl bg-white/5 hover:bg-amber-500/20 hover:border-amber-400/40 border border-white/10 text-center transition-all cursor-pointer text-[10px]"
+              title="Senja Penuh / Sunset (17:30)"
+            >
+              🌆 17:30
             </button>
             <button
               type="button"
               onClick={() => handlePresetTime(22, 0)}
               className="px-1.5 py-1.5 rounded-xl bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/40 border border-white/10 text-center transition-all cursor-pointer text-[10px]"
-              title="Bulan Malam (Muncul dari kiri atas ke kanan)"
+              title="Bulan Malam (22:00)"
             >
               🌙 22:00
             </button>

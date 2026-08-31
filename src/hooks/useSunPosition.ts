@@ -12,6 +12,7 @@ export interface SunPositionState {
     azimuthDeg: number;
     x: number; // 0-100%
     y: number; // 0-100%
+    progress: number; // 0.0 (day start) to 1.0 (sunset)
     visible: boolean;
   };
   moon: {
@@ -111,11 +112,11 @@ export function computeSunState(
   const moonPos = SunCalc.getMoonPosition(now, lat, lng);
   const moonIllum = SunCalc.getMoonIllumination(now);
 
-  // In Suncalc, altitude and azimuth from getPosition are in degrees
-  const sunAltDeg = sunPos.altitude;
-  const sunAzDeg = sunPos.azimuth;
-  const moonAltDeg = moonPos.altitude;
-  const moonAzDeg = moonPos.azimuth;
+  // Convert SunCalc positions from radians to degrees
+  const sunAltDeg = (sunPos.altitude * 180) / Math.PI;
+  const sunAzDeg = (sunPos.azimuth * 180) / Math.PI;
+  const moonAltDeg = (moonPos.altitude * 180) / Math.PI;
+  const moonAzDeg = (moonPos.azimuth * 180) / Math.PI;
 
   const timeHour = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
   const isDaytime = timeHour >= 5.75 && timeHour <= 18.25;
@@ -123,33 +124,54 @@ export function computeSunState(
   const sun2D = calculateSun2D(timeHour);
   const moon2D = calculateMoon2D(timeHour);
 
+  // Time-based smooth background wallpaper crossfade
+  // 1. Dawn / Sunrise: 05:30 - 06:45 (Night -> Day)
+  // 2. Full Day: 06:45 - 15:30 (Day = 1.0)
+  // 3. Transition to Sunset: 15:30 - 16:15 (Day -> Sunset, by 16:00 sunset is already strongly active)
+  // 4. Full Sunset / Senja: 16:15 - 18:00 (Sunset = 1.0)
+  // 5. Dusk to Night: 18:00 - 19:15 (Sunset -> Night)
+  // 6. Full Night: 19:15 - 05:30 (Night = 1.0)
+
   let dayWeight = 0;
   let sunsetWeight = 0;
   let nightWeight = 0;
   let phase: SunPositionState["phase"] = "day";
 
-  if (sunAltDeg > 12) {
-    // Full Day
+  if (timeHour >= 5.5 && timeHour < 6.75) {
+    // Dawn / Sunrise (05:30 - 06:45)
+    const progress = (timeHour - 5.5) / 1.25;
+    dayWeight = progress;
+    nightWeight = 1 - progress;
+    sunsetWeight = 0;
+    phase = "sunrise";
+  } else if (timeHour >= 6.75 && timeHour < 15.5) {
+    // Full Day (06:45 - 15:30)
     dayWeight = 1;
     sunsetWeight = 0;
     nightWeight = 0;
     phase = "day";
-  } else if (sunAltDeg > 0) {
-    // Golden Hour / Sunset / Sunrise transition
-    const progress = (12 - sunAltDeg) / 12;
+  } else if (timeHour >= 15.5 && timeHour < 16.25) {
+    // Afternoon to Sunset Transition (15:30 - 16:15)
+    const progress = (timeHour - 15.5) / 0.75;
     dayWeight = Math.max(0, 1 - progress);
-    sunsetWeight = progress;
+    sunsetWeight = Math.min(1, progress);
     nightWeight = 0;
-    phase = timeHour >= 12 ? "sunset" : "sunrise";
-  } else if (sunAltDeg > -8) {
-    // Civil / Nautical Twilight (Dusk / Dawn)
-    const progress = (-sunAltDeg) / 8;
+    phase = "sunset";
+  } else if (timeHour >= 16.25 && timeHour < 18.0) {
+    // Full Sunset / Senja (16:15 - 18:00)
+    dayWeight = 0;
+    sunsetWeight = 1;
+    nightWeight = 0;
+    phase = "sunset";
+  } else if (timeHour >= 18.0 && timeHour < 19.25) {
+    // Dusk / Twilight to Night (18:00 - 19:15)
+    const progress = (timeHour - 18.0) / 1.25;
     dayWeight = 0;
     sunsetWeight = Math.max(0, 1 - progress);
-    nightWeight = progress;
+    nightWeight = Math.min(1, progress);
     phase = "dusk";
   } else {
-    // Deep Night
+    // Deep Night (19:15 - 05:30)
     dayWeight = 0;
     sunsetWeight = 0;
     nightWeight = 1;
@@ -184,6 +206,7 @@ export function computeSunState(
       azimuthDeg: sunAzDeg,
       x: sun2D.x,
       y: sun2D.y,
+      progress: sun2D.progress,
       visible: sun2D.visible,
     },
     moon: {
